@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
-import { useAtmosphericStore, ActivityContextType, ATMOSPHERIC_CONTEXT_MAP } from '../../store/useAtmosphericStore';
+import { useAtmosphericStore } from '../../store/useAtmosphericStore';
 
 export const CreateVibeModal: React.FC = () => {
-  const { isCreateModalOpen, setCreateModalOpen, addVibe, currentContext } = useAtmosphericStore();
+  const { isCreateModalOpen, setCreateModalOpen, addVibe, activeTag, pinTag } = useAtmosphericStore();
 
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [activity, setActivity] = useState<ActivityContextType>(currentContext);
-  const [keywordsStr, setKeywordsStr] = useState('');
+  const [hashtagsStr, setHashtagsStr] = useState(
+    activeTag !== '#ALL' ? activeTag : '#deepwork, #lofi'
+  );
   const [musicUrl, setMusicUrl] = useState('');
   const [videoUrl, setVideoUrl] = useState('');
   const [imageUrl, setImageUrl] = useState('');
@@ -18,25 +19,33 @@ export const CreateVibeModal: React.FC = () => {
     e.preventDefault();
     if (!title.trim() || !content.trim()) return;
 
-    const keywords = keywordsStr
-      .split(',')
-      .map((k) => k.trim().replace(/^#/, ''))
-      .filter(Boolean);
+    // Parse hashtags cleanly
+    const parsedTags = hashtagsStr
+      .split(/[\s,]+/)
+      .map((t) => t.trim())
+      .filter(Boolean)
+      .map((t) => (t.startsWith('#') ? t.toLowerCase() : `#${t.toLowerCase()}`));
+
+    const finalTags = parsedTags.length > 0 ? parsedTags : ['#general', '#vibe'];
+    
+    // Automatically pin the first tag to menu if not already
+    const firstTag = finalTags[0];
+    pinTag(firstTag);
 
     const images = imageUrl.trim() ? [imageUrl.trim()] : [];
 
     addVibe({
       title,
       content,
-      activity,
-      keywords: keywords.length > 0 ? keywords : ['vibe', 'tactical'],
+      tags: finalTags,
+      keywords: finalTags.map((t) => t.replace(/^#/, '')),
       images,
       musicUrl: musicUrl.trim() || null,
       videoUrl: videoUrl.trim() || null,
       authorName: 'cyber_junkie',
       authorId: 'user-op-01',
       roomConfig: {
-        themeColor: ATMOSPHERIC_CONTEXT_MAP[activity].neonColor,
+        themeColor: '#FFB000',
         bgImageUrl: images[0] || undefined
       }
     });
@@ -44,7 +53,7 @@ export const CreateVibeModal: React.FC = () => {
     // Reset and close
     setTitle('');
     setContent('');
-    setKeywordsStr('');
+    setHashtagsStr('#deepwork, #lofi');
     setMusicUrl('');
     setVideoUrl('');
     setImageUrl('');
@@ -58,7 +67,7 @@ export const CreateVibeModal: React.FC = () => {
         <div className="flex justify-between items-center px-4 py-3 bg-zinc-900/80 border-b border-zinc-800">
           <div className="flex items-center space-x-2 text-xs font-bold text-cyan-400">
             <span className="material-symbols-outlined text-sm">terminal</span>
-            <span>[ CREATE_NEW_VIBE_ENTRY ]</span>
+            <span>[ CREATE_NEW_VIBE_LOG ]</span>
           </div>
           <button 
             onClick={() => setCreateModalOpen(false)}
@@ -83,18 +92,25 @@ export const CreateVibeModal: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-zinc-400 mb-1 font-bold uppercase">[ACTIVITY_CONTEXT]:</label>
-            <select
-              value={activity}
-              onChange={(e) => setActivity(e.target.value as ActivityContextType)}
-              className="w-full bg-zinc-900 border border-zinc-800 focus:border-cyan-500 rounded p-2 text-zinc-100 outline-none uppercase"
-            >
-              {(Object.keys(ATMOSPHERIC_CONTEXT_MAP) as ActivityContextType[]).map((key) => (
-                <option key={key} value={key}>
-                  {ATMOSPHERIC_CONTEXT_MAP[key].label} ({key})
-                </option>
-              ))}
-            </select>
+            <div className="flex justify-between items-center mb-1">
+              <label className="block text-amber-400 font-bold uppercase flex items-center gap-1">
+                <span>[HASHTAGS]:</span>
+              </label>
+              <span className="text-[10px] text-zinc-500 font-normal">
+                ★ 1st Tag = Primary Route Tag
+              </span>
+            </div>
+            <input
+              type="text"
+              required
+              placeholder="#deepwork, #lofi, #coding"
+              value={hashtagsStr}
+              onChange={(e) => setHashtagsStr(e.target.value)}
+              className="w-full bg-zinc-900 border border-amber-500/50 focus:border-amber-400 rounded p-2 text-amber-300 placeholder-zinc-600 outline-none font-bold"
+            />
+            <p className="text-[10px] text-zinc-500 mt-1">
+              Separate with spaces or commas. The first tag will be used for main route grouping.
+            </p>
           </div>
 
           <div>
@@ -105,7 +121,7 @@ export const CreateVibeModal: React.FC = () => {
               placeholder="Enter contextual log, current activity notes, or status..."
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              className="w-full bg-zinc-900 border border-zinc-800 focus:border-cyan-500 rounded p-2 text-zinc-100 placeholder-zinc-600 outline-none resize-none"
+              className="w-full bg-zinc-900 border border-zinc-800 focus:border-cyan-500 rounded p-2 text-zinc-100 placeholder-zinc-600 outline-none resize-none font-sans"
             />
           </div>
 
@@ -130,17 +146,6 @@ export const CreateVibeModal: React.FC = () => {
                 className="w-full bg-zinc-900 border border-zinc-800 focus:border-cyan-500 rounded p-2 text-zinc-100 placeholder-zinc-600 outline-none"
               />
             </div>
-          </div>
-
-          <div>
-            <label className="block text-zinc-400 mb-1 font-bold uppercase">[KEYWORDS / #TAGS]:</label>
-            <input
-              type="text"
-              placeholder="lofi, nestjs, night, junkpunk"
-              value={keywordsStr}
-              onChange={(e) => setKeywordsStr(e.target.value)}
-              className="w-full bg-zinc-900 border border-zinc-800 focus:border-cyan-500 rounded p-2 text-zinc-100 placeholder-zinc-600 outline-none"
-            />
           </div>
 
           {/* Modal Footer Controls */}

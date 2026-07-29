@@ -1,12 +1,13 @@
 import React from 'react';
 import { useAtmosphericStore, VibeItem } from '../../store/useAtmosphericStore';
+import { CyberAudioPlayer } from '../Player/CyberAudioPlayer';
 
 export interface VibeCardProps {
   id: string;
   title: string;
   content: string;
-  keywords: string[];
-  activity: string;
+  tags?: string[];
+  keywords?: string[];
   images?: string[];
   videoUrl?: string | null;
   musicUrl?: string | null;
@@ -23,8 +24,8 @@ export const VibeCard: React.FC<VibeCardProps> = ({
   id,
   title,
   content,
-  keywords,
-  activity,
+  tags = [],
+  keywords = [],
   images = [],
   videoUrl,
   musicUrl,
@@ -37,7 +38,23 @@ export const VibeCard: React.FC<VibeCardProps> = ({
   onDelete,
 }) => {
   const isOwner = currentUserId === authorId;
-  const { setSelectedVibeRoom, setViewMode } = useAtmosphericStore();
+  const { 
+    setSelectedVibeRoom, 
+    setViewMode, 
+    activeTag, 
+    setActiveTag, 
+    pinnedTags, 
+    pinTag, 
+    unpinTag 
+  } = useAtmosphericStore();
+
+  // Combine tags and keywords fallback
+  const displayTags = tags.length > 0 
+    ? tags 
+    : keywords.map((k) => (k.startsWith('#') ? k : `#${k}`));
+  
+  // The first tag is the primary routing tag
+  const firstTag = displayTags[0] || '#general';
 
   const handleEnterRoom = () => {
     if (vibeItem) {
@@ -47,8 +64,8 @@ export const VibeCard: React.FC<VibeCardProps> = ({
   };
 
   return (
-    <article className="w-full max-w-2xl mx-auto my-4 bg-zinc-900/80 border border-zinc-800 rounded-lg overflow-hidden shadow-xl backdrop-blur-sm relative group">
-      {/* Accent strip */}
+    <article className="w-full max-w-2xl mx-auto my-4 bg-zinc-900/80 border border-zinc-800 rounded-lg overflow-hidden shadow-xl backdrop-blur-sm relative group font-sans">
+      {/* Top Cyber Accent strip */}
       <div className="h-0.5 w-full bg-gradient-to-r from-cyan-500 via-amber-500 to-purple-500 opacity-60" />
 
       {/* Header */}
@@ -58,10 +75,17 @@ export const VibeCard: React.FC<VibeCardProps> = ({
           <span className="text-sm font-mono text-zinc-300 font-semibold">@{authorName}</span>
           <span className="text-xs font-mono text-zinc-600">• {createdAt}</span>
         </div>
+
+        {/* Primary Route Tag Header Badge */}
         <div className="flex items-center space-x-2">
-          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-800 text-zinc-400 border border-zinc-700 uppercase tracking-widest">
-            [{activity}]
-          </span>
+          <button
+            onClick={() => setActiveTag(firstTag)}
+            title="Route feed by primary tag"
+            className="text-[10px] font-mono px-2.5 py-0.5 rounded bg-amber-950/80 text-amber-400 border border-amber-500/60 uppercase tracking-widest hover:border-amber-400 transition-colors shadow-[0_0_8px_rgba(255,176,0,0.15)] flex items-center space-x-1"
+          >
+            <span className="text-zinc-500 text-[9px]">ROUTE:</span>
+            <span className="font-bold">{firstTag}</span>
+          </button>
         </div>
       </div>
 
@@ -122,38 +146,78 @@ export const VibeCard: React.FC<VibeCardProps> = ({
           </div>
         )}
 
-        {/* Media Block: Music Preview */}
+        {/* Media Block: Cyber Audio Player */}
         {musicUrl && (
-          <div className="p-2.5 bg-zinc-950 border border-zinc-800 rounded flex items-center space-x-3">
-            <span className="text-xs font-mono text-amber-500 shrink-0">🎵 AUDIO_STREAM:</span>
-            <audio controls src={musicUrl} className="w-full h-8 max-h-8" />
+          <div className="pt-2">
+            <CyberAudioPlayer 
+              src={musicUrl}
+              title={title ? `${title} Stream` : 'VIBE_AUDIO_STREAM'} 
+              accentColor={firstTag === activeTag ? '#FFB000' : '#00F0FF'}
+            />
           </div>
         )}
 
-        {/* Keywords */}
-        {keywords.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 pt-2">
-            {keywords.map((kw, i) => (
-              <span key={i} className="text-xs font-mono text-zinc-500 hover:text-zinc-400 cursor-pointer bg-zinc-950/40 border border-zinc-800/60 px-2 py-0.5 rounded-[2px]">
-                #{kw}
-              </span>
-            ))}
+        {/* Hashtags Section with Menu Pinning */}
+        {displayTags.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 pt-2 font-mono">
+            {displayTags.map((tag, i) => {
+              const formatted = tag.startsWith('#') ? tag : `#${tag}`;
+              const isPinned = pinnedTags.some((pt) => pt.toLowerCase() === formatted.toLowerCase());
+              const isActive = activeTag.toLowerCase() === formatted.toLowerCase();
+
+              return (
+                <div 
+                  key={i} 
+                  className={`group/chip flex items-center rounded border text-xs transition-all ${
+                    isActive 
+                      ? 'bg-amber-950/60 border-amber-500/80 text-amber-300' 
+                      : 'bg-zinc-950/60 border-zinc-800 text-zinc-400 hover:border-cyan-500/50 hover:text-cyan-300'
+                  }`}
+                >
+                  <button
+                    onClick={() => setActiveTag(formatted)}
+                    className="px-2 py-0.5 hover:underline flex items-center space-x-1"
+                  >
+                    <span>{formatted}</span>
+                    {i === 0 && (
+                      <span className="text-[9px] text-amber-400 font-bold ml-1">★ 1st</span>
+                    )}
+                  </button>
+
+                  {/* Pin to Menu Button */}
+                  <button
+                    onClick={() => {
+                      if (isPinned) unpinTag(formatted);
+                      else pinTag(formatted);
+                    }}
+                    title={isPinned ? 'Unpin tag from menu' : 'Pin tag to top menu & sidebar'}
+                    className={`px-1.5 py-0.5 border-l border-zinc-800 text-[10px] transition-colors ${
+                      isPinned 
+                        ? 'text-cyan-400 font-bold hover:text-red-400' 
+                        : 'text-zinc-600 hover:text-cyan-400'
+                    }`}
+                  >
+                    {isPinned ? '📌' : '+menu'}
+                  </button>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
 
-      {/* Footer / Controls */}
+      {/* Footer / Owner Controls */}
       {isOwner && (
-        <div className="flex items-center justify-end space-x-2 px-4 py-2 bg-zinc-950/40 border-t border-zinc-800/40">
+        <div className="flex items-center justify-end space-x-2 px-4 py-2 bg-zinc-950/40 border-t border-zinc-800/40 font-mono">
           <button
             onClick={() => onEdit?.(id)}
-            className="px-2.5 py-1 text-[11px] font-mono text-zinc-400 hover:text-amber-400 hover:bg-zinc-800 rounded transition-colors"
+            className="px-2.5 py-1 text-[11px] text-zinc-400 hover:text-amber-400 hover:bg-zinc-800 rounded transition-colors"
           >
             [ ✏️ EDIT ]
           </button>
           <button
             onClick={() => onDelete?.(id)}
-            className="px-2.5 py-1 text-[11px] font-mono text-zinc-400 hover:text-red-400 hover:bg-zinc-800 rounded transition-colors"
+            className="px-2.5 py-1 text-[11px] text-zinc-400 hover:text-red-400 hover:bg-zinc-800 rounded transition-colors"
           >
             [ 🗑 DELETE ]
           </button>
