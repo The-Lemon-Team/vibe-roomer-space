@@ -37,9 +37,9 @@ export const ActivitySwitcher: React.FC = () => {
   };
 
   return (
-    <div className="w-full bg-zinc-950/80 p-3 overflow-x-auto no-scrollbar font-mono text-xs select-none backdrop-blur-md">
-      <div className="flex items-center space-x-2 min-w-max">
-        <span className="text-zinc-500 uppercase tracking-widest mr-1 text-[11px] font-bold flex items-center gap-1">
+    <div className="w-full bg-zinc-950/80 font-mono text-xs select-none backdrop-blur-md">
+      <div className="max-w-[980px] mx-auto w-full px-4 md:px-6 py-2 overflow-x-auto no-scrollbar flex items-center space-x-2">
+        <span className="text-zinc-500 uppercase tracking-widest mr-1 text-[11px] font-bold flex items-center gap-1 shrink-0">
           <span className="material-symbols-outlined text-sm text-cyan-400">tag</span>
           <span>[MENU_TAGS]:</span>
         </span>
@@ -47,7 +47,7 @@ export const ActivitySwitcher: React.FC = () => {
         {/* All Vibes Button */}
         <button
           onClick={() => setActiveTag('#ALL')}
-          className={`px-3 py-1.5 font-bold uppercase transition-all duration-200 rounded border flex items-center space-x-1 ${
+          className={`px-3 py-1 font-bold uppercase transition-all duration-200 rounded border flex items-center space-x-1 shrink-0 ${
             activeTag === '#ALL'
               ? 'bg-cyan-950/80 border-cyan-500 text-cyan-400 shadow-[0_0_10px_rgba(0,240,255,0.2)]'
               : 'bg-zinc-900/40 border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200'
@@ -62,10 +62,10 @@ export const ActivitySwitcher: React.FC = () => {
           const isActive = activeTag.toLowerCase() === tag.toLowerCase();
 
           return (
-            <div key={tag} className="relative group flex items-center">
+            <div key={tag} className="relative group flex items-center shrink-0">
               <button
                 onClick={() => setActiveTag(tag)}
-                className={`px-3 py-1.5 font-bold uppercase transition-all duration-200 rounded border flex items-center space-x-1.5 ${
+                className={`px-3 py-1 font-bold uppercase transition-all duration-200 rounded border flex items-center space-x-1.5 ${
                   isActive
                     ? 'bg-amber-950/80 border-amber-500 text-amber-400 shadow-[0_0_10px_rgba(255,176,0,0.25)]'
                     : 'bg-zinc-900/40 border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200'
@@ -94,7 +94,7 @@ export const ActivitySwitcher: React.FC = () => {
         {isAdding ? (
           <form
             onSubmit={handleAddTag}
-            className="flex items-center space-x-1 bg-zinc-900 border border-cyan-500/60 rounded px-2 py-0.5"
+            className="flex items-center space-x-1 bg-zinc-900 border border-cyan-500/60 rounded px-2 py-0.5 shrink-0"
           >
             <span className="text-cyan-400 font-bold">#</span>
             <input
@@ -119,7 +119,7 @@ export const ActivitySwitcher: React.FC = () => {
         ) : (
           <button
             onClick={() => setIsAdding(true)}
-            className="px-2.5 py-1.5 text-zinc-500 hover:text-cyan-400 border border-dashed border-zinc-800 hover:border-cyan-500/50 rounded flex items-center space-x-1 transition-colors"
+            className="px-2.5 py-1 text-zinc-500 hover:text-cyan-400 border border-dashed border-zinc-800 hover:border-cyan-500/50 rounded flex items-center space-x-1 transition-colors shrink-0"
           >
             <span className="material-symbols-outlined text-sm">add</span>
             <span>PIN TAG</span>

@@ -62,16 +62,16 @@ export const App: React.FC = () => {
 
           {/* Dynamic View: Main Vibes List OR Immersive Hashtag Room View */}
           {viewMode === 'vibes' ? (
-            <main className="flex-1 w-full h-full overflow-y-auto p-4 md:p-6 pb-20 lg:pb-8">
+            <main className="flex-1 w-full h-full overflow-y-auto py-4 px-4 md:px-6 pb-20 lg:pb-8">
               <div
-                className={`w-full mx-auto transition-all ${
+                className={`w-full max-w-[980px] mx-auto p-4 md:p-6 rounded-lg transition-all ${
                   isAuthenticated
-                    ? 'max-w-4xl'
-                    : 'max-w-2xl border-x border-zinc-800/40 bg-zinc-950/20 p-4 md:p-6 rounded-lg shadow-2xl'
+                    ? 'bg-zinc-950/60 bg-[linear-gradient(to_right,#18181b_1px,transparent_1px),linear-gradient(to_bottom,#18181b_1px,transparent_1px)] bg-[size:20px_20px]'
+                    : 'bg-zinc-950/90 bg-[radial-gradient(#27272a_1px,transparent_1px)] bg-[size:16px_16px]'
                 }`}
               >
                 {/* Feed Header & Status */}
-                <div className="flex justify-between items-center mb-4 font-mono text-xs text-zinc-400 border-b border-zinc-800 pb-2">
+                <div className="flex justify-between items-center mb-4 font-mono text-xs text-zinc-400 border-b border-zinc-800/80 pb-2">
                   <div>
                     [HASHTAG_ROUTE: <span className="text-amber-400 font-bold">{activeTag}</span>]
                   </div>
