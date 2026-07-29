@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradient -->
+    <radialGradient id="bgGlow" cx="50%" cy="50%" r="75%">
+      <stop offset="0%" stop-color="#091827" />
+      <stop offset="100%" stop-color="#09090b" />
+    </radialGradient>
+
+    <!-- Neon Cyan Glow -->
+    <filter id="cyanGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="12" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <!-- Neon Amber Glow -->
+    <filter id="amberGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="16" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <!-- Line Gradients -->
+    <linearGradient id="cyanToAmber" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00f0ff" />
+      <stop offset="50%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#f59e0b" />
+    </linearGradient>
+
+    <linearGradient id="amberToCyan" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#f59e0b" />
+      <stop offset="100%" stop-color="#00f0ff" />
+    </linearGradient>
+  </defs>
+
+  <!-- Container Base -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGlow)" stroke="#27272a" stroke-width="8" />
+
+  <!-- Outer Pulse Ring -->
+  <circle cx="256" cy="256" r="180" fill="none" stroke="#00f0ff" stroke-width="4" stroke-dasharray="16 12" opacity="0.4" filter="url(#cyanGlow)" />
+  
+  <!-- Cyberpunk Inner Hex Frame / Octagon -->
+  <polygon points="256,96 384,148 416,256 384,364 256,416 128,364 96,256 128,148" fill="none" stroke="url(#cyanToAmber)" stroke-width="6" opacity="0.7" />
+
+  <!-- Atmospheric Soundwaves / Equalizer Bars -->
+  <g filter="url(#cyanGlow)">
+    <rect x="156" y="216" width="20" height="80" rx="10" fill="#00f0ff" />
+    <rect x="196" y="166" width="20" height="180" rx="10" fill="#00f0ff" />
+    <rect x="236" y="126" width="20" height="260" rx="10" fill="url(#cyanToAmber)" />
+    <rect x="276" y="176" width="20" height="160" rx="10" fill="#f59e0b" />
+    <rect x="316" y="206" width="20" height="100" rx="10" fill="#f59e0b" filter="url(#amberGlow)" />
+    <rect x="356" y="236" width="20" height="40" rx="10" fill="#f59e0b" />
+  </g>
+
+  <!-- Central Glowing Signal Orb -->
+  <circle cx="246" cy="256" r="16" fill="#ffffff" filter="url(#cyanGlow)" />
+  <circle cx="246" cy="256" r="8" fill="#00f0ff" />
+</svg>

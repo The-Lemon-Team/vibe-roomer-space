@@ -22,28 +22,34 @@ enum ActivityContext {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  username  String   @unique
-  password  String
-  role      Role     @default(USER)
-  vibes     Vibe[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String           @id @default(uuid())
+  email           String           @unique
+  username        String           @unique
+  password        String
+  role            Role             @default(USER)
+  vibes           Vibe[]
+  rooms           Room[]
+  roomStreamItems RoomStreamItem[]
+  roomNews        RoomNews[]
+  roomNotes       RoomNote[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
 }
 
 model Vibe {
   id          String          @id @default(uuid())
-  title       String
+  title       String          // e.g., "Cyber-Coffee & Heavy Code"
   content     String          @db.Text
-  keywords    String[]
-  activity    ActivityContext @default(CUSTOM)
+  keywords    String[]        // ["lofi", "nestjs", "night", "junkpunk"]
+  activity    ActivityContext @default(CUSTOM) // crucial for the activity value proposition
   
+  // media content for the post
   images      String[]
   videoUrl    String?
   musicUrl    String?
 
-  roomConfig  Json?
+  // placeholder for future "Atmospheric Rooms" functionality
+  roomConfig  Json?           // JSON with settings (bg textures, neon colors)
   
   inMainFeed  Boolean         @default(false)
   authorId    String
@@ -69,4 +75,63 @@ model Hashtag {
   useCount    Int      @default(1)
   lastUsedAt  DateTime @default(now())
   createdAt   DateTime @default(now())
+}
+
+model Room {
+  id              String           @id @default(uuid())
+  title           String
+  description     String?          @db.Text
+  poster          String?
+  originVibeId    String?
+  isPublic        Boolean          @default(true)
+  tags            String[]
+  images          String[]
+  videoUrl        String?
+  musicUrl        String?
+  youtubeUrl      String?
+  roomConfig      Json?
+  authorId        String
+  author          User             @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  streamItems     RoomStreamItem[]
+  news            RoomNews[]
+  notes           RoomNote[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+}
+
+model RoomStreamItem {
+  id        String   @id @default(uuid())
+  type      String
+  content   String?  @db.Text
+  mediaUrls String[]
+  url       String?
+  title     String?
+  roomId    String
+  room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model RoomNews {
+  id        String   @id @default(uuid())
+  title     String
+  content   String   @db.Text
+  roomId    String
+  room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model RoomNote {
+  id        String   @id @default(uuid())
+  title     String
+  content   String   @db.Text // Markdown text
+  roomId    String
+  room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

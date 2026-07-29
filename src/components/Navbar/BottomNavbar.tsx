@@ -2,7 +2,7 @@ import React from 'react';
 import { useAtmosphericStore } from '../../store/useAtmosphericStore';
 
 export const BottomNavbar: React.FC = () => {
-  const { viewMode, setViewMode, setCreateModalOpen } = useAtmosphericStore();
+  const { viewMode, setViewMode, closeRoomPage, setCreateModalOpen } = useAtmosphericStore();
 
   return (
     <nav className="lg:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-2 h-14 bg-zinc-950/95 border-t border-zinc-800 backdrop-blur-md font-mono text-[10px]">
@@ -17,7 +17,7 @@ export const BottomNavbar: React.FC = () => {
       </button>
 
       <button 
-        onClick={() => setViewMode('rooms')}
+        onClick={() => closeRoomPage()}
         className={`flex flex-col items-center justify-center p-1 w-16 transition-colors ${
           viewMode === 'rooms' ? 'text-cyan-400 font-bold' : 'text-zinc-400 hover:text-zinc-200'
         }`}

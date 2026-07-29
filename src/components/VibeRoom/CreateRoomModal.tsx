@@ -36,14 +36,13 @@ export const CreateRoomModal: React.FC = () => {
       setRoomTitle(`ROOM :: ${starterVibe.title}`);
       setDescription(starterVibe.content || '');
       setThemeColor(starterVibe.roomConfig?.themeColor || '#00F0FF');
-      setPosterUrl(
-        starterVibe.images?.[0] || starterVibe.roomConfig?.bgImageUrl || '',
-      );
+      setPosterUrl(starterVibe.roomConfig?.bgImageUrl || '');
       if (starterVibe.tags && starterVibe.tags.length > 0) {
         setHashtagsInput(starterVibe.tags.join(', '));
       }
     } else {
       setRoomTitle('NEON STREAM ROOM');
+      setPosterUrl('');
       setHashtagsInput('#stream, #lofi, #ambient');
     }
   }, [starterVibe, isCreateRoomModalOpen]);
@@ -149,15 +148,18 @@ export const CreateRoomModal: React.FC = () => {
         {/* Room Poster URL */}
         <div className="space-y-1 font-mono text-xs">
           <label className="block text-zinc-300 font-semibold">
-            ROOM POSTER / BACKGROUND IMAGE URL
+            BACKGROUND IMAGE URL (OPTIONAL)
           </label>
           <input
             type="url"
             value={posterUrl}
             onChange={(e) => setPosterUrl(e.target.value)}
-            placeholder="https://images.unsplash.com/..."
+            placeholder="Default: Empty -> Standard Black Cells Grid"
             className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-cyan-300 focus:border-cyan-400 focus:outline-none"
           />
+          <p className="text-[10px] text-zinc-500">
+            Leave empty to use standard black cells grid background. You can also edit it anytime later.
+          </p>
         </div>
 
         {/* Visibility Option: PUBLIC vs PRIVATE */}

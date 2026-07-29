@@ -6,7 +6,19 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "server": "npm --prefix server run start:dev",
+    "server:dev": "npm --prefix server run start:dev",
+    "server:build": "npm --prefix server run build",
+    "server:start": "npm --prefix server run start",
+    "server:prod": "npm --prefix server run start:prod",
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose down",
+    "db:migrate": "prisma migrate dev",
+    "db:push": "prisma db push",
+    "db:studio": "prisma studio",
+    "db:generate": "prisma generate",
+    "db:seed": "npm --prefix server run seed"
   },
   "dependencies": {
     "@prisma/client": "^6.3.0",

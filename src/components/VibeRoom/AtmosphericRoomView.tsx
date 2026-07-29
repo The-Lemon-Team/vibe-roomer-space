@@ -10,6 +10,7 @@ import { CyberAudioPlayer } from '../Player/CyberAudioPlayer';
 import { checkRoomPostingPermission } from '../../utils/roomPermissions';
 import { RoomNewsBlock } from './RoomNewsBlock';
 import { RoomNotesBlock } from './RoomNotesBlock';
+import { BaseModal } from '../Common/BaseModal';
 
 interface AtmosphericRoomViewProps {
   vibeTitle?: string;
@@ -33,6 +34,7 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
     enterVibePage,
     closeRoomPage,
     addStreamItemToRoom,
+    updateRoomBackground,
   } = useAtmosphericStore();
 
   const { isAuthenticated, user, setAuthModalOpen } = useAuthStore();
@@ -81,12 +83,17 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
     currentRoomVibe?.roomConfig?.themeColor ||
     '#00F0FF';
 
-  const posterImage =
+  const customBgImage = (
     targetRoom?.poster ||
     targetRoom?.roomConfig?.bgImageUrl ||
-    matchingVibes.find((v) => v.images && v.images.length > 0)?.images?.[0] ||
-    currentRoomVibe?.roomConfig?.bgImageUrl ||
-    'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1600&q=80';
+    roomConfig?.bgImageUrl ||
+    ''
+  ).trim();
+  const hasCustomBg = !!customBgImage;
+
+  // Background edit modal state
+  const [isBgModalOpen, setIsBgModalOpen] = useState(false);
+  const [bgInputUrl, setBgInputUrl] = useState(customBgImage);
 
   const roomImages = targetRoom?.images?.length
     ? targetRoom.images
@@ -162,18 +169,36 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
 
   return (
     <div className="relative flex-1 w-full h-full overflow-y-auto pb-20 lg:pb-8 bg-zinc-950 text-zinc-100 flex flex-col font-sans selection:bg-cyan-500 selection:text-black">
-      {/* Dynamic Main Background Image */}
-      <div
-        className="fixed inset-0 bg-cover bg-center opacity-25 pointer-events-none transition-all duration-700 blur-[3px]"
-        style={{ backgroundImage: `url('${posterImage}')` }}
-      />
-      <div
-        className="fixed inset-0 pointer-events-none opacity-40 z-0"
-        style={{
-          backgroundImage: `radial-gradient(circle at 50% 30%, ${activeColor}20 0%, transparent 70%), linear-gradient(to right, #2a292e 1px, transparent 1px), linear-gradient(to bottom, #2a292e 1px, transparent 1px)`,
-          backgroundSize: '100% 100%, 40px 40px, 40px 40px',
-        }}
-      />
+      {/* Whole Room Background: Custom Wallpaper OR Standard Black Cells Grid */}
+      {hasCustomBg ? (
+        <div
+          className="fixed inset-0 bg-cover bg-center opacity-30 pointer-events-none transition-all duration-700 blur-[2px] z-0"
+          style={{ backgroundImage: `url('${customBgImage}')` }}
+        />
+      ) : (
+        <div
+          className="fixed inset-0 pointer-events-none z-0 bg-zinc-950 opacity-90 transition-all duration-700 overflow-hidden"
+          style={{
+            backgroundImage: `
+              radial-gradient(circle at 50% 30%, ${activeColor}15 0%, transparent 70%),
+              linear-gradient(to right, rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+              linear-gradient(to bottom, rgba(255, 255, 255, 0.08) 1px, transparent 1px)
+            `,
+            backgroundSize: '100% 100%, 36px 36px, 36px 36px',
+          }}
+        >
+          <div
+            className="w-full h-full opacity-60"
+            style={{
+              backgroundImage: `
+                linear-gradient(to right, #1f1f23 1px, transparent 1px),
+                linear-gradient(to bottom, #1f1f23 1px, transparent 1px)
+              `,
+              backgroundSize: '18px 18px',
+            }}
+          />
+        </div>
+      )}
 
       {/* Room Header */}
       <header
@@ -217,12 +242,43 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
       <main className="flex-1 p-4 md:p-6 lg:p-8 max-w-[1400px] mx-auto w-full relative z-10 space-y-6">
         {/* Hero Banner Poster Section */}
         <section className="relative w-full h-72 md:h-96 border border-zinc-800 rounded-xl overflow-hidden group bg-zinc-950 shadow-2xl">
-          <img
-            src={posterImage}
-            alt={roomTitle}
-            className="absolute inset-0 w-full h-full object-cover opacity-60 mix-blend-screen group-hover:scale-105 transition-transform duration-1000"
-          />
+          {hasCustomBg ? (
+            <img
+              src={customBgImage}
+              alt={roomTitle}
+              className="absolute inset-0 w-full h-full object-cover opacity-60 mix-blend-screen group-hover:scale-105 transition-transform duration-1000"
+            />
+          ) : (
+            <div
+              className="absolute inset-0 bg-zinc-950 flex items-center justify-center opacity-80"
+              style={{
+                backgroundImage: `
+                  radial-gradient(circle at 50% 40%, ${activeColor}22 0%, transparent 70%),
+                  linear-gradient(to right, #1f1f24 1px, transparent 1px),
+                  linear-gradient(to bottom, #1f1f24 1px, transparent 1px)
+                `,
+                backgroundSize: '100% 100%, 32px 32px, 32px 32px',
+              }}
+            />
+          )}
           <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/60 to-transparent" />
+
+          {/* Edit Room Background Button */}
+          <button
+            type="button"
+            onClick={() => {
+              if (!isAuthenticated) {
+                setAuthModalOpen(true, 'login');
+                return;
+              }
+              setBgInputUrl(customBgImage);
+              setIsBgModalOpen(true);
+            }}
+            className="absolute top-4 right-4 z-20 px-3 py-1.5 bg-zinc-950/80 hover:bg-zinc-900 border border-zinc-700 hover:border-cyan-400 text-cyan-300 hover:text-white rounded font-mono text-xs font-bold transition-all shadow-lg flex items-center space-x-1.5 backdrop-blur-md"
+          >
+            <span className="material-symbols-outlined text-sm">wallpaper</span>
+            <span>{hasCustomBg ? '[ EDIT ROOM BACKGROUND ]' : '[ EDIT BACKGROUND (BLACK CELLS) ]'}</span>
+          </button>
 
           <div className="absolute bottom-6 left-6 right-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div className="space-y-2">
@@ -568,6 +624,30 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
                     className="w-full accent-cyan-400 cursor-pointer"
                   />
                 </div>
+
+                <div className="space-y-1 bg-zinc-950 p-3 rounded border border-zinc-800/80">
+                  <div className="flex justify-between items-center text-zinc-400 mb-1">
+                    <span>ROOM BACKGROUND ENGINE</span>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded border uppercase ${hasCustomBg ? 'bg-cyan-950 text-cyan-300 border-cyan-500/60' : 'bg-zinc-900 text-zinc-400 border-zinc-700'}`}>
+                      {hasCustomBg ? 'CUSTOM IMAGE' : 'BLACK CELLS GRID'}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!isAuthenticated) {
+                        setAuthModalOpen(true, 'login');
+                        return;
+                      }
+                      setBgInputUrl(customBgImage);
+                      setIsBgModalOpen(true);
+                    }}
+                    className="w-full py-1.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 hover:border-cyan-500/60 text-cyan-400 rounded text-center text-xs font-bold transition-all flex items-center justify-center space-x-1 uppercase"
+                  >
+                    <span className="material-symbols-outlined text-sm">wallpaper</span>
+                    <span>EDIT WHOLE ROOM BACKGROUND</span>
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -579,6 +659,169 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
           </div>
         </div>
       </main>
+
+      {/* Edit Room Background Modal */}
+      <BaseModal
+        isOpen={isBgModalOpen}
+        onClose={() => setIsBgModalOpen(false)}
+        title="[ EDIT WHOLE ROOM BACKGROUND ]"
+        headerIcon="wallpaper"
+        maxWidth="max-w-lg"
+        containerClassName="rounded-xl"
+      >
+        <div className="p-6 space-y-5 font-mono text-xs">
+          <div className="space-y-1">
+            <label className="block text-zinc-300 font-bold uppercase">
+              CURRENT ROOM BACKGROUND STATUS
+            </label>
+            <div className="p-3 bg-zinc-900/90 border border-zinc-800 rounded flex items-center justify-between">
+              <span className="text-zinc-400">BACKGROUND MODE:</span>
+              <span className={`font-bold px-2.5 py-1 rounded border text-[10px] uppercase ${hasCustomBg ? 'bg-cyan-950 text-cyan-300 border-cyan-500/60' : 'bg-zinc-950 text-emerald-400 border-emerald-500/50'}`}>
+                {hasCustomBg ? '● CUSTOM IMAGE ACTIVE' : '● STANDART BLACK CELLS GRID (DEFAULT)'}
+              </span>
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <label className="block text-zinc-300 font-bold uppercase">
+              CUSTOM BACKGROUND IMAGE URL
+            </label>
+            <input
+              type="url"
+              value={bgInputUrl}
+              onChange={(e) => setBgInputUrl(e.target.value)}
+              placeholder="https://images.unsplash.com/photo-..."
+              className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-cyan-300 focus:border-cyan-400 focus:outline-none"
+            />
+            <p className="text-[10px] text-zinc-500">
+              Paste background image URL or pick preset below. Clear URL to return to default black cells grid.
+            </p>
+          </div>
+
+          {/* Quick Presets */}
+          <div className="space-y-2">
+            <label className="block text-zinc-300 font-bold uppercase text-[11px]">
+              BACKGROUND PRESETS & MODES
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setBgInputUrl('')}
+                className={`p-2.5 rounded border text-left font-bold transition-all ${
+                  !bgInputUrl.trim()
+                    ? 'bg-cyan-950/60 border-cyan-500 text-cyan-300 shadow-[0_0_10px_rgba(0,240,255,0.2)]'
+                    : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-700'
+                }`}
+              >
+                <div className="text-[11px] flex items-center space-x-1 font-bold">
+                  <span className="material-symbols-outlined text-xs">grid_4x4</span>
+                  <span>STANDART BLACK CELLS</span>
+                </div>
+                <div className="text-[9px] text-zinc-500 font-normal mt-0.5">Empty default dark grid cells</div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setBgInputUrl(
+                    'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1600&q=80',
+                  )
+                }
+                className={`p-2.5 rounded border text-left font-bold transition-all ${
+                  bgInputUrl.includes('photo-1526374965328')
+                    ? 'bg-cyan-950/60 border-cyan-500 text-cyan-300'
+                    : 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:border-zinc-700'
+                }`}
+              >
+                <div className="text-[11px] flex items-center space-x-1 font-bold">
+                  <span className="material-symbols-outlined text-xs">code</span>
+                  <span>NEON MATRIX</span>
+                </div>
+                <div className="text-[9px] text-zinc-500 font-normal mt-0.5">Tactical cyber matrix grid</div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setBgInputUrl(
+                    'https://images.unsplash.com/photo-1508739773434-c26b3d09e071?auto=format&fit=crop&w=1600&q=80',
+                  )
+                }
+                className={`p-2.5 rounded border text-left font-bold transition-all ${
+                  bgInputUrl.includes('photo-1508739773434')
+                    ? 'bg-purple-950/60 border-purple-500 text-purple-300'
+                    : 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:border-zinc-700'
+                }`}
+              >
+                <div className="text-[11px] flex items-center space-x-1 font-bold">
+                  <span className="material-symbols-outlined text-xs">directions_car</span>
+                  <span>SYNTHWAVE RUN</span>
+                </div>
+                <div className="text-[9px] text-zinc-500 font-normal mt-0.5">Neon highway ambient night</div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setBgInputUrl(
+                    'https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&w=1600&q=80',
+                  )
+                }
+                className={`p-2.5 rounded border text-left font-bold transition-all ${
+                  bgInputUrl.includes('photo-1514565131')
+                    ? 'bg-cyan-950/60 border-cyan-500 text-cyan-300'
+                    : 'bg-zinc-900 border-zinc-800 text-zinc-300 hover:border-zinc-700'
+                }`}
+              >
+                <div className="text-[11px] flex items-center space-x-1 font-bold">
+                  <span className="material-symbols-outlined text-xs">water_drop</span>
+                  <span>RAINY ALLEY</span>
+                </div>
+                <div className="text-[9px] text-zinc-500 font-normal mt-0.5">Wet street rain reflections</div>
+              </button>
+            </div>
+          </div>
+
+          {/* Modal Actions */}
+          <div className="flex items-center justify-between pt-4 border-t border-zinc-800">
+            <button
+              type="button"
+              onClick={() => {
+                if (targetRoom) {
+                  updateRoomBackground(targetRoom.id, '');
+                }
+                setBgInputUrl('');
+                setIsBgModalOpen(false);
+              }}
+              className="px-3 py-1.5 bg-red-950/60 border border-red-800/80 text-red-400 hover:bg-red-900 rounded font-bold transition-colors uppercase text-[11px]"
+            >
+              CLEAR TO BLACK CELLS
+            </button>
+
+            <div className="flex items-center space-x-2">
+              <button
+                type="button"
+                onClick={() => setIsBgModalOpen(false)}
+                className="px-4 py-1.5 text-zinc-400 hover:text-zinc-200 transition-colors uppercase text-xs"
+              >
+                CANCEL
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (targetRoom) {
+                    updateRoomBackground(targetRoom.id, bgInputUrl);
+                  }
+                  setIsBgModalOpen(false);
+                }}
+                className="px-5 py-1.5 bg-cyan-400 text-black font-bold rounded hover:bg-cyan-300 transition-all uppercase text-xs shadow-[0_0_12px_rgba(0,240,255,0.3)]"
+              >
+                APPLY BACKGROUND
+              </button>
+            </div>
+          </div>
+        </div>
+      </BaseModal>
     </div>
   );
 };

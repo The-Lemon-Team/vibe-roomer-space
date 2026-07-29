@@ -87,10 +87,8 @@ export const RoomListView: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredRooms.map((room) => {
               const themeColor = room.roomConfig?.themeColor || '#00F0FF';
-              const posterImage =
-                room.poster ||
-                room.images?.[0] ||
-                'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1200&q=80';
+              const posterImage = (room.poster || room.roomConfig?.bgImageUrl || '').trim();
+              const hasPoster = !!posterImage;
 
               const attachedImagesCount = room.images?.length || 0;
               const hasMusic = !!room.musicUrl;
@@ -104,11 +102,29 @@ export const RoomListView: React.FC = () => {
                 >
                   {/* Poster Image & Badges Header */}
                   <div className="relative h-48 w-full overflow-hidden bg-zinc-950">
-                    <img
-                      src={posterImage}
-                      alt={room.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-80"
-                    />
+                    {hasPoster ? (
+                      <img
+                        src={posterImage}
+                        alt={room.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-80"
+                      />
+                    ) : (
+                      <div
+                        className="w-full h-full flex items-center justify-center relative opacity-80"
+                        style={{
+                          backgroundImage: `
+                            radial-gradient(circle at 50% 40%, ${themeColor}22 0%, transparent 70%),
+                            linear-gradient(to right, #1f1f23 1px, transparent 1px),
+                            linear-gradient(to bottom, #1f1f23 1px, transparent 1px)
+                          `,
+                          backgroundSize: '100% 100%, 24px 24px, 24px 24px',
+                        }}
+                      >
+                        <span className="text-[10px] font-mono text-zinc-400 bg-zinc-950/80 px-2.5 py-1 rounded border border-zinc-800 backdrop-blur-md">
+                          [STANDART BLACK CELLS]
+                        </span>
+                      </div>
+                    )}
                     <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-zinc-900/30 to-transparent" />
 
                     {/* Accent Color Indicator Bar */}

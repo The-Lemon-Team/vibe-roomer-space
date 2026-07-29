@@ -246,6 +246,8 @@ interface AtmosphericState {
   addRoomNote: (roomId: string, note: { title: string; content: string }) => void;
   updateRoomNote: (roomId: string, noteId: string, note: { title?: string; content?: string }) => void;
   deleteRoomNote: (roomId: string, noteId: string) => void;
+  updateRoomBackground: (roomId: string, bgImageUrl: string | null) => void;
+  updateRoom: (roomId: string, updates: Partial<CreatedRoom>) => void;
 
   // Create Room Modal State
   isCreateRoomModalOpen: boolean;
@@ -378,7 +380,7 @@ const MOCK_INITIAL_ROOMS: CreatedRoom[] = [
     id: 'room-stream-01',
     title: 'NEON MATRIX LIVE STREAM',
     description: 'High-bandwidth cyber stream featuring ambient synth loops, coding transmissions, and real-time visual drops.',
-    poster: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1200&q=80',
+    poster: '',
     originVibeId: 'vibe-9482-a',
     originVibeTitle: 'Cyber-Coffee & Heavy Code',
     isPublic: true,
@@ -443,14 +445,14 @@ const MOCK_INITIAL_ROOMS: CreatedRoom[] = [
     ],
     roomConfig: {
       themeColor: '#00F0FF',
-      bgImageUrl: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1600&q=80',
+      bgImageUrl: '',
     },
   },
   {
     id: 'room-stream-02',
     title: 'SYNTHWAVE NIGHT HIGHWAY',
     description: 'Cruising through sector 7 rain. Stream audio loop active. Visual feed transmitting.',
-    poster: 'https://images.unsplash.com/photo-1508739773434-c26b3d09e071?auto=format&fit=crop&w=1200&q=80',
+    poster: '',
     originVibeId: 'vibe-9482-b',
     originVibeTitle: 'Neon Highway Run',
     isPublic: true,
@@ -475,14 +477,14 @@ const MOCK_INITIAL_ROOMS: CreatedRoom[] = [
     ],
     roomConfig: {
       themeColor: '#BD00FF',
-      bgImageUrl: 'https://images.unsplash.com/photo-1508739773434-c26b3d09e071?auto=format&fit=crop&w=1600&q=80',
+      bgImageUrl: '',
     },
   },
   {
     id: 'room-stream-03',
     title: 'AMBIENT RAIN WALK & MEDITATION',
     description: 'Continuous atmospheric transmission. Low pulse walking and field recordings.',
-    poster: 'https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&w=1200&q=80',
+    poster: '',
     originVibeId: 'vibe-9482-c',
     originVibeTitle: 'Rainy Alleyway Meditation',
     isPublic: true,
@@ -497,7 +499,7 @@ const MOCK_INITIAL_ROOMS: CreatedRoom[] = [
     streamItems: [],
     roomConfig: {
       themeColor: '#FFB000',
-      bgImageUrl: 'https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&w=1600&q=80',
+      bgImageUrl: '',
     },
   },
 ];
@@ -692,24 +694,18 @@ export const useAtmosphericStore = create<AtmosphericState>((set, get) => ({
 
   viewMode: initialRoute.viewMode,
   setViewMode: (mode) => {
-    const currentActiveTag = mode === 'rooms' ? get().activeRoomTag : get().activeVibeTag;
-    set({ viewMode: mode, activeTag: currentActiveTag });
     if (mode === 'rooms') {
-      // If entering rooms view mode directly, show room list unless an activeCreatedRoom is explicitly open
-      updateHashRoute(
-        mode,
-        currentActiveTag,
-        undefined,
-        get().activeCreatedRoom?.id,
-      );
-    } else {
-      updateHashRoute(
-        mode,
-        currentActiveTag,
-        get().selectedVibePage?.id,
-        undefined,
-      );
+      get().closeRoomPage();
+      return;
     }
+    const currentActiveTag = get().activeVibeTag;
+    set({ viewMode: mode, activeTag: currentActiveTag });
+    updateHashRoute(
+      mode,
+      currentActiveTag,
+      get().selectedVibePage?.id,
+      undefined,
+    );
   },
 
   selectedVibePage: MOCK_INITIAL_VIBES[0],
@@ -732,8 +728,13 @@ export const useAtmosphericStore = create<AtmosphericState>((set, get) => ({
   },
 
   closeRoomPage: () => {
-    set({ activeCreatedRoom: null, viewMode: 'rooms' });
-    updateHashRoute('rooms', get().activeRoomTag);
+    set({
+      activeCreatedRoom: null,
+      activeRoomTag: '#ALL',
+      activeTag: '#ALL',
+      viewMode: 'rooms',
+    });
+    updateHashRoute('rooms', '#ALL');
   },
 
   createRoomFromVibe: (vibe, params) => {
@@ -746,7 +747,7 @@ export const useAtmosphericStore = create<AtmosphericState>((set, get) => ({
       id: `room-${Date.now()}`,
       title: params.title || `ROOM :: ${vibe.title}`,
       description: vibe.content,
-      poster: vibe.images?.[0] || vibe.roomConfig?.bgImageUrl || 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1200&q=80',
+      poster: params.roomConfig?.bgImageUrl || vibe.roomConfig?.bgImageUrl || vibe.images?.[0] || '',
       originVibeId: vibe.id,
       originVibeTitle: vibe.title,
       isPublic: params.isPublic,
@@ -760,7 +761,7 @@ export const useAtmosphericStore = create<AtmosphericState>((set, get) => ({
       streamItems: [],
       roomConfig: params.roomConfig || vibe.roomConfig || {
         themeColor: '#00F0FF',
-        bgImageUrl: vibe.images?.[0] || '',
+        bgImageUrl: '',
       },
     };
 
@@ -781,7 +782,7 @@ export const useAtmosphericStore = create<AtmosphericState>((set, get) => ({
       id: `room-${Date.now()}`,
       title: params.title,
       description: params.description || '',
-      poster: params.poster || params.images?.[0] || 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1200&q=80',
+      poster: params.poster || params.roomConfig?.bgImageUrl || '',
       isPublic: params.isPublic,
       authorId: currentUser?.id || 'user-op-01',
       authorName: currentUser?.username || 'operator',
@@ -1017,6 +1018,60 @@ export const useAtmosphericStore = create<AtmosphericState>((set, get) => ({
       const updatedActive =
         state.activeCreatedRoom?.id === roomId
           ? updatedRooms.find((r) => r.id === roomId) || null
+          : state.activeCreatedRoom;
+
+      return {
+        createdRooms: updatedRooms,
+        activeCreatedRoom: updatedActive,
+      };
+    });
+  },
+
+  updateRoomBackground: (roomId, bgImageUrl) => {
+    const cleanBg = bgImageUrl ? bgImageUrl.trim() : '';
+    set((state) => {
+      const updatedRooms = state.createdRooms.map((r) => {
+        if (r.id === roomId) {
+          return {
+            ...r,
+            poster: cleanBg,
+            roomConfig: {
+              ...r.roomConfig,
+              bgImageUrl: cleanBg,
+            },
+          };
+        }
+        return r;
+      });
+
+      const updatedActive =
+        state.activeCreatedRoom?.id === roomId
+          ? {
+              ...state.activeCreatedRoom,
+              poster: cleanBg,
+              roomConfig: {
+                ...state.activeCreatedRoom.roomConfig,
+                bgImageUrl: cleanBg,
+              },
+            }
+          : state.activeCreatedRoom;
+
+      return {
+        createdRooms: updatedRooms,
+        activeCreatedRoom: updatedActive,
+      };
+    });
+  },
+
+  updateRoom: (roomId, updates) => {
+    set((state) => {
+      const updatedRooms = state.createdRooms.map((r) =>
+        r.id === roomId ? { ...r, ...updates } : r,
+      );
+
+      const updatedActive =
+        state.activeCreatedRoom?.id === roomId
+          ? { ...state.activeCreatedRoom, ...updates }
           : state.activeCreatedRoom;
 
       return {
