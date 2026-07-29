@@ -34,18 +34,16 @@ model User {
 
 model Vibe {
   id          String          @id @default(uuid())
-  title       String          // e.g., "Cyber-Coffee & Heavy Code"
+  title       String
   content     String          @db.Text
-  keywords    String[]        // ["lofi", "nestjs", "night", "junkpunk"]
-  activity    ActivityContext @default(CUSTOM) // crucial for the activity value proposition
+  keywords    String[]
+  activity    ActivityContext @default(CUSTOM)
   
-  // media content for the post
   images      String[]
   videoUrl    String?
   musicUrl    String?
 
-  // placeholder for future "Atmospheric Rooms" functionality
-  roomConfig  Json?           // JSON with settings (bg textures, neon colors)
+  roomConfig  Json?
   
   inMainFeed  Boolean         @default(false)
   authorId    String

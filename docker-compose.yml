@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: vibe-roomer-db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: viberoomer
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: vibe-roomer-backend
+    restart: always
+    ports:
+      - "3001:3001"
+    environment:
+      DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/viberoomer?schema=public"
+      PORT: 3001
+      JWT_SECRET: "super-secret-vibe-key-change-in-production"
+      UPLOADS_DIR: "./uploads"
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:
