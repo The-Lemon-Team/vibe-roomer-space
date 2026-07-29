@@ -6,17 +6,17 @@ export const HeaderNavbar: React.FC = () => {
 
   const handleLogoClick = () => {
     setActiveTag('#ALL');
-    setViewMode('feed');
+    setViewMode('vibes');
   };
 
   return (
-    <header className="flex justify-between items-center w-full px-4 md:px-6 py-2.5 h-16 sticky top-0 z-40 bg-zinc-950/90 backdrop-blur-md shadow-[0_0_10px_rgba(0,219,233,0.1)] border-b border-zinc-800 font-mono">
+    <div className="flex justify-between items-center w-full px-4 md:px-6 py-2.5 h-16 border-b border-zinc-800/80 font-mono">
       {/* Left Title & Status */}
       <div className="flex items-center space-x-3">
         <button
           onClick={handleLogoClick}
           className="font-sans italic font-black text-xl md:text-2xl text-cyan-400 tracking-tighter hover:text-cyan-300 transition-colors focus:outline-none cursor-pointer text-left"
-          title="Redirect to #ALL hashtag feed"
+          title="Redirect to #ALL hashtag vibes"
         >
           VIBER ROOMER
         </button>
@@ -39,13 +39,13 @@ export const HeaderNavbar: React.FC = () => {
       {/* Trailing Actions */}
       <div className="flex items-center space-x-2">
         <button
-          onClick={() => setViewMode(viewMode === 'feed' ? 'room' : 'feed')}
+          onClick={() => setViewMode(viewMode === 'vibes' ? 'rooms' : 'vibes')}
           className="px-3 py-1 text-xs font-mono rounded bg-zinc-900 border border-zinc-800 hover:border-cyan-500/50 text-cyan-400 transition-colors flex items-center space-x-1"
         >
           <span className="material-symbols-outlined text-sm">
-            {viewMode === 'feed' ? 'sensors' : 'grid_view'}
+            {viewMode === 'vibes' ? 'sensors' : 'grid_view'}
           </span>
-          <span>[{viewMode === 'feed' ? 'ENTER_ROOM' : 'MAIN_FEED'}]</span>
+          <span>[{viewMode === 'vibes' ? 'ENTER_ROOMS' : 'MAIN_VIBES'}]</span>
         </button>
 
         <button 
@@ -55,6 +55,6 @@ export const HeaderNavbar: React.FC = () => {
           <span className="material-symbols-outlined text-lg">add</span>
         </button>
       </div>
-    </header>
+    </div>
   );
 };

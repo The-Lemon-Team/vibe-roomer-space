@@ -1,11 +1,12 @@
-import React from 'react';
-import { useAtmosphericStore } from './store/useAtmosphericStore';
+import React, { useState } from 'react';
+import { useAtmosphericStore, VibeItem } from './store/useAtmosphericStore';
 import { HeaderNavbar } from './components/Navbar/HeaderNavbar';
 import { ActivitySwitcher } from './components/VibeSelector/ActivitySwitcher';
 import { OperatorSidebar } from './components/Sidebar/OperatorSidebar';
 import { VibeCard } from './components/VibeList/VibeCard';
 import { AtmosphericRoomView } from './components/VibeRoom/AtmosphericRoomView';
 import { CreateVibeModal } from './components/VibeForm/CreateVibeModal';
+import { DeleteVibeModal } from './components/VibeList/DeleteVibeModal';
 import { BottomNavbar } from './components/Navbar/BottomNavbar';
 
 export const App: React.FC = () => {
@@ -19,6 +20,8 @@ export const App: React.FC = () => {
     setCreateModalOpen 
   } = useAtmosphericStore();
 
+  const [vibeToDelete, setVibeToDelete] = useState<VibeItem | null>(null);
+
   // Dynamic hashtag feed filtering
   const filteredVibes = activeTag === '#ALL' 
     ? vibes 
@@ -28,24 +31,24 @@ export const App: React.FC = () => {
       );
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col font-sans selection:bg-cyan-500 selection:text-black">
+    <div className="h-screen bg-zinc-950 text-zinc-100 flex flex-col font-sans selection:bg-cyan-500 selection:text-black overflow-hidden">
       {/* Scanline CRT Overlay */}
       <div className="fixed inset-0 pointer-events-none opacity-20 z-50 bg-[linear-gradient(to_bottom,rgba(255,255,255,0)_50%,rgba(0,0,0,0.4)_50%)] bg-[length:100%_4px]" />
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden h-full">
         {/* Tactical Desktop Operator Sidebar */}
         <OperatorSidebar />
 
         {/* Main Content Area */}
-        <div className="flex-1 flex flex-col min-w-0 min-h-screen">
-          {/* Header Bar */}
-          <HeaderNavbar />
+        <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+          {/* Fixed Sticky Navigation & Hashtag Menu Header */}
+          <header className="sticky top-0 z-40 shrink-0 bg-zinc-950/95 backdrop-blur-md border-b border-zinc-800 shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
+            <HeaderNavbar />
+            <ActivitySwitcher />
+          </header>
 
-          {/* Hashtag Navigation Menu Toolbar */}
-          <ActivitySwitcher />
-
-          {/* Dynamic View: Main Feed OR Immersive Hashtag Room View */}
-          {viewMode === 'feed' ? (
+          {/* Dynamic View: Main Vibes List OR Immersive Hashtag Room View */}
+          {viewMode === 'vibes' ? (
             <main className="flex-1 p-4 md:p-6 overflow-y-auto max-w-3xl w-full mx-auto pb-20 lg:pb-8">
               {/* Feed Header */}
               <div className="flex justify-between items-center mb-4 font-mono text-xs text-zinc-400 border-b border-zinc-800 pb-2">
@@ -85,7 +88,7 @@ export const App: React.FC = () => {
                       currentUserId={currentUserId}
                       createdAt={vibe.createdAt}
                       vibeItem={vibe}
-                      onDelete={(id) => deleteVibe(id)}
+                      onDelete={() => setVibeToDelete(vibe)}
                       onEdit={(id) => alert(`[EDIT_VIBE]: Action logged for ID ${id}`)}
                     />
                   ))}
@@ -105,6 +108,18 @@ export const App: React.FC = () => {
       {/* New Vibe Modal Dialog */}
       <CreateVibeModal />
 
+      {/* Confirmation Modal for Deleting Top Level Vibe */}
+      <DeleteVibeModal
+        vibe={vibeToDelete}
+        onConfirm={() => {
+          if (vibeToDelete) {
+            deleteVibe(vibeToDelete.id);
+            setVibeToDelete(null);
+          }
+        }}
+        onCancel={() => setVibeToDelete(null)}
+      />
+
       {/* Mobile Navigation Toolbar */}
       <BottomNavbar />
     </div>
@@ -112,3 +127,4 @@ export const App: React.FC = () => {
 };
 
 export default App;
+

@@ -19,7 +19,7 @@ export const ActivitySwitcher: React.FC = () => {
   };
 
   return (
-    <div className="w-full bg-zinc-950 border-b border-zinc-800 p-3 overflow-x-auto no-scrollbar font-mono text-xs select-none">
+    <div className="w-full bg-zinc-950/80 p-3 overflow-x-auto no-scrollbar font-mono text-xs select-none backdrop-blur-md">
       <div className="flex items-center space-x-2 min-w-max">
         <span className="text-zinc-500 uppercase tracking-widest mr-1 text-[11px] font-bold flex items-center gap-1">
           <span className="material-symbols-outlined text-sm text-cyan-400">tag</span>

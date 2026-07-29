@@ -6,6 +6,13 @@ export interface RoomConfig {
   bgImageUrl?: string;
 }
 
+export interface VibeWidget {
+  id: string;
+  type: 'youtube' | 'link';
+  url: string;
+  title?: string;
+}
+
 export interface VibeItem {
   id: string;
   title: string;
@@ -13,6 +20,7 @@ export interface VibeItem {
   tags: string[]; // tags[0] is "The First Tag" for primary routing
   keywords?: string[]; // backwards compatibility
   images?: string[];
+  widgets?: VibeWidget[];
   videoUrl?: string | null;
   musicUrl?: string | null;
   authorName: string;
@@ -31,9 +39,9 @@ interface AtmosphericState {
   unpinTag: (tag: string) => void;
   togglePinTag: (tag: string) => void;
 
-  // View Mode: 'feed' | 'room'
-  viewMode: 'feed' | 'room';
-  setViewMode: (mode: 'feed' | 'room') => void;
+  // View Mode: 'vibes' | 'rooms'
+  viewMode: 'vibes' | 'rooms';
+  setViewMode: (mode: 'vibes' | 'rooms') => void;
   selectedVibeRoom: VibeItem | null;
   setSelectedVibeRoom: (vibe: VibeItem | null) => void;
   
@@ -70,6 +78,14 @@ const MOCK_INITIAL_VIBES: VibeItem[] = [
       'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=800&q=80'
     ],
     videoUrl: 'https://www.youtube.com/watch?v=jfKfPfyJRdk',
+    widgets: [
+      {
+        id: 'widget-yt-1',
+        type: 'youtube',
+        url: 'https://www.youtube.com/watch?v=jfKfPfyJRdk',
+        title: 'Lofi Cyber Station Stream'
+      }
+    ],
     musicUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
     authorName: 'cyber_junkie',
     authorId: 'user-op-01',
@@ -183,7 +199,7 @@ export const useAtmosphericStore = create<AtmosphericState>((set) => ({
     });
   },
 
-  viewMode: 'feed',
+  viewMode: 'vibes',
   setViewMode: (mode) => set({ viewMode: mode }),
   selectedVibeRoom: MOCK_INITIAL_VIBES[0],
   setSelectedVibeRoom: (vibe) => set({ selectedVibeRoom: vibe }),
@@ -198,7 +214,17 @@ export const useAtmosphericStore = create<AtmosphericState>((set) => ({
     set((state) => ({ vibes: [created, ...state.vibes] }));
   },
   deleteVibe: (id) => {
-    set((state) => ({ vibes: state.vibes.filter((v) => v.id !== id) }));
+    set((state) => {
+      const updatedVibes = state.vibes.filter((v) => v.id !== id);
+      const newSelectedRoom = state.selectedVibeRoom?.id === id 
+        ? (updatedVibes[0] || null) 
+        : state.selectedVibeRoom;
+
+      return {
+        vibes: updatedVibes,
+        selectedVibeRoom: newSelectedRoom
+      };
+    });
   },
 
   isCreateModalOpen: false,

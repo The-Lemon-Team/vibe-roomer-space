@@ -53,7 +53,7 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
   }, []);
 
   return (
-    <div className="relative min-h-screen bg-zinc-950 text-zinc-100 flex flex-col font-sans overflow-x-hidden selection:bg-cyan-500 selection:text-black">
+    <div className="relative flex-1 w-full h-full overflow-y-auto pb-20 lg:pb-8 bg-zinc-950 text-zinc-100 flex flex-col font-sans selection:bg-cyan-500 selection:text-black">
       {/* Background Image Shader & Grid Overlay */}
       <div 
         className="fixed inset-0 bg-cover bg-center opacity-20 pointer-events-none transition-all duration-700"
@@ -78,11 +78,11 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
       >
         <div className="flex items-center space-x-3">
           <button
-            onClick={() => setViewMode('feed')}
+            onClick={() => setViewMode('vibes')}
             className="text-xs text-zinc-400 hover:text-white px-2 py-1 bg-zinc-900 border border-zinc-800 rounded flex items-center space-x-1"
           >
             <span className="material-symbols-outlined text-sm">arrow_back</span>
-            <span className="hidden sm:inline">[FEED]</span>
+            <span className="hidden sm:inline">[VIBES]</span>
           </button>
           
           <div 

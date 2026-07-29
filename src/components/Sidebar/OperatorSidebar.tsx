@@ -56,20 +56,20 @@ export const OperatorSidebar: React.FC = () => {
       {/* Main View Switcher */}
       <div className="mb-4 grid grid-cols-2 gap-1 bg-zinc-900/90 p-1 border border-zinc-800 rounded text-xs">
         <button
-          onClick={() => setViewMode('feed')}
+          onClick={() => setViewMode('vibes')}
           className={`py-1.5 text-center font-bold rounded transition-colors ${
-            viewMode === 'feed' ? 'bg-cyan-950 text-cyan-400 border border-cyan-700/50' : 'text-zinc-400 hover:text-zinc-200'
+            viewMode === 'vibes' ? 'bg-cyan-950 text-cyan-400 border border-cyan-700/50' : 'text-zinc-400 hover:text-zinc-200'
           }`}
         >
-          [FEED]
+          [VIBES]
         </button>
         <button
-          onClick={() => setViewMode('room')}
+          onClick={() => setViewMode('rooms')}
           className={`py-1.5 text-center font-bold rounded transition-colors ${
-            viewMode === 'room' ? 'bg-cyan-950 text-cyan-400 border border-cyan-700/50' : 'text-zinc-400 hover:text-zinc-200'
+            viewMode === 'rooms' ? 'bg-cyan-950 text-cyan-400 border border-cyan-700/50' : 'text-zinc-400 hover:text-zinc-200'
           }`}
         >
-          [ROOM]
+          [ROOMS]
         </button>
       </div>
 

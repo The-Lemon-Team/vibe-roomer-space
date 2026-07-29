@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAtmosphericStore, VibeItem } from '../../store/useAtmosphericStore';
+import { useAtmosphericStore, VibeItem, VibeWidget } from '../../store/useAtmosphericStore';
 import { CyberAudioPlayer } from '../Player/CyberAudioPlayer';
 
 export interface VibeCardProps {
@@ -9,6 +9,7 @@ export interface VibeCardProps {
   tags?: string[];
   keywords?: string[];
   images?: string[];
+  widgets?: VibeWidget[];
   videoUrl?: string | null;
   musicUrl?: string | null;
   authorName: string;
@@ -20,6 +21,12 @@ export interface VibeCardProps {
   onDelete?: (id: string) => void;
 }
 
+const extractYouTubeId = (url: string): string | null => {
+  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+  const match = url.match(regExp);
+  return match && match[2].length === 11 ? match[2] : null;
+};
+
 export const VibeCard: React.FC<VibeCardProps> = ({
   id,
   title,
@@ -27,6 +34,7 @@ export const VibeCard: React.FC<VibeCardProps> = ({
   tags = [],
   keywords = [],
   images = [],
+  widgets = [],
   videoUrl,
   musicUrl,
   authorName,
@@ -56,10 +64,21 @@ export const VibeCard: React.FC<VibeCardProps> = ({
   // The first tag is the primary routing tag
   const firstTag = displayTags[0] || '#general';
 
+  // Combine item widgets with fallback legacy videoUrl
+  const allWidgets: VibeWidget[] = [...(widgets || [])];
+  if (allWidgets.length === 0 && videoUrl) {
+    allWidgets.push({
+      id: `widget-legacy-yt`,
+      type: 'youtube',
+      url: videoUrl,
+      title: 'YouTube Stream Link'
+    });
+  }
+
   const handleEnterRoom = () => {
     if (vibeItem) {
       setSelectedVibeRoom(vibeItem);
-      setViewMode('room');
+      setViewMode('rooms');
     }
   };
 
@@ -110,39 +129,89 @@ export const VibeCard: React.FC<VibeCardProps> = ({
           {content}
         </p>
 
-        {/* Media Block: Image Grid */}
+        {/* Media Block: Image Grid & Main Cover Badge */}
         {images.length > 0 && (
           <div className={`grid gap-2 my-3 ${images.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
-            {images.map((url, idx) => (
-              <div key={idx} className="relative overflow-hidden rounded border border-zinc-800 bg-zinc-950">
-                <img
-                  src={url}
-                  alt={`Media ${idx + 1}`}
-                  className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className="absolute bottom-1 right-1 bg-black/70 px-1.5 py-0.5 font-mono text-[9px] text-zinc-400 border border-zinc-800">
-                  IMG_0{idx + 1}
+            {images.map((url, idx) => {
+              const isMain = idx === 0;
+
+              return (
+                <div key={idx} className="relative overflow-hidden rounded border border-zinc-800 bg-zinc-950">
+                  <img
+                    src={url}
+                    alt={`Media ${idx + 1}`}
+                    className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute bottom-1 right-1 bg-black/70 px-1.5 py-0.5 font-mono text-[9px] text-zinc-400 border border-zinc-800">
+                    {isMain ? 'MAIN COVER' : `IMG_0${idx + 1}`}
+                  </div>
+                  {isMain && images.length > 1 && (
+                    <div className="absolute top-1 left-1 bg-amber-500 text-black font-mono text-[9px] font-bold px-1.5 py-0.5 rounded shadow">
+                      ★ COVER
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
-        {/* Video Link Preview */}
-        {videoUrl && (
-          <div className="p-2.5 bg-zinc-950/90 border border-zinc-800/80 rounded flex items-center justify-between text-xs font-mono text-cyan-400">
-            <div className="flex items-center space-x-2 truncate">
-              <span className="material-symbols-outlined text-red-500">play_circle</span>
-              <span className="text-zinc-300 truncate">{videoUrl}</span>
-            </div>
-            <a 
-              href={videoUrl} 
-              target="_blank" 
-              rel="noreferrer"
-              className="text-[10px] text-zinc-500 hover:text-cyan-400 underline ml-2 shrink-0"
-            >
-              [WATCH]
-            </a>
+        {/* Widgets Render Block (YouTube Embeds & External Link Widgets) */}
+        {allWidgets.length > 0 && (
+          <div className="space-y-2 my-3">
+            {allWidgets.map((w, idx) => {
+              if (w.type === 'youtube') {
+                const ytId = extractYouTubeId(w.url);
+                return (
+                  <div key={w.id || idx} className="rounded overflow-hidden border border-zinc-800 bg-zinc-950 shadow-md">
+                    {ytId ? (
+                      <div className="relative pt-[56.25%] w-full bg-black">
+                        <iframe
+                          src={`https://www.youtube-nocookie.com/embed/${ytId}`}
+                          title={w.title || 'YouTube Player'}
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                          className="absolute top-0 left-0 w-full h-full border-0"
+                        />
+                      </div>
+                    ) : (
+                      <div className="p-2.5 flex items-center justify-between text-xs font-mono text-cyan-400">
+                        <div className="flex items-center space-x-2 truncate">
+                          <span className="material-symbols-outlined text-red-500">play_circle</span>
+                          <span className="text-zinc-300 truncate">{w.url}</span>
+                        </div>
+                        <a 
+                          href={w.url} 
+                          target="_blank" 
+                          rel="noreferrer"
+                          className="text-[10px] text-zinc-500 hover:text-cyan-400 underline ml-2 shrink-0"
+                        >
+                          [WATCH]
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+
+              // Default Link Widget
+              return (
+                <div key={w.id || idx} className="p-2.5 bg-zinc-950/90 border border-zinc-800 rounded flex items-center justify-between text-xs font-mono text-cyan-400">
+                  <div className="flex items-center space-x-2 truncate">
+                    <span className="material-symbols-outlined text-cyan-400 text-sm">link</span>
+                    <span className="text-zinc-200 font-bold truncate">{w.title || w.url}</span>
+                  </div>
+                  <a
+                    href={w.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[10px] text-zinc-400 hover:text-cyan-300 underline ml-2 shrink-0"
+                  >
+                    [OPEN LINK]
+                  </a>
+                </div>
+              );
+            })}
           </div>
         )}
 
