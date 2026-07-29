@@ -62,63 +62,65 @@ export const App: React.FC = () => {
 
           {/* Dynamic View: Main Vibes List OR Immersive Hashtag Room View */}
           {viewMode === 'vibes' ? (
-            <main
-              className={`flex-1 p-4 md:p-6 overflow-y-auto w-full mx-auto pb-20 lg:pb-8 transition-all ${
-                isAuthenticated
-                  ? 'max-w-4xl'
-                  : 'max-w-2xl border-x border-zinc-800/60 bg-zinc-950/40 shadow-2xl'
-              }`}
-            >
-              {/* Feed Header & Status */}
-              <div className="flex justify-between items-center mb-4 font-mono text-xs text-zinc-400 border-b border-zinc-800 pb-2">
-                <div>
-                  [HASHTAG_ROUTE: <span className="text-amber-400 font-bold">{activeTag}</span>]
+            <main className="flex-1 w-full h-full overflow-y-auto p-4 md:p-6 pb-20 lg:pb-8">
+              <div
+                className={`w-full mx-auto transition-all ${
+                  isAuthenticated
+                    ? 'max-w-4xl'
+                    : 'max-w-2xl border-x border-zinc-800/40 bg-zinc-950/20 p-4 md:p-6 rounded-lg shadow-2xl'
+                }`}
+              >
+                {/* Feed Header & Status */}
+                <div className="flex justify-between items-center mb-4 font-mono text-xs text-zinc-400 border-b border-zinc-800 pb-2">
+                  <div>
+                    [HASHTAG_ROUTE: <span className="text-amber-400 font-bold">{activeTag}</span>]
+                  </div>
+                  <div>{filteredVibes.length} VIBE LOGS</div>
                 </div>
-                <div>{filteredVibes.length} VIBE LOGS</div>
-              </div>
 
-              {/* Feed List */}
-              {filteredVibes.length === 0 ? (
-                <div className="text-center py-12 border border-dashed border-zinc-800 rounded bg-zinc-900/40 p-8 font-mono text-xs text-zinc-500 space-y-3">
-                  <div>NO VIBE LOGS FOUND FOR HASHTAG [{activeTag}].</div>
-                  <div>CLICK BELOW TO TRANSMIT A NEW ATMOSPHERIC POST FOR THIS TAG.</div>
-                  <button
-                    onClick={() => {
-                      if (isAuthenticated) {
-                        setCreateModalOpen(true);
-                      } else {
-                        setAuthModalOpen(true, 'login');
-                      }
-                    }}
-                    className="px-4 py-2 bg-amber-500/20 border border-amber-500/60 text-amber-400 font-bold rounded hover:bg-amber-500/30 transition-colors uppercase"
-                  >
-                    + TRANSMIT VIBE FOR {activeTag}
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {filteredVibes.map((vibe) => (
-                    <VibeCard
-                      key={vibe.id}
-                      id={vibe.id}
-                      title={vibe.title}
-                      content={vibe.content}
-                      tags={vibe.tags}
-                      keywords={vibe.keywords}
-                      images={vibe.images}
-                      videoUrl={vibe.videoUrl}
-                      musicUrl={vibe.musicUrl}
-                      authorName={vibe.authorName}
-                      authorId={vibe.authorId}
-                      currentUserId={user?.id || ''}
-                      createdAt={vibe.createdAt}
-                      vibeItem={vibe}
-                      onDelete={() => setVibeToDelete(vibe)}
-                      onEdit={(id) => alert(`[EDIT_VIBE]: Action logged for ID ${id}`)}
-                    />
-                  ))}
-                </div>
-              )}
+                {/* Feed List */}
+                {filteredVibes.length === 0 ? (
+                  <div className="text-center py-12 border border-dashed border-zinc-800 rounded bg-zinc-900/40 p-8 font-mono text-xs text-zinc-500 space-y-3">
+                    <div>NO VIBE LOGS FOUND FOR HASHTAG [{activeTag}].</div>
+                    <div>CLICK BELOW TO TRANSMIT A NEW ATMOSPHERIC POST FOR THIS TAG.</div>
+                    <button
+                      onClick={() => {
+                        if (isAuthenticated) {
+                          setCreateModalOpen(true);
+                        } else {
+                          setAuthModalOpen(true, 'login');
+                        }
+                      }}
+                      className="px-4 py-2 bg-amber-500/20 border border-amber-500/60 text-amber-400 font-bold rounded hover:bg-amber-500/30 transition-colors uppercase"
+                    >
+                      + TRANSMIT VIBE FOR {activeTag}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {filteredVibes.map((vibe) => (
+                      <VibeCard
+                        key={vibe.id}
+                        id={vibe.id}
+                        title={vibe.title}
+                        content={vibe.content}
+                        tags={vibe.tags}
+                        keywords={vibe.keywords}
+                        images={vibe.images}
+                        videoUrl={vibe.videoUrl}
+                        musicUrl={vibe.musicUrl}
+                        authorName={vibe.authorName}
+                        authorId={vibe.authorId}
+                        currentUserId={user?.id || ''}
+                        createdAt={vibe.createdAt}
+                        vibeItem={vibe}
+                        onDelete={() => setVibeToDelete(vibe)}
+                        onEdit={(id) => alert(`[EDIT_VIBE]: Action logged for ID ${id}`)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
             </main>
           ) : (
             <AtmosphericRoomView
