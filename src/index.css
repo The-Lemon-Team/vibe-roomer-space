@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: #131317;
+    color: #e4e1e7;
+    background-image: 
+      linear-gradient(to right, #2a292e 1px, transparent 1px),
+      linear-gradient(to bottom, #2a292e 1px, transparent 1px);
+    background-size: 40px 40px;
+    background-attachment: fixed;
+  }
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #131317;
+  border-left: 1px solid #2a292e;
+}
+::-webkit-scrollbar-thumb {
+  background: #3b494b;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #00dbe9;
+}
+
+/* Hide scrollbar utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

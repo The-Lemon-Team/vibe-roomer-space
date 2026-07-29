@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Viber Roomer - Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                            "surface-container-low": "#1b1b1f",
+                            "primary-fixed-dim": "#00dbe9",
+                            "tertiary": "#fff3f2",
+                            "primary": "#dbfcff",
+                            "on-secondary": "#412d00",
+                            "secondary": "#ffdb9d",
+                            "surface-bright": "#39393d",
+                            "on-error": "#690005",
+                            "error": "#ffb4ab",
+                            "on-background": "#e4e1e7",
+                            "on-primary": "#00363a",
+                            "tertiary-container": "#ffcec8",
+                            "on-primary-fixed-variant": "#004f54",
+                            "on-error-container": "#ffdad6",
+                            "on-tertiary": "#690006",
+                            "secondary-container": "#feb700",
+                            "tertiary-fixed": "#ffdad6",
+                            "on-secondary-fixed": "#271900",
+                            "tertiary-fixed-dim": "#ffb4ab",
+                            "outline-variant": "#3b494b",
+                            "surface-dim": "#131317",
+                            "on-primary-fixed": "#002022",
+                            "on-primary-container": "#006970",
+                            "surface-container-lowest": "#0e0e12",
+                            "surface-container": "#1f1f23",
+                            "inverse-on-surface": "#303034",
+                            "background": "#131317",
+                            "outline": "#849495",
+                            "surface": "#131317",
+                            "surface-tint": "#00dbe9",
+                            "surface-container-high": "#2a292e",
+                            "secondary-fixed-dim": "#ffba20",
+                            "on-tertiary-fixed-variant": "#93000c",
+                            "surface-variant": "#353439",
+                            "on-surface-variant": "#b9cacb",
+                            "primary-fixed": "#7df4ff",
+                            "secondary-fixed": "#ffdea8",
+                            "surface-container-highest": "#353439",
+                            "primary-container": "#00f0ff",
+                            "inverse-surface": "#e4e1e7",
+                            "on-tertiary-container": "#c10014",
+                            "on-secondary-container": "#6b4b00",
+                            "on-surface": "#e4e1e7",
+                            "on-tertiary-fixed": "#410002",
+                            "inverse-primary": "#006970",
+                            "on-secondary-fixed-variant": "#5e4200",
+                            "error-container": "#93000a"
+                    },
+                    "borderRadius": {
+                            "DEFAULT": "0.25rem",
+                            "lg": "0.5rem",
+                            "xl": "0.75rem",
+                            "full": "9999px"
+                    },
+                    "spacing": {
+                            "xs": "4px",
+                            "base": "4px",
+                            "margin": "20px",
+                            "md": "16px",
+                            "xl": "48px",
+                            "lg": "24px",
+                            "gutter": "16px",
+                            "sm": "8px"
+                    },
+                    "fontFamily": {
+                            "code-display": [
+                                    "JetBrains Mono"
+                            ],
+                            "headline-md": [
+                                    "Inter"
+                            ],
+                            "label-sm": [
+                                    "JetBrains Mono"
+                            ],
+                            "body-md": [
+                                    "Inter"
+                            ],
+                            "headline-lg-mobile": [
+                                    "Inter"
+                            ],
+                            "headline-lg": [
+                                    "Inter"
+                            ],
+                            "label-md": [
+                                    "JetBrains Mono"
+                            ]
+                    },
+                    "fontSize": {
+                            "code-display": [
+                                    "13px",
+                                    {
+                                            "lineHeight": "1.5",
+                                            "fontWeight": "400"
+                                    }
+                            ],
+                            "headline-md": [
+                                    "20px",
+                                    {
+                                            "lineHeight": "1.3",
+                                            "fontWeight": "700"
+                                    }
+                            ],
+                            "label-sm": [
+                                    "11px",
+                                    {
+                                            "lineHeight": "1.2",
+                                            "letterSpacing": "0.1em",
+                                            "fontWeight": "400"
+                                    }
+                            ],
+                            "body-md": [
+                                    "16px",
+                                    {
+                                            "lineHeight": "1.6",
+                                            "fontWeight": "400"
+                                    }
+                            ],
+                            "headline-lg-mobile": [
+                                    "24px",
+                                    {
+                                            "lineHeight": "1.2",
+                                            "fontWeight": "800"
+                                    }
+                            ],
+                            "headline-lg": [
+                                    "32px",
+                                    {
+                                            "lineHeight": "1.2",
+                                            "letterSpacing": "-0.02em",
+                                            "fontWeight": "800"
+                                    }
+                            ],
+                            "label-md": [
+                                    "14px",
+                                    {
+                                            "lineHeight": "1.4",
+                                            "letterSpacing": "0.05em",
+                                            "fontWeight": "500"
+                                    }
+                            ]
+                    }
+                }
+            }
+        }
+    </script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body {
+            background-image: 
+                linear-gradient(to right, #2a292e 1px, transparent 1px),
+                linear-gradient(to bottom, #2a292e 1px, transparent 1px);
+            background-size: 40px 40px;
+            background-color: #131317;
+            background-attachment: fixed;
+        }
+        .glow-border {
+            box-shadow: 0 0 10px rgba(0, 219, 233, 0.2);
+        }
+        .scanline {
+            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.1));
+            background-size: 100% 4px;
+            pointer-events: none;
+        }
+        /* Custom scrollbar for webkit */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #131317;
+            border-left: 1px solid #2a292e;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #3b494b;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00dbe9;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface min-h-screen flex flex-col font-body-md text-body-md">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center w-full px-margin py-sm h-16 sticky top-0 z-50 bg-surface-container-low/90 backdrop-blur-md shadow-[0_0_10px_rgba(0,219,233,0.1)] border-b border-outline-variant">
+<div class="flex items-center gap-md">
+<!-- Brand Logo -->
+<span class="font-headline-lg-mobile text-headline-lg-mobile italic font-black text-primary-fixed-dim tracking-tighter md:font-headline-lg md:text-headline-lg">
+                VIBER ROOMER
+            </span>
+<div class="hidden lg:flex items-center gap-md ml-lg border-l border-outline-variant pl-md">
+<span class="font-label-sm text-label-sm text-on-surface-variant bg-surface-variant px-2 py-1 rounded-[2px] border border-outline-variant">[SYS: ONLINE]</span>
+<span class="w-1.5 h-1.5 rounded-full bg-[#00ff41] shadow-[0_0_4px_#00ff41]"></span>
+</div>
+</div>
+<!-- Navigation Links -->
+<nav class="hidden md:flex gap-lg items-center h-full">
+<a class="text-primary-fixed-dim border-b-2 border-primary-fixed-dim pb-1 font-label-md text-label-md hover:text-primary hover:bg-surface-variant transition-colors flex items-center h-full" href="#">DEEP WORK</a>
+<a class="text-on-surface-variant font-label-md text-label-md hover:text-primary hover:bg-surface-variant transition-colors flex items-center h-full" href="#">OUTSIDE WALK</a>
+<a class="text-on-surface-variant font-label-md text-label-md hover:text-primary hover:bg-surface-variant transition-colors flex items-center h-full" href="#">NIGHT DRIVE</a>
+<a class="text-on-surface-variant font-label-md text-label-md hover:text-primary hover:bg-surface-variant transition-colors flex items-center h-full" href="#">CHILL &amp; RELAX</a>
+</nav>
+<!-- Trailing Icons -->
+<div class="flex gap-sm">
+<button class="p-2 text-primary-fixed-dim hover:text-primary hover:bg-surface-variant transition-colors rounded-[2px] border border-transparent hover:border-outline-variant">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">settings</span>
+</button>
+<button class="p-2 text-primary-fixed-dim hover:text-primary hover:bg-surface-variant transition-colors rounded-[2px] border border-transparent hover:border-outline-variant relative">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">notifications</span>
+<span class="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-[#ff003c] shadow-[0_0_4px_#ff003c]"></span>
+</button>
+</div>
+</header>
+<div class="flex flex-1 overflow-hidden relative">
+<div class="absolute inset-0 scanline z-10 pointer-events-none"></div>
+<!-- SideNavBar -->
+<nav class="hidden lg:flex flex-col h-screen sticky left-0 top-16 z-40 p-md bg-surface-dim border-r border-outline-variant w-64">
+<div class="mb-xl flex items-center gap-sm p-sm border border-outline-variant bg-surface-container-lowest">
+<div class="w-10 h-10 bg-surface-variant border border-outline-variant flex items-center justify-center overflow-hidden">
+<img alt="User tactical profile" class="w-full h-full object-cover grayscale mix-blend-screen opacity-80" data-alt="A low-resolution, high-contrast monochrome avatar of a person wearing a futuristic visor, rendered in a gritty, pixelated style suitable for a dark junkpunk tactical interface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCloq7sBOI9o-6cf7nbydc7uqy0K98tQAkmUAZ32gqaGlUPKlTbkua3A4etM54TeA0nPF0jILWoatxTBATzGCPvfwArGpeGMdM4hE1SnliN9DMaIHCoP5yatEIkN4U50KkRMnwuod2IRvnt4ehBzoqKxhdEruGyceuapRNTgsThglLyGotrcN9uSyDZZHHv6fpxP_iuG9aIUx1QaarpTmzRAiFIjmduaLiAyDiKwPY-O1AH-fk-eFqu"/>
+</div>
+<div>
+<div class="font-headline-md text-headline-md text-primary-fixed-dim leading-none">OPERATOR_01</div>
+<div class="font-code-display text-code-display text-[#00ff41] mt-1 text-[10px]">SYSTEM: ACTIVE</div>
+</div>
+</div>
+<div class="flex-1 flex flex-col gap-sm">
+<div class="font-code-display text-[10px] text-on-surface-variant mb-2 px-2 uppercase tracking-widest border-b border-outline-variant pb-1">Vibe Modes</div>
+<a class="bg-primary-container/10 text-primary-fixed-dim font-bold border-l-4 border-primary-fixed-dim font-label-md text-label-md p-3 flex flex-col gap-1 transition-all" href="#">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">terminal</span>
+        DEEP WORK
+    </div>
+<div class="font-code-display text-[10px] text-on-surface-variant font-normal">Maximum focus. Code compilation.</div>
+</a>
+<a class="text-on-surface-variant font-medium font-label-md text-label-md p-3 flex flex-col gap-1 hover:bg-surface-container-high hover:text-primary border-l-4 border-transparent transition-all hover:translate-x-1" href="#">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">directions_walk</span>
+        OUTSIDE WALK
+    </div>
+<div class="font-code-display text-[10px] text-on-surface-variant/70 font-normal">Concrete jungle exploration.</div>
+</a>
+<a class="text-on-surface-variant font-medium font-label-md text-label-md p-3 flex flex-col gap-1 hover:bg-surface-container-high hover:text-primary border-l-4 border-transparent transition-all hover:translate-x-1" href="#">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">commute</span>
+        NIGHT DRIVE
+    </div>
+<div class="font-code-display text-[10px] text-on-surface-variant/70 font-normal">Neon lights and wet asphalt.</div>
+</a>
+<a class="text-on-surface-variant font-medium font-label-md text-label-md p-3 flex flex-col gap-1 hover:bg-surface-container-high hover:text-primary border-l-4 border-transparent transition-all hover:translate-x-1" href="#">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">coffee</span>
+        CHILL &amp; RELAX
+    </div>
+<div class="font-code-display text-[10px] text-on-surface-variant/70 font-normal">System cool down. Lofi beats.</div>
+</a>
+</div>
+<div class="mt-auto pt-xl">
+<button class="w-full bg-primary-fixed-dim text-on-primary-fixed-variant font-headline-md text-[14px] p-3 mb-md hover:shadow-[0_0_10px_rgba(0,219,233,0.5)] transition-shadow uppercase font-bold flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]">add</span> NEW VIBE
+                </button>
+<a class="text-on-surface-variant font-medium font-label-md text-label-md p-3 flex items-center gap-sm hover:bg-surface-container-high hover:text-primary border-l-4 border-transparent transition-all" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">logout</span>
+                    LOGOUT
+                </a>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="flex-1 p-margin md:p-xl overflow-y-auto z-20 flex justify-center pb-24 lg:pb-xl">
+<div class="w-full max-w-3xl flex flex-col gap-lg relative">
+<!-- Decorative hardware frame elements -->
+<div class="absolute -left-4 -top-4 w-4 h-4 border-t border-l border-outline-variant pointer-events-none"></div>
+<div class="absolute -right-4 -top-4 w-4 h-4 border-t border-r border-outline-variant pointer-events-none"></div>
+<div class="absolute -left-4 -bottom-4 w-4 h-4 border-b border-l border-outline-variant pointer-events-none"></div>
+<div class="absolute -right-4 -bottom-4 w-4 h-4 border-b border-r border-outline-variant pointer-events-none"></div>
+<!-- Feed Post 1 -->
+<article class="bg-surface-container-low border border-outline-variant relative flex flex-col">
+<!-- Technical Header -->
+<div class="absolute top-0 left-0 w-8 h-1 bg-primary-fixed-dim"></div>
+<div class="flex justify-between items-center p-sm border-b border-outline-variant bg-surface-container-highest/50">
+<div class="flex items-center gap-sm">
+<span class="font-code-display text-code-display text-primary-fixed-dim text-[10px] tracking-widest uppercase">ID: 9482-A</span>
+<span class="w-px h-3 bg-outline-variant"></span>
+<span class="font-code-display text-code-display text-on-surface-variant text-[10px] uppercase">SYS_LOG_ENTRY</span>
+</div>
+<div class="font-code-display text-code-display text-on-surface-variant text-[10px]">T-MINUS 04:22:11</div>
+</div>
+<div class="p-md md:p-lg flex flex-col gap-md">
+<!-- Post Header -->
+<header class="flex justify-between items-start">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface mb-1">Cyber-Coffee &amp; Heavy Code</h2>
+<p class="font-code-display text-code-display text-on-surface-variant opacity-80">@cyber_junkie</p>
+</div>
+<div class="font-label-sm text-label-sm text-primary-fixed-dim border border-primary-fixed-dim px-2 py-1 bg-primary-fixed-dim/10 glow-border">
+                                [ WORK ]
+                            </div>
+</header>
+<!-- Text Snippet -->
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+                            System nominal. Caffeine levels critical. Compiling the latest core module while the rain hits the neo-glass. 
+                            The grid is quiet tonight. Good time for deep optimization. 
+                            <span class="text-primary-fixed-dim font-code-display opacity-70 block mt-2 text-[12px]">&gt; Executing build sequence...</span>
+</p>
+<!-- Image Gallery Grid -->
+<div class="grid grid-cols-2 gap-sm mt-sm">
+<div class="aspect-square border border-outline-variant relative overflow-hidden bg-surface-container-lowest group">
+<div class="absolute inset-0 bg-primary-fixed-dim/10 mix-blend-overlay z-10 pointer-events-none"></div>
+<img alt="Cyber coffee setup" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" data-alt="A steaming cup of dark coffee on a metallic desk covered in glowing wireframes and scattered electronic components, illuminated by harsh neon cyan light in a dark, gritty cyberpunk room." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBTiqZLBFfRF6OtK-TC2-5U4JBmReybSJvDP_Hm0j1bFr5Phq-1PorntZu6nybINeozuxj_SpM6RuvHzX7EPyEBxSOGZMC8vbPMXVhyk-dQJQDLdYfzd6W6QS1XVNz1hwCo7ioDb9VU6s6d77-GB3aMh00U3Qvay0aRaP9u6hF-Ibw9bmUmg0HMokxjuVgpoumwLx297_UPbramQUukW1nXDnDdNcVX7LKUVtRTO0scE34wvs_3Nl1-"/>
+<div class="absolute bottom-1 right-1 bg-background/80 border border-outline-variant px-1 font-code-display text-[9px] text-on-surface-variant z-20">IMG_01</div>
+</div>
+<div class="aspect-square border border-outline-variant relative overflow-hidden bg-surface-container-lowest group">
+<div class="absolute inset-0 bg-primary-fixed-dim/10 mix-blend-overlay z-10 pointer-events-none"></div>
+<img alt="Heavy code keyboard" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" data-alt="A close-up shot of mechanical keyboard keys glowing with matrix green and neon cyan backlighting in a pitch-black environment, dusty and worn, embodying a dark industrial junkpunk aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAoy5HOh9TDWvDUgDF1Bl98b5lk69c2Fi32aBGa_knmT-0M576MLcgswJr9XqcrJ4rzQB8R0wfKMZRxHMXDrqiAMuhyuNQ2t_JIoC4xKp3aLFP7czrmo7CMN8D4eMAWowkULPpLRojynjeEfE5nCSg88qfsrwUikClI6_7iMtEC7XDMKhBHpEBx-CCjCA4i5rW_tSMnWj5vlebhvQ1pOYvTjpEdbX0qyJytLRY4RpcJEMj4Dp8AyBh3"/>
+<div class="absolute bottom-1 right-1 bg-background/80 border border-outline-variant px-1 font-code-display text-[9px] text-on-surface-variant z-20">IMG_02</div>
+</div>
+</div>
+<!-- Audio Player -->
+<div class="border border-outline-variant bg-surface-container-lowest p-sm flex items-center gap-md mt-sm">
+<button class="w-10 h-10 border border-primary-fixed-dim flex items-center justify-center text-primary-fixed-dim hover:bg-primary-fixed-dim/10 transition-colors shrink-0">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+</button>
+<div class="flex-1 flex flex-col gap-1">
+<div class="flex justify-between font-code-display text-[10px] text-on-surface-variant">
+<span>Lofi_Grid_Run.wav</span>
+<span>01:24 / 04:00</span>
+</div>
+<div class="h-4 flex items-end gap-[2px] opacity-70">
+<!-- Simulated Waveform -->
+<div class="w-1 bg-primary-fixed-dim h-[40%]"></div>
+<div class="w-1 bg-primary-fixed-dim h-[80%]"></div>
+<div class="w-1 bg-primary-fixed-dim h-[60%]"></div>
+<div class="w-1 bg-primary-fixed-dim h-[100%]"></div>
+<div class="w-1 bg-primary-fixed-dim h-[30%]"></div>
+<div class="w-1 bg-primary-fixed-dim h-[50%]"></div>
+<div class="w-1 bg-primary-fixed-dim h-[70%]"></div>
+<div class="w-1 bg-primary-fixed-dim h-[90%]"></div>
+<div class="w-1 bg-primary-fixed-dim h-[40%]"></div>
+<div class="w-1 bg-primary-fixed-dim h-[20%]"></div>
+<div class="w-1 bg-outline-variant h-[10%]"></div>
+<div class="w-1 bg-outline-variant h-[30%]"></div>
+<div class="w-1 bg-outline-variant h-[50%]"></div>
+<div class="w-1 bg-outline-variant h-[20%]"></div>
+<div class="w-1 bg-outline-variant h-[40%]"></div>
+<div class="w-1 bg-outline-variant h-[10%]"></div>
+</div>
+</div>
+</div>
+<!-- Tags -->
+<div class="flex gap-sm flex-wrap mt-2">
+<span class="font-code-display text-[11px] text-on-surface-variant border border-outline-variant px-2 py-0.5 bg-surface-container">#lofi</span>
+<span class="font-code-display text-[11px] text-on-surface-variant border border-outline-variant px-2 py-0.5 bg-surface-container">#nestjs</span>
+<span class="font-code-display text-[11px] text-on-surface-variant border border-outline-variant px-2 py-0.5 bg-surface-container">#junkpunk</span>
+</div>
+</div>
+<!-- Footer Actions -->
+<footer class="border-t border-outline-variant p-sm flex justify-end gap-sm bg-surface-container-highest/30">
+<button class="font-code-display text-code-display text-on-surface-variant px-4 py-1.5 border border-outline-variant hover:border-primary-fixed-dim hover:text-primary-fixed-dim transition-colors uppercase flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">edit</span> [EDIT]
+                        </button>
+<button class="font-code-display text-code-display text-[#ff003c] px-4 py-1.5 border border-[#ff003c]/30 hover:border-[#ff003c] hover:shadow-[0_0_8px_rgba(255,0,60,0.3)] transition-all uppercase flex items-center gap-1 bg-[#ff003c]/5">
+<span class="material-symbols-outlined text-[16px]">delete</span> [DELETE]
+                        </button>
+</footer>
+</article>
+<!-- Feed Post 2 -->
+<article class="bg-surface-container-low border border-outline-variant relative flex flex-col">
+<!-- Technical Header -->
+<div class="absolute top-0 left-0 w-8 h-1 bg-secondary-fixed-dim"></div>
+<div class="flex justify-between items-center p-sm border-b border-outline-variant bg-surface-container-highest/50">
+<div class="flex items-center gap-sm">
+<span class="font-code-display text-code-display text-secondary-fixed-dim text-[10px] tracking-widest uppercase">ID: 9482-B</span>
+<span class="w-px h-3 bg-outline-variant"></span>
+<span class="font-code-display text-code-display text-on-surface-variant text-[10px] uppercase">SYS_LOG_ENTRY</span>
+</div>
+<div class="font-code-display text-code-display text-on-surface-variant text-[10px]">T-MINUS 12:45:00</div>
+</div>
+<div class="p-md md:p-lg flex flex-col gap-md">
+<!-- Post Header -->
+<header class="flex justify-between items-start">
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface mb-1">Neon Highway Run</h2>
+<p class="font-code-display text-code-display text-on-surface-variant opacity-80">@cyber_junkie</p>
+</div>
+<div class="font-label-sm text-label-sm text-secondary-fixed-dim border border-secondary-fixed-dim px-2 py-1 bg-secondary-fixed-dim/10 shadow-[0_0_10px_rgba(255,186,32,0.2)]">
+                                [ DRIVE ]
+                            </div>
+</header>
+<!-- Text Snippet -->
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+                            Sensors picking up heavy rain. Engine purring. Navigating the grid perimeter while the synthwave kicks in. 
+                            <span class="text-secondary-fixed-dim font-code-display opacity-70 block mt-2 text-[12px]">&gt; Establishing secure connection...</span>
+</p>
+<!-- Audio Player -->
+<div class="border border-outline-variant bg-surface-container-lowest p-sm flex items-center gap-md mt-sm">
+<button class="w-10 h-10 border border-secondary-fixed-dim flex items-center justify-center text-secondary-fixed-dim hover:bg-secondary-fixed-dim/10 transition-colors shrink-0">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+</button>
+<div class="flex-1 flex flex-col gap-1">
+<div class="flex justify-between font-code-display text-[10px] text-on-surface-variant">
+<span>Night_City_Drift.wav</span>
+<span>00:45 / 05:30</span>
+</div>
+<div class="h-4 flex items-end gap-[2px] opacity-70">
+<!-- Simulated Waveform -->
+<div class="w-1 bg-outline-variant h-[10%]"></div>
+<div class="w-1 bg-outline-variant h-[20%]"></div>
+<div class="w-1 bg-secondary-fixed-dim h-[50%]"></div>
+<div class="w-1 bg-secondary-fixed-dim h-[80%]"></div>
+<div class="w-1 bg-secondary-fixed-dim h-[100%]"></div>
+<div class="w-1 bg-secondary-fixed-dim h-[60%]"></div>
+<div class="w-1 bg-secondary-fixed-dim h-[40%]"></div>
+<div class="w-1 bg-secondary-fixed-dim h-[30%]"></div>
+<div class="w-1 bg-secondary-fixed-dim h-[70%]"></div>
+<div class="w-1 bg-outline-variant h-[20%]"></div>
+<div class="w-1 bg-outline-variant h-[10%]"></div>
+<div class="w-1 bg-outline-variant h-[30%]"></div>
+<div class="w-1 bg-outline-variant h-[40%]"></div>
+<div class="w-1 bg-outline-variant h-[10%]"></div>
+<div class="w-1 bg-outline-variant h-[20%]"></div>
+<div class="w-1 bg-outline-variant h-[10%]"></div>
+</div>
+</div>
+</div>
+<!-- Tags -->
+<div class="flex gap-sm flex-wrap mt-2">
+<span class="font-code-display text-[11px] text-on-surface-variant border border-outline-variant px-2 py-0.5 bg-surface-container">#synthwave</span>
+<span class="font-code-display text-[11px] text-on-surface-variant border border-outline-variant px-2 py-0.5 bg-surface-container">#drive</span>
+<span class="font-code-display text-[11px] text-on-surface-variant border border-outline-variant px-2 py-0.5 bg-surface-container">#rain</span>
+</div>
+</div>
+<!-- Footer Actions -->
+<footer class="border-t border-outline-variant p-sm flex justify-end gap-sm bg-surface-container-highest/30">
+<button class="font-code-display text-code-display text-on-surface-variant px-4 py-1.5 border border-outline-variant hover:border-secondary-fixed-dim hover:text-secondary-fixed-dim transition-colors uppercase flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">edit</span> [EDIT]
+                        </button>
+<button class="font-code-display text-code-display text-[#ff003c] px-4 py-1.5 border border-[#ff003c]/30 hover:border-[#ff003c] hover:shadow-[0_0_8px_rgba(255,0,60,0.3)] transition-all uppercase flex items-center gap-1 bg-[#ff003c]/5">
+<span class="material-symbols-outlined text-[16px]">delete</span> [DELETE]
+                        </button>
+</footer>
+</article>
+</div>
+</main>
+</div>
+<!-- BottomNavBar -->
+<nav class="lg:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-safe h-16 bg-surface-container-lowest border-t border-outline-variant shadow-[0_-4px_12px_rgba(0,0,0,0.5)]">
+<a class="flex flex-col items-center justify-center text-primary-fixed-dim bg-on-primary-fixed-variant/20 rounded-none p-2 w-16 hover:bg-surface-variant" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">settings_input_component</span>
+<span class="font-label-sm text-label-sm mt-1">MODES</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 w-16 hover:bg-surface-variant" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">forum</span>
+<span class="font-label-sm text-label-sm mt-1">POSTS</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 w-16 hover:bg-surface-variant" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">radar</span>
+<span class="font-label-sm text-label-sm mt-1">SIGNALS</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2 w-16 hover:bg-surface-variant" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">account_circle</span>
+<span class="font-label-sm text-label-sm mt-1">PROFILE</span>
+</a>
+</nav>
+</body></html>

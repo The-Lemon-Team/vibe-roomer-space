@@ -1,0 +1,67 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+// core feature: context/activity definitions
+enum ActivityContext {
+  WORK
+  WALK
+  NIGHT_DRIVE
+  RELAX
+  SPORT
+  CUSTOM
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  username  String   @unique
+  password  String
+  role      Role     @default(USER)
+  vibes     Vibe[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Vibe {
+  id          String          @id @default(uuid())
+  title       String          // e.g., "Cyber-Coffee & Heavy Code"
+  content     String          @db.Text
+  keywords    String[]        // ["lofi", "nestjs", "night", "junkpunk"]
+  activity    ActivityContext @default(CUSTOM) // crucial for the activity value proposition
+  
+  // media content for the post
+  images      String[]
+  videoUrl    String?
+  musicUrl    String?
+
+  // placeholder for future "Atmospheric Rooms" functionality
+  roomConfig  Json?           // JSON with settings (bg textures, neon colors)
+  
+  inMainFeed  Boolean         @default(false)
+  authorId    String
+  author      User            @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  
+  updates     VibeUpdate[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+model VibeUpdate {
+  id        String   @id @default(uuid())
+  content   String   @db.Text
+  mediaUrls String[]
+  vibeId    String
+  vibe      Vibe     @relation(fields: [vibeId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
