@@ -6,26 +6,50 @@ export const OperatorSidebar: React.FC = () => {
   const {
     activeTag,
     setActiveTag,
-    pinnedTags,
-    pinTag,
-    unpinTag,
+    adminMenuTags,
+    addAdminMenuTag,
+    removeAdminMenuTag,
+    myTags,
+    addMyTag,
+    removeMyTag,
+    roomsAdminMenuTags,
+    addRoomsAdminMenuTag,
+    removeRoomsAdminMenuTag,
+    roomsMyTags,
+    addRoomsMyTag,
+    removeRoomsMyTag,
     setCreateModalOpen,
     viewMode,
     setViewMode,
     vibes,
+    createdRooms,
+    tagMode,
+    closeRoomPage,
   } = useAtmosphericStore();
 
   const { user, isAuthenticated, setAuthModalOpen } = useAuthStore();
   const [sidebarTagInput, setSidebarTagInput] = useState('');
 
-  // Extract all unique hashtags across all vibes
+  const isAdmin = isAuthenticated && user?.role === 'ADMIN';
+  const isRoomsMode = viewMode === 'rooms';
+
+  const currentAdminTags = isRoomsMode ? roomsAdminMenuTags : adminMenuTags;
+  const currentMyTags = isRoomsMode ? roomsMyTags : myTags;
+
+  const displayedTags = tagMode === 'admin_config' && isAdmin ? currentAdminTags : currentMyTags;
+
+  // Extract all unique hashtags across vibes or rooms depending on mode
   const allDiscoveredTags = Array.from(
-    new Set(vibes.flatMap((v) => v.tags || [])),
+    new Set(
+      isRoomsMode
+        ? createdRooms.flatMap((r) => r.tags || [])
+        : vibes.flatMap((v) => v.tags || []),
+    ),
   );
 
-  // Tags that are not yet pinned to the menu
+  // Tags that are not yet pinned to the current view list
   const unpinnedDiscoveredTags = allDiscoveredTags.filter(
-    (t) => !pinnedTags.some((pt) => pt.toLowerCase() === t.toLowerCase()),
+    (t) => !displayedTags.some((pt) => pt.toLowerCase() === t.toLowerCase()),
   );
 
   const handleAddCustomTag = (e: React.FormEvent) => {
@@ -34,9 +58,55 @@ export const OperatorSidebar: React.FC = () => {
     const formatted = sidebarTagInput.trim().startsWith('#')
       ? sidebarTagInput.trim().toLowerCase()
       : `#${sidebarTagInput.trim().toLowerCase()}`;
-    pinTag(formatted);
+
+    if (isRoomsMode) {
+      if (tagMode === 'admin_config' && isAdmin) {
+        addRoomsAdminMenuTag(formatted);
+      } else {
+        addRoomsMyTag(formatted);
+      }
+    } else {
+      if (tagMode === 'admin_config' && isAdmin) {
+        addAdminMenuTag(formatted);
+      } else {
+        addMyTag(formatted);
+      }
+    }
+
     setActiveTag(formatted);
     setSidebarTagInput('');
+  };
+
+  const handleRemove = (tag: string) => {
+    if (isRoomsMode) {
+      if (tagMode === 'admin_config' && isAdmin) {
+        removeRoomsAdminMenuTag(tag);
+      } else {
+        removeRoomsMyTag(tag);
+      }
+    } else {
+      if (tagMode === 'admin_config' && isAdmin) {
+        removeAdminMenuTag(tag);
+      } else {
+        removeMyTag(tag);
+      }
+    }
+  };
+
+  const handleAddDiscovered = (tag: string) => {
+    if (isRoomsMode) {
+      if (tagMode === 'admin_config' && isAdmin) {
+        addRoomsAdminMenuTag(tag);
+      } else {
+        addRoomsMyTag(tag);
+      }
+    } else {
+      if (tagMode === 'admin_config' && isAdmin) {
+        addAdminMenuTag(tag);
+      } else {
+        addMyTag(tag);
+      }
+    }
   };
 
   return (
@@ -62,7 +132,7 @@ export const OperatorSidebar: React.FC = () => {
         <button
           onClick={() => setViewMode('vibes')}
           className={`py-1.5 text-center font-bold rounded transition-colors ${
-            viewMode === 'vibes'
+            viewMode === 'vibes' || viewMode === 'vibe'
               ? 'bg-cyan-950 text-cyan-400 border border-cyan-700/50'
               : 'text-zinc-400 hover:text-zinc-200'
           }`}
@@ -70,7 +140,10 @@ export const OperatorSidebar: React.FC = () => {
           [VIBES]
         </button>
         <button
-          onClick={() => setViewMode('rooms')}
+          onClick={() => {
+            closeRoomPage();
+            setViewMode('rooms');
+          }}
           className={`py-1.5 text-center font-bold rounded transition-colors ${
             viewMode === 'rooms'
               ? 'bg-cyan-950 text-cyan-400 border border-cyan-700/50'
@@ -86,8 +159,8 @@ export const OperatorSidebar: React.FC = () => {
         {/* Pinned Menu Tags */}
         <div>
           <div className="text-[10px] text-zinc-500 uppercase tracking-widest px-2 mb-2 border-b border-zinc-800 pb-1 flex justify-between items-center">
-            <span>PINNED MENU HASHTAGS</span>
-            <span className="text-cyan-400">{pinnedTags.length}</span>
+            <span>{isRoomsMode ? 'ROOM HASHTAGS' : 'VIBE HASHTAGS'}</span>
+            <span className="text-cyan-400">{displayedTags.length}</span>
           </div>
 
           {/* All Tag Option */}
@@ -99,17 +172,21 @@ export const OperatorSidebar: React.FC = () => {
                 : 'text-zinc-400 border-l-transparent hover:bg-zinc-900/40 hover:text-zinc-200'
             }`}
           >
-            <span>#ALL (SHOW EVERY VIBE)</span>
+            <span>#ALL ({isRoomsMode ? 'ALL ROOMS' : 'ALL VIBES'})</span>
             {activeTag === '#ALL' && <span className="text-[10px]">●</span>}
           </button>
 
           {/* List of Pinned Tags */}
           <div className="space-y-1">
-            {pinnedTags.map((tag) => {
+            {displayedTags.map((tag) => {
               const isActive = activeTag.toLowerCase() === tag.toLowerCase();
-              const tagCount = vibes.filter((v) =>
-                v.tags.some((t) => t.toLowerCase() === tag.toLowerCase()),
-              ).length;
+              const tagCount = isRoomsMode
+                ? createdRooms.filter((r) =>
+                    r.tags?.some((t) => t.toLowerCase() === tag.toLowerCase()),
+                  ).length
+                : vibes.filter((v) =>
+                    v.tags?.some((t) => t.toLowerCase() === tag.toLowerCase()),
+                  ).length;
 
               return (
                 <div key={tag} className="flex items-center group">
@@ -126,8 +203,8 @@ export const OperatorSidebar: React.FC = () => {
                   </button>
 
                   <button
-                    onClick={() => unpinTag(tag)}
-                    title="Unpin tag from menu"
+                    onClick={() => handleRemove(tag)}
+                    title="Remove tag"
                     className="p-2 text-zinc-600 hover:text-red-400 bg-zinc-900/20 hover:bg-zinc-900 rounded-r text-xs transition-colors"
                   >
                     ✕
@@ -143,7 +220,7 @@ export const OperatorSidebar: React.FC = () => {
           <div className="flex items-center bg-zinc-900 border border-zinc-800 rounded overflow-hidden">
             <input
               type="text"
-              placeholder="+ Pin custom #tag"
+              placeholder={tagMode === 'admin_config' && isAdmin ? '+ Public top tag' : '+ Pin custom #tag'}
               value={sidebarTagInput}
               onChange={(e) => setSidebarTagInput(e.target.value)}
               className="bg-transparent border-none outline-none text-xs text-zinc-200 p-2 w-full placeholder-zinc-600"
@@ -167,8 +244,8 @@ export const OperatorSidebar: React.FC = () => {
               {unpinnedDiscoveredTags.map((tag) => (
                 <button
                   key={tag}
-                  onClick={() => pinTag(tag)}
-                  title="Click to pin tag to menu"
+                  onClick={() => handleAddDiscovered(tag)}
+                  title="Click to add tag to list"
                   className="text-[10px] bg-zinc-900/60 border border-zinc-800 text-zinc-400 hover:border-cyan-500/50 hover:text-cyan-400 px-2 py-1 rounded transition-colors flex items-center gap-1"
                 >
                   <span>{tag}</span>

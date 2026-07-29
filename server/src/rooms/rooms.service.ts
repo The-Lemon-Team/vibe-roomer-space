@@ -180,4 +180,112 @@ export class RoomsService {
       dataPoints,
     };
   }
+
+  /**
+   * Add news announcement to room.
+   */
+  async addNewsToRoom(roomId: string, authorId: string, dto: { title: string; content: string }) {
+    if (!this.prisma.isConnected) {
+      return {
+        id: `news-${Date.now()}`,
+        title: dto.title,
+        content: dto.content,
+        authorId,
+        createdAt: new Date().toISOString(),
+      };
+    }
+
+    return this.prisma.roomNews.create({
+      data: {
+        title: dto.title,
+        content: dto.content,
+        roomId,
+        authorId,
+      },
+      include: {
+        author: {
+          select: { id: true, username: true, email: true },
+        },
+      },
+    });
+  }
+
+  /**
+   * Delete news item from room.
+   */
+  async deleteNewsFromRoom(roomId: string, newsId: string) {
+    if (!this.prisma.isConnected) {
+      return { success: true };
+    }
+
+    await this.prisma.roomNews.deleteMany({
+      where: { id: newsId, roomId },
+    });
+    return { success: true };
+  }
+
+  /**
+   * Add Markdown note to room.
+   */
+  async addNoteToRoom(roomId: string, authorId: string, dto: { title: string; content: string }) {
+    if (!this.prisma.isConnected) {
+      return {
+        id: `note-${Date.now()}`,
+        title: dto.title,
+        content: dto.content,
+        authorId,
+        createdAt: new Date().toISOString(),
+      };
+    }
+
+    return this.prisma.roomNote.create({
+      data: {
+        title: dto.title,
+        content: dto.content,
+        roomId,
+        authorId,
+      },
+      include: {
+        author: {
+          select: { id: true, username: true, email: true },
+        },
+      },
+    });
+  }
+
+  /**
+   * Update Markdown note in room.
+   */
+  async updateRoomNote(roomId: string, noteId: string, dto: { title?: string; content?: string }) {
+    if (!this.prisma.isConnected) {
+      return { id: noteId, ...dto, updatedAt: new Date().toISOString() };
+    }
+
+    return this.prisma.roomNote.update({
+      where: { id: noteId },
+      data: {
+        ...(dto.title !== undefined && { title: dto.title }),
+        ...(dto.content !== undefined && { content: dto.content }),
+      },
+      include: {
+        author: {
+          select: { id: true, username: true, email: true },
+        },
+      },
+    });
+  }
+
+  /**
+   * Delete note from room.
+   */
+  async deleteRoomNote(roomId: string, noteId: string) {
+    if (!this.prisma.isConnected) {
+      return { success: true };
+    }
+
+    await this.prisma.roomNote.deleteMany({
+      where: { id: noteId, roomId },
+    });
+    return { success: true };
+  }
 }

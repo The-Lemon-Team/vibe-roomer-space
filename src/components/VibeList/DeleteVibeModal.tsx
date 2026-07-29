@@ -1,5 +1,6 @@
 import React from 'react';
 import { VibeItem } from '../../store/useAtmosphericStore';
+import { BaseModal } from '../Common/BaseModal';
 
 interface DeleteVibeModalProps {
   vibe: VibeItem | null;
@@ -12,26 +13,18 @@ export const DeleteVibeModal: React.FC<DeleteVibeModalProps> = ({
   onConfirm,
   onCancel,
 }) => {
-  if (!vibe) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md font-mono select-none animate-fadeIn">
-      <div className="bg-zinc-950 border border-red-500/60 rounded-lg max-w-md w-full overflow-hidden shadow-[0_0_25px_rgba(239,68,68,0.25)] space-y-0 relative">
-        {/* Modal Top Header */}
-        <div className="flex justify-between items-center px-4 py-3 bg-red-950/40 border-b border-red-500/40">
-          <div className="flex items-center space-x-2 text-xs font-bold text-red-400">
-            <span className="material-symbols-outlined text-sm animate-pulse">warning</span>
-            <span>[ SYSTEM WARNING :: CONFIRM DELETE ]</span>
-          </div>
-          <button 
-            onClick={onCancel}
-            className="text-zinc-500 hover:text-zinc-200 text-sm font-bold px-2 py-0.5 rounded hover:bg-zinc-800"
-          >
-            ✕
-          </button>
-        </div>
-
-        {/* Modal Content */}
+    <BaseModal
+      isOpen={Boolean(vibe)}
+      onClose={onCancel}
+      systemTag="[ SYSTEM WARNING :: CONFIRM DELETE ]"
+      headerIcon="warning"
+      borderColor="border-red-500/60"
+      shadowClass="shadow-[0_0_25px_rgba(239,68,68,0.25)]"
+      headerClass="bg-red-950/40 border-red-500/40"
+      maxWidth="max-w-md"
+    >
+      {vibe && (
         <div className="p-5 space-y-4 text-xs">
           <div className="space-y-2">
             <p className="text-zinc-200 font-sans text-sm font-semibold">
@@ -70,7 +63,7 @@ export const DeleteVibeModal: React.FC<DeleteVibeModalProps> = ({
             </button>
           </div>
         </div>
-      </div>
-    </div>
+      )}
+    </BaseModal>
   );
 };

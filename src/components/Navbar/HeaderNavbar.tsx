@@ -3,27 +3,47 @@ import { useAtmosphericStore } from '../../store/useAtmosphericStore';
 import { useAuthStore } from '../../store/useAuthStore';
 
 export const HeaderNavbar: React.FC = () => {
-  const { activeTag, setActiveTag, viewMode, setViewMode, setCreateModalOpen } =
+  const { activeTag, setActiveTag, viewMode, setViewMode, setCreateModalOpen, closeRoomPage } =
     useAtmosphericStore();
-  const { isAuthenticated, user, logout, setAuthModalOpen } = useAuthStore();
+  const { isAuthenticated, user, logout, setAuthModalOpen, isAuthModalOpen, authModalMode } = useAuthStore();
 
-  const handleLogoClick = () => {
-    setActiveTag('#ALL');
-    setViewMode('vibes');
-  };
+  const isVibesActive = viewMode === 'vibes' || viewMode === 'vibe';
+  const isRoomsActive = viewMode === 'rooms';
 
   return (
     <div className="w-full border-b border-zinc-800/80 font-mono">
-      <div className="max-w-[980px] mx-auto w-full flex justify-between items-center px-4 md:px-6 py-2 h-14">
+      <div className="max-w-[1400px] mx-auto w-full flex justify-between items-center px-4 md:px-6 py-2 h-14">
         {/* Left Title & Status */}
         <div className="flex items-center space-x-3">
-          <button
-            onClick={handleLogoClick}
-            className="font-sans italic font-black text-xl md:text-2xl text-cyan-400 tracking-tighter hover:text-cyan-300 transition-colors focus:outline-none cursor-pointer text-left"
-            title="Redirect to #ALL hashtag vibes"
-          >
-            VIBER ROOMER
-          </button>
+          <div className="font-sans italic font-black text-xl md:text-2xl tracking-tighter flex items-center space-x-1.5 select-none">
+            <button
+              onClick={() => {
+                setActiveTag('#ALL');
+                setViewMode('vibes');
+              }}
+              className={`transition-all duration-200 cursor-pointer focus:outline-none ${
+                isVibesActive
+                  ? 'text-cyan-400 drop-shadow-[0_0_10px_rgba(0,240,255,0.6)] font-black'
+                  : 'text-zinc-500 hover:text-zinc-300 font-bold'
+              }`}
+              title="Navigate to Vibes"
+            >
+              VIBES
+            </button>
+            <button
+              onClick={() => {
+                closeRoomPage();
+              }}
+              className={`transition-all duration-200 cursor-pointer focus:outline-none ${
+                isRoomsActive
+                  ? 'text-cyan-400 drop-shadow-[0_0_10px_rgba(0,240,255,0.6)] font-black'
+                  : 'text-zinc-500 hover:text-zinc-300 font-bold'
+              }`}
+              title="Navigate to Rooms List"
+            >
+              ROOMS
+            </button>
+          </div>
           <div className="hidden lg:flex items-center space-x-2 border-l border-zinc-800 pl-3">
             <span className="text-[10px] text-zinc-400 bg-zinc-900 px-2 py-0.5 rounded border border-zinc-800">
               [SYS: {isAuthenticated ? 'AUTHENTICATED' : 'GUEST_MODE'}]
@@ -58,15 +78,33 @@ export const HeaderNavbar: React.FC = () => {
             <span>[{viewMode === 'vibes' ? 'ENTER_ROOMS' : 'MAIN_VIBES'}]</span>
           </button>
 
-          {/* Sign-in Button (Next to [ENTER_ROOMS]) or Logged-in Operator badge */}
+          {/* Auth Action Buttons: Open AuthModal in login or register mode */}
           {!isAuthenticated ? (
-            <button
-              onClick={() => setAuthModalOpen(true, 'login')}
-              className="px-3 py-1.5 text-xs font-mono rounded bg-amber-500/20 border border-amber-500/60 text-amber-400 hover:bg-amber-500/30 transition-colors flex items-center space-x-1 uppercase font-bold"
-            >
-              <span className="material-symbols-outlined text-sm">login</span>
-              <span>[SIGN_IN]</span>
-            </button>
+            <div className="flex items-center space-x-1.5">
+              <button
+                onClick={() => setAuthModalOpen(true, 'login')}
+                className={`px-3 py-1.5 text-xs font-mono rounded transition-colors flex items-center space-x-1 uppercase font-bold ${
+                  isAuthModalOpen && authModalMode === 'login'
+                    ? 'bg-cyan-500/30 border border-cyan-400 text-cyan-300'
+                    : 'bg-zinc-900 border border-zinc-800 text-zinc-300 hover:border-cyan-500/50 hover:text-cyan-400'
+                }`}
+              >
+                <span className="material-symbols-outlined text-sm">login</span>
+                <span>[SIGN_IN]</span>
+              </button>
+
+              <button
+                onClick={() => setAuthModalOpen(true, 'register')}
+                className={`px-3 py-1.5 text-xs font-mono rounded transition-colors flex items-center space-x-1 uppercase font-bold ${
+                  isAuthModalOpen && authModalMode === 'register'
+                    ? 'bg-amber-500/30 border border-amber-400 text-amber-300'
+                    : 'bg-amber-500/20 border border-amber-500/60 text-amber-400 hover:bg-amber-500/30'
+                }`}
+              >
+                <span className="material-symbols-outlined text-sm">person_add</span>
+                <span>[REGISTER]</span>
+              </button>
+            </div>
           ) : (
             <div className="flex items-center space-x-2">
               <span className="hidden sm:inline-block text-[11px] px-2 py-1 bg-zinc-900 border border-zinc-800 text-zinc-300 rounded">

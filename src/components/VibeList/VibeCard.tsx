@@ -47,13 +47,14 @@ export const VibeCard: React.FC<VibeCardProps> = ({
 }) => {
   const isOwner = currentUserId === authorId;
   const { 
+    enterVibePage, 
     setSelectedVibeRoom, 
     setViewMode, 
     activeTag, 
     setActiveTag, 
     pinnedTags, 
     pinTag, 
-    unpinTag 
+    unpinTag,
   } = useAtmosphericStore();
 
   // Combine tags and keywords fallback
@@ -75,10 +76,9 @@ export const VibeCard: React.FC<VibeCardProps> = ({
     });
   }
 
-  const handleEnterRoom = () => {
+  const handleEnterVibe = () => {
     if (vibeItem) {
-      setSelectedVibeRoom(vibeItem);
-      setViewMode('rooms');
+      enterVibePage(vibeItem);
     }
   };
 
@@ -115,11 +115,11 @@ export const VibeCard: React.FC<VibeCardProps> = ({
             <span>{title}</span>
             {vibeItem && (
               <button
-                onClick={handleEnterRoom}
-                className="text-[10px] font-mono px-2 py-1 bg-cyan-950/60 border border-cyan-800/80 text-cyan-400 hover:bg-cyan-900/50 hover:text-cyan-300 rounded transition-colors flex items-center space-x-1"
+                onClick={handleEnterVibe}
+                className="text-[10px] font-mono px-2.5 py-1 bg-amber-950/60 border border-amber-500/80 text-amber-400 hover:bg-amber-900/60 hover:text-amber-300 rounded transition-colors flex items-center space-x-1 shadow-[0_0_8px_rgba(255,176,0,0.2)]"
               >
-                <span>[ ENTER ROOM ]</span>
-                <span className="material-symbols-outlined text-xs">open_in_new</span>
+                <span>[ ENTER VIBE ]</span>
+                <span className="material-symbols-outlined text-xs">arrow_forward</span>
               </button>
             )}
           </h3>

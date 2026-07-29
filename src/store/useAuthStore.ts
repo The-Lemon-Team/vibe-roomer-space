@@ -23,7 +23,7 @@ interface AuthState {
   setAuthModalMode: (mode: 'login' | 'register') => void;
 
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, username: string, password: string, role?: 'USER' | 'ADMIN') => Promise<void>;
+  register: (email: string, username: string, password: string) => Promise<void>;
   logout: () => void;
   checkAuth: () => Promise<void>;
   clearError: () => void;
@@ -85,14 +85,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  register: async (email, username, password, role = 'USER') => {
+  register: async (email, username, password) => {
     set({ isLoading: true, error: null });
     try {
       const data = await fetchApi<{ user: UserProfile; accessToken: string; refreshToken: string }>(
         '/auth/register',
         {
           method: 'POST',
-          body: JSON.stringify({ email, username, password, role }),
+          body: JSON.stringify({ email, username, password }),
         },
       );
 

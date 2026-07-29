@@ -1,5 +1,9 @@
 import { create } from 'zustand';
 import { fetchApi } from '../services/api';
+import { useAuthStore } from './useAuthStore';
+import { checkRoomPostingPermission } from '../utils/roomPermissions';
+
+export type TagMode = 'live' | 'my_tags' | 'admin_config';
 
 export interface RoomConfig {
   ambientLoopUrl?: string;
@@ -12,6 +16,13 @@ export interface VibeWidget {
   type: 'youtube' | 'link';
   url: string;
   title?: string;
+}
+
+export interface VibeUpdate {
+  id: string;
+  content: string;
+  mediaUrls?: string[];
+  createdAt: string;
 }
 
 export interface VibeItem {
@@ -28,54 +39,249 @@ export interface VibeItem {
   authorId: string;
   createdAt: string;
   roomConfig?: RoomConfig | null;
+  updates?: VibeUpdate[];
 }
+
+export interface RoomNewsItem {
+  id: string;
+  title: string;
+  content: string;
+  authorName: string;
+  authorId: string;
+  createdAt: string;
+}
+
+export interface RoomNoteItem {
+  id: string;
+  title: string;
+  content: string; // Markdown formatted string
+  authorName: string;
+  authorId: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface RoomStreamItem {
+  id: string;
+  type: 'text' | 'image' | 'video' | 'music' | 'youtube';
+  content?: string;
+  mediaUrls?: string[];
+  url?: string;
+  title?: string;
+  authorName: string;
+  authorId: string;
+  createdAt: string;
+}
+
+export interface CreatedRoom {
+  id: string;
+  title: string;
+  description?: string;
+  poster?: string;
+  originVibeId?: string;
+  originVibeTitle?: string;
+  isPublic: boolean;
+  authorId: string;
+  authorName: string;
+  createdAt: string;
+  tags: string[]; // Attached hashtags for the room (e.g. ['#stream', '#lofi', '#ambient'])
+  images?: string[];
+  videoUrl?: string | null;
+  musicUrl?: string | null;
+  youtubeUrl?: string | null;
+  streamItems?: RoomStreamItem[];
+  news?: RoomNewsItem[];
+  notes?: RoomNoteItem[];
+  roomConfig?: RoomConfig | null;
+}
+
+export type ViewMode = 'vibes' | 'vibe' | 'rooms';
+
+export const parseHashRoute = (): {
+  viewMode: ViewMode;
+  tag: string;
+  vibeId?: string;
+  roomId?: string;
+  authModalMode?: 'login' | 'register';
+} => {
+  if (typeof window === 'undefined') return { viewMode: 'vibes', tag: '#ALL' };
+  const hash = window.location.hash.replace(/^#\/?/, '');
+  const [modePart, queryPart] = hash.split('?');
+  let viewMode: ViewMode = 'vibes';
+  let authModalMode: 'login' | 'register' | undefined = undefined;
+
+  if (modePart === 'vibe') viewMode = 'vibe';
+  else if (modePart === 'rooms' || modePart === 'room') viewMode = 'rooms';
+  else if (modePart === 'login') {
+    viewMode = 'vibes';
+    authModalMode = 'login';
+  } else if (modePart === 'register') {
+    viewMode = 'vibes';
+    authModalMode = 'register';
+  }
+
+  const params = new URLSearchParams(queryPart || '');
+  const tagParam = params.get('tag');
+  const vibeId = params.get('id') || undefined;
+  const roomId = params.get('roomId') || (modePart === 'room' ? params.get('id') : undefined) || undefined;
+
+  const activeTag = tagParam
+    ? tagParam.startsWith('#')
+      ? tagParam
+      : `#${tagParam}`
+    : '#ALL';
+  return { viewMode, tag: activeTag, vibeId, roomId, authModalMode };
+};
+
+export const updateHashRoute = (
+  mode: ViewMode,
+  tag: string,
+  vibeId?: string,
+  roomId?: string,
+) => {
+  if (typeof window === 'undefined') return;
+  const cleanTag = tag === '#ALL' ? '' : tag.replace(/^#/, '');
+  let hash = `/${mode}`;
+
+  if (mode === 'vibe' && vibeId) {
+    hash = `/vibe?id=${encodeURIComponent(vibeId)}`;
+  } else if (mode === 'rooms' && roomId) {
+    hash = `/room?id=${encodeURIComponent(roomId)}`;
+  } else if (cleanTag) {
+    hash = `/${mode}?tag=${encodeURIComponent(cleanTag)}`;
+  }
+
+  if (window.location.hash !== `#${hash}`) {
+    window.history.replaceState(null, '', `#${hash}`);
+  }
+};
 
 interface AtmosphericState {
   // Hashtag Navigation & Filtering
-  activeTag: string; // '#ALL' or specific tag like '#deepwork'
+  activeVibeTag: string;
+  activeRoomTag: string;
+  activeTag: string; // Active tag for current mode
   setActiveTag: (tag: string) => void;
 
   topHashtags: string[];
   fetchTopHashtags: () => Promise<void>;
 
+  // Admin Configured Public Top Menu Tags (Vibes)
+  adminMenuTags: string[];
+  addAdminMenuTag: (tag: string) => void;
+  removeAdminMenuTag: (tag: string) => void;
+
+  // Logged-in User Personal Saved Tags (Vibes)
+  myTags: string[];
+  addMyTag: (tag: string) => void;
+  removeMyTag: (tag: string) => void;
+
+  // Admin Configured Public Top Menu Tags (Rooms)
+  roomsAdminMenuTags: string[];
+  addRoomsAdminMenuTag: (tag: string) => void;
+  removeRoomsAdminMenuTag: (tag: string) => void;
+
+  // Logged-in User Personal Saved Tags (Rooms)
+  roomsMyTags: string[];
+  addRoomsMyTag: (tag: string) => void;
+  removeRoomsMyTag: (tag: string) => void;
+
+  // Tag View Mode: 'live' (Public tags + trending) | 'my_tags' | 'admin_config'
+  tagMode: TagMode;
+  setTagMode: (mode: TagMode) => void;
+
+  // Pinned Tags
   pinnedTags: string[];
   pinTag: (tag: string) => void;
   unpinTag: (tag: string) => void;
   togglePinTag: (tag: string) => void;
 
-  // View Mode: 'vibes' | 'rooms'
-  viewMode: 'vibes' | 'rooms';
-  setViewMode: (mode: 'vibes' | 'rooms') => void;
+  // View Mode: 'vibes' | 'vibe' | 'rooms'
+  viewMode: ViewMode;
+  setViewMode: (mode: ViewMode) => void;
+
+  // Selected Vibe Page
+  selectedVibePage: VibeItem | null;
+  setSelectedVibePage: (vibe: VibeItem | null) => void;
+  enterVibePage: (vibe: VibeItem) => void;
+
+  // Selected room vibe fallback
   selectedVibeRoom: VibeItem | null;
   setSelectedVibeRoom: (vibe: VibeItem | null) => void;
+
+  // Created Rooms Management
+  createdRooms: CreatedRoom[];
+  activeCreatedRoom: CreatedRoom | null;
+  setActiveCreatedRoom: (room: CreatedRoom | null) => void;
+  openRoomPage: (room: CreatedRoom) => void;
+  closeRoomPage: () => void;
+  createRoomFromVibe: (
+    vibe: VibeItem,
+    params: { title: string; isPublic: boolean; tags?: string[]; roomConfig?: RoomConfig },
+  ) => CreatedRoom;
+  createStandaloneRoom: (params: {
+    title: string;
+    description?: string;
+    poster?: string;
+    isPublic: boolean;
+    tags: string[];
+    images?: string[];
+    videoUrl?: string;
+    musicUrl?: string;
+    youtubeUrl?: string;
+    roomConfig?: RoomConfig;
+  }) => CreatedRoom;
+  addStreamItemToRoom: (
+    roomId: string,
+    item: {
+      type: 'text' | 'image' | 'video' | 'music' | 'youtube';
+      content?: string;
+      mediaUrls?: string[];
+      url?: string;
+      title?: string;
+    },
+  ) => void;
+  addRoomNews: (roomId: string, news: { title: string; content: string }) => void;
+  deleteRoomNews: (roomId: string, newsId: string) => void;
+  addRoomNote: (roomId: string, note: { title: string; content: string }) => void;
+  updateRoomNote: (roomId: string, noteId: string, note: { title?: string; content?: string }) => void;
+  deleteRoomNote: (roomId: string, noteId: string) => void;
+
+  // Create Room Modal State
+  isCreateRoomModalOpen: boolean;
+  vibeToCreateRoom: VibeItem | null;
+  setCreateRoomModalOpen: (open: boolean, vibe?: VibeItem | null) => void;
+
+  // Sync route from window URL hash
+  syncRouteFromUrl: () => void;
 
   // Vibe Items Management
   vibes: VibeItem[];
   isLoadingVibes: boolean;
   fetchVibes: (tag?: string) => Promise<void>;
   addVibe: (vibe: Omit<VibeItem, 'id' | 'createdAt'>) => Promise<void>;
+  updateVibe: (id: string, updates: Partial<VibeItem>) => Promise<void>;
   deleteVibe: (id: string) => Promise<void>;
+  addVibeUpdate: (
+    vibeId: string,
+    content: string,
+    mediaUrls?: string[],
+  ) => Promise<void>;
+  addTagToVibe: (vibeId: string, newTag: string) => Promise<void>;
+  removeTagFromVibe: (vibeId: string, tagToRemove: string) => Promise<void>;
 
   // Room stream integration
   roomData: any | null;
   isLoadingRoom: boolean;
   fetchRoomData: (tag: string) => Promise<void>;
 
-  // Create Modal
+  // Create Vibe Modal
   isCreateModalOpen: boolean;
   setCreateModalOpen: (open: boolean) => void;
 
   // User context
   currentUserId: string;
 }
-
-const DEFAULT_PINNED_TAGS = [
-  '#deepwork',
-  '#nightdrive',
-  '#chill',
-  '#outside',
-  '#highenergy',
-];
 
 const MOCK_INITIAL_VIBES: VibeItem[] = [
   {
@@ -107,6 +313,20 @@ const MOCK_INITIAL_VIBES: VibeItem[] = [
       bgImageUrl:
         'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1600&q=80',
     },
+    updates: [
+      {
+        id: 'upd-1',
+        content: 'Core module compiled successfully. Deploying micro-services to main grid.',
+        mediaUrls: [],
+        createdAt: '10 MIN AGO',
+      },
+      {
+        id: 'upd-0',
+        content: 'Initial transmission initiated. Atmospheric sensors online.',
+        mediaUrls: [],
+        createdAt: '25 MIN AGO',
+      },
+    ],
   },
   {
     id: 'vibe-9482-b',
@@ -128,6 +348,7 @@ const MOCK_INITIAL_VIBES: VibeItem[] = [
       bgImageUrl:
         'https://images.unsplash.com/photo-1508739773434-c26b3d09e071?auto=format&fit=crop&w=1600&q=80',
     },
+    updates: [],
   },
   {
     id: 'vibe-9482-c',
@@ -148,11 +369,175 @@ const MOCK_INITIAL_VIBES: VibeItem[] = [
       bgImageUrl:
         'https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&w=1600&q=80',
     },
+    updates: [],
   },
 ];
 
+const MOCK_INITIAL_ROOMS: CreatedRoom[] = [
+  {
+    id: 'room-stream-01',
+    title: 'NEON MATRIX LIVE STREAM',
+    description: 'High-bandwidth cyber stream featuring ambient synth loops, coding transmissions, and real-time visual drops.',
+    poster: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1200&q=80',
+    originVibeId: 'vibe-9482-a',
+    originVibeTitle: 'Cyber-Coffee & Heavy Code',
+    isPublic: true,
+    authorId: 'user-op-01',
+    authorName: 'cyber_junkie',
+    createdAt: 'LIVE NOW',
+    tags: ['#stream', '#lofi', '#coding', '#deepwork'],
+    images: [
+      'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=800&q=80',
+    ],
+    videoUrl: 'https://www.youtube.com/watch?v=jfKfPfyJRdk',
+    youtubeUrl: 'https://www.youtube.com/watch?v=jfKfPfyJRdk',
+    musicUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+    streamItems: [
+      {
+        id: 'rsi-1',
+        type: 'youtube',
+        title: 'Lofi Cyber Station Stream',
+        url: 'https://www.youtube.com/watch?v=jfKfPfyJRdk',
+        authorName: 'cyber_junkie',
+        authorId: 'user-op-01',
+        createdAt: '5 MIN AGO',
+      },
+      {
+        id: 'rsi-2',
+        type: 'image',
+        content: 'Latest tactical terminal visual drop',
+        mediaUrls: ['https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=800&q=80'],
+        authorName: 'cyber_junkie',
+        authorId: 'user-op-01',
+        createdAt: '12 MIN AGO',
+      },
+      {
+        id: 'rsi-3',
+        type: 'text',
+        content: 'System parameters optimized. Synchronizing stream audio with grid frequency.',
+        authorName: 'cyber_junkie',
+        authorId: 'user-op-01',
+        createdAt: '20 MIN AGO',
+      },
+    ],
+    news: [
+      {
+        id: 'news-1',
+        title: 'GRID MATRIX UPDATE 2.4 ONLINE',
+        content: 'Atmospheric room feeds synced. High bandwidth stream audio loop is active for all grid operators.',
+        authorName: 'cyber_junkie',
+        authorId: 'user-op-01',
+        createdAt: '15 MIN AGO',
+      },
+    ],
+    notes: [
+      {
+        id: 'note-1',
+        title: 'System Operational Directives',
+        content: `# Room Operational Blueprint\n\nWelcome to the **Neon Matrix Room**. Below are the attached note directives:\n\n- [x] Calibrate atmospheric frequencies\n- [x] Establish secure cyber stream endpoint\n- [ ] Deploy secondary backup node\n\n### Code Snippet\n\`\`\`ts\nconst streamStatus = "NOMINAL";\nconsole.log(\`[GRID]: \${streamStatus}\`);\n\`\`\`\n\n> Note: All operators must maintain high caffeine levels.`,
+        authorName: 'cyber_junkie',
+        authorId: 'user-op-01',
+        createdAt: '30 MIN AGO',
+      },
+    ],
+    roomConfig: {
+      themeColor: '#00F0FF',
+      bgImageUrl: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1600&q=80',
+    },
+  },
+  {
+    id: 'room-stream-02',
+    title: 'SYNTHWAVE NIGHT HIGHWAY',
+    description: 'Cruising through sector 7 rain. Stream audio loop active. Visual feed transmitting.',
+    poster: 'https://images.unsplash.com/photo-1508739773434-c26b3d09e071?auto=format&fit=crop&w=1200&q=80',
+    originVibeId: 'vibe-9482-b',
+    originVibeTitle: 'Neon Highway Run',
+    isPublic: true,
+    authorId: 'user-op-01',
+    authorName: 'cyber_junkie',
+    createdAt: '1 HOUR AGO',
+    tags: ['#stream', '#nightdrive', '#synthwave', '#ambient'],
+    images: [
+      'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=800&q=80',
+    ],
+    musicUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
+    streamItems: [
+      {
+        id: 'rsi-4',
+        type: 'music',
+        title: 'Midnight Synth Stream Track',
+        url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
+        authorName: 'cyber_junkie',
+        authorId: 'user-op-01',
+        createdAt: '30 MIN AGO',
+      },
+    ],
+    roomConfig: {
+      themeColor: '#BD00FF',
+      bgImageUrl: 'https://images.unsplash.com/photo-1508739773434-c26b3d09e071?auto=format&fit=crop&w=1600&q=80',
+    },
+  },
+  {
+    id: 'room-stream-03',
+    title: 'AMBIENT RAIN WALK & MEDITATION',
+    description: 'Continuous atmospheric transmission. Low pulse walking and field recordings.',
+    poster: 'https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&w=1200&q=80',
+    originVibeId: 'vibe-9482-c',
+    originVibeTitle: 'Rainy Alleyway Meditation',
+    isPublic: true,
+    authorId: 'user-op-02',
+    authorName: 'neon_wanderer',
+    createdAt: '2 HOURS AGO',
+    tags: ['#ambient', '#outside', '#chill', '#stream'],
+    images: [
+      'https://images.unsplash.com/photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=800&q=80',
+    ],
+    musicUrl: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
+    streamItems: [],
+    roomConfig: {
+      themeColor: '#FFB000',
+      bgImageUrl: 'https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&w=1600&q=80',
+    },
+  },
+];
+
+const DEFAULT_ADMIN_VIBE_TAGS = [
+  '#deepwork',
+  '#nightdrive',
+  '#chill',
+  '#outside',
+  '#highenergy',
+];
+
+const DEFAULT_ADMIN_ROOM_TAGS = [
+  '#stream',
+  '#lofi',
+  '#ambient',
+  '#gaming',
+  '#coding',
+  '#synthwave',
+];
+
+const DEFAULT_MY_VIBE_TAGS = ['#deepwork', '#chill', '#nightdrive'];
+const DEFAULT_MY_ROOM_TAGS = ['#stream', '#lofi', '#ambient'];
+
+const getStoredTags = (key: string, defaultTags: string[]): string[] => {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : defaultTags;
+  } catch (_) {
+    return defaultTags;
+  }
+};
+
+const initialRoute = parseHashRoute();
+
 export const useAtmosphericStore = create<AtmosphericState>((set, get) => ({
-  activeTag: '#ALL',
+  activeVibeTag: initialRoute.viewMode === 'vibes' ? initialRoute.tag : '#ALL',
+  activeRoomTag: initialRoute.viewMode === 'rooms' ? initialRoute.tag : '#ALL',
+  activeTag: initialRoute.tag,
+
   setActiveTag: (tag) => {
     const formatted =
       tag === '#ALL' || tag === 'ALL'
@@ -160,11 +545,27 @@ export const useAtmosphericStore = create<AtmosphericState>((set, get) => ({
         : tag.startsWith('#')
         ? tag
         : `#${tag}`;
-    set({ activeTag: formatted });
-    get().fetchVibes(formatted === '#ALL' ? undefined : formatted);
+
+    if (get().viewMode === 'rooms') {
+      set({
+        activeCreatedRoom: null,
+        activeRoomTag: formatted,
+        activeTag: formatted,
+      });
+      updateHashRoute('rooms', formatted);
+    } else {
+      set({
+        viewMode: 'vibes',
+        selectedVibePage: null,
+        activeVibeTag: formatted,
+        activeTag: formatted,
+      });
+      updateHashRoute('vibes', formatted);
+      get().fetchVibes(formatted === '#ALL' ? undefined : formatted);
+    }
   },
 
-  topHashtags: DEFAULT_PINNED_TAGS,
+  topHashtags: DEFAULT_ADMIN_VIBE_TAGS,
   fetchTopHashtags: async () => {
     try {
       const data = await fetchApi<{ name: string; useCount: number }[]>(
@@ -176,48 +577,487 @@ export const useAtmosphericStore = create<AtmosphericState>((set, get) => ({
         );
         set({ topHashtags: formatted });
       }
-    } catch (_) {
-      // Fallback to default pinned tags if backend server is starting
+    } catch (_) {}
+  },
+
+  // Vibes Admin Tags
+  adminMenuTags: getStoredTags('vibe_admin_menu_tags', DEFAULT_ADMIN_VIBE_TAGS),
+  addAdminMenuTag: (tag) => {
+    const formatted = tag.startsWith('#') ? tag : `#${tag}`;
+    set((state) => {
+      if (state.adminMenuTags.some((t) => t.toLowerCase() === formatted.toLowerCase()))
+        return state;
+      const updated = [...state.adminMenuTags, formatted];
+      localStorage.setItem('vibe_admin_menu_tags', JSON.stringify(updated));
+      return { adminMenuTags: updated, pinnedTags: updated };
+    });
+  },
+  removeAdminMenuTag: (tag) => {
+    const formatted = tag.startsWith('#') ? tag : `#${tag}`;
+    set((state) => {
+      const updated = state.adminMenuTags.filter(
+        (t) => t.toLowerCase() !== formatted.toLowerCase(),
+      );
+      localStorage.setItem('vibe_admin_menu_tags', JSON.stringify(updated));
+      return { adminMenuTags: updated, pinnedTags: updated };
+    });
+  },
+
+  // Vibes Personal Tags
+  myTags: getStoredTags('vibe_my_tags', DEFAULT_MY_VIBE_TAGS),
+  addMyTag: (tag) => {
+    const formatted = tag.startsWith('#') ? tag : `#${tag}`;
+    set((state) => {
+      if (state.myTags.some((t) => t.toLowerCase() === formatted.toLowerCase()))
+        return state;
+      const updated = [...state.myTags, formatted];
+      localStorage.setItem('vibe_my_tags', JSON.stringify(updated));
+      return { myTags: updated };
+    });
+  },
+  removeMyTag: (tag) => {
+    const formatted = tag.startsWith('#') ? tag : `#${tag}`;
+    set((state) => {
+      const updated = state.myTags.filter(
+        (t) => t.toLowerCase() !== formatted.toLowerCase(),
+      );
+      localStorage.setItem('vibe_my_tags', JSON.stringify(updated));
+      return { myTags: updated };
+    });
+  },
+
+  // Rooms Admin Tags
+  roomsAdminMenuTags: getStoredTags('rooms_admin_menu_tags', DEFAULT_ADMIN_ROOM_TAGS),
+  addRoomsAdminMenuTag: (tag) => {
+    const formatted = tag.startsWith('#') ? tag : `#${tag}`;
+    set((state) => {
+      if (state.roomsAdminMenuTags.some((t) => t.toLowerCase() === formatted.toLowerCase()))
+        return state;
+      const updated = [...state.roomsAdminMenuTags, formatted];
+      localStorage.setItem('rooms_admin_menu_tags', JSON.stringify(updated));
+      return { roomsAdminMenuTags: updated };
+    });
+  },
+  removeRoomsAdminMenuTag: (tag) => {
+    const formatted = tag.startsWith('#') ? tag : `#${tag}`;
+    set((state) => {
+      const updated = state.roomsAdminMenuTags.filter(
+        (t) => t.toLowerCase() !== formatted.toLowerCase(),
+      );
+      localStorage.setItem('rooms_admin_menu_tags', JSON.stringify(updated));
+      return { roomsAdminMenuTags: updated };
+    });
+  },
+
+  // Rooms Personal Tags
+  roomsMyTags: getStoredTags('rooms_my_tags', DEFAULT_MY_ROOM_TAGS),
+  addRoomsMyTag: (tag) => {
+    const formatted = tag.startsWith('#') ? tag : `#${tag}`;
+    set((state) => {
+      if (state.roomsMyTags.some((t) => t.toLowerCase() === formatted.toLowerCase()))
+        return state;
+      const updated = [...state.roomsMyTags, formatted];
+      localStorage.setItem('rooms_my_tags', JSON.stringify(updated));
+      return { roomsMyTags: updated };
+    });
+  },
+  removeRoomsMyTag: (tag) => {
+    const formatted = tag.startsWith('#') ? tag : `#${tag}`;
+    set((state) => {
+      const updated = state.roomsMyTags.filter(
+        (t) => t.toLowerCase() !== formatted.toLowerCase(),
+      );
+      localStorage.setItem('rooms_my_tags', JSON.stringify(updated));
+      return { roomsMyTags: updated };
+    });
+  },
+
+  tagMode: 'live',
+  setTagMode: (mode) => set({ tagMode: mode }),
+
+  pinnedTags: getStoredTags('vibe_admin_menu_tags', DEFAULT_ADMIN_VIBE_TAGS),
+  pinTag: (tag) => get().addMyTag(tag),
+  unpinTag: (tag) => get().removeMyTag(tag),
+  togglePinTag: (tag) => {
+    const formatted = tag.startsWith('#') ? tag : `#${tag}`;
+    const exists = get().myTags.some(
+      (t) => t.toLowerCase() === formatted.toLowerCase(),
+    );
+    if (exists) {
+      get().removeMyTag(formatted);
+    } else {
+      get().addMyTag(formatted);
     }
   },
 
-  pinnedTags: DEFAULT_PINNED_TAGS,
-  pinTag: (tag) => {
-    const formatted = tag.startsWith('#') ? tag : `#${tag}`;
-    set((state) => {
-      if (state.pinnedTags.includes(formatted)) return state;
-      return { pinnedTags: [...state.pinnedTags, formatted] };
-    });
-  },
-  unpinTag: (tag) => {
-    const formatted = tag.startsWith('#') ? tag : `#${tag}`;
-    set((state) => ({
-      pinnedTags: state.pinnedTags.filter(
-        (t) => t.toLowerCase() !== formatted.toLowerCase(),
-      ),
-    }));
-  },
-  togglePinTag: (tag) => {
-    const formatted = tag.startsWith('#') ? tag : `#${tag}`;
-    set((state) => {
-      const exists = state.pinnedTags.some(
-        (t) => t.toLowerCase() === formatted.toLowerCase(),
+  viewMode: initialRoute.viewMode,
+  setViewMode: (mode) => {
+    const currentActiveTag = mode === 'rooms' ? get().activeRoomTag : get().activeVibeTag;
+    set({ viewMode: mode, activeTag: currentActiveTag });
+    if (mode === 'rooms') {
+      // If entering rooms view mode directly, show room list unless an activeCreatedRoom is explicitly open
+      updateHashRoute(
+        mode,
+        currentActiveTag,
+        undefined,
+        get().activeCreatedRoom?.id,
       );
-      if (exists) {
-        return {
-          pinnedTags: state.pinnedTags.filter(
-            (t) => t.toLowerCase() !== formatted.toLowerCase(),
-          ),
-        };
-      }
-      return { pinnedTags: [...state.pinnedTags, formatted] };
+    } else {
+      updateHashRoute(
+        mode,
+        currentActiveTag,
+        get().selectedVibePage?.id,
+        undefined,
+      );
+    }
+  },
+
+  selectedVibePage: MOCK_INITIAL_VIBES[0],
+  setSelectedVibePage: (vibe) => set({ selectedVibePage: vibe }),
+  enterVibePage: (vibe) => {
+    set({ selectedVibePage: vibe, viewMode: 'vibe' });
+    updateHashRoute('vibe', get().activeVibeTag, vibe.id);
+  },
+
+  selectedVibeRoom: MOCK_INITIAL_VIBES[0],
+  setSelectedVibeRoom: (vibe) => set({ selectedVibeRoom: vibe }),
+
+  createdRooms: MOCK_INITIAL_ROOMS,
+  activeCreatedRoom: null,
+  setActiveCreatedRoom: (room) => set({ activeCreatedRoom: room }),
+
+  openRoomPage: (room) => {
+    set({ activeCreatedRoom: room, viewMode: 'rooms' });
+    updateHashRoute('rooms', get().activeRoomTag, undefined, room.id);
+  },
+
+  closeRoomPage: () => {
+    set({ activeCreatedRoom: null, viewMode: 'rooms' });
+    updateHashRoute('rooms', get().activeRoomTag);
+  },
+
+  createRoomFromVibe: (vibe, params) => {
+    const currentUser = useAuthStore.getState().user;
+    const roomTags = params.tags && params.tags.length > 0 
+      ? params.tags 
+      : Array.from(new Set(['#stream', ...(vibe.tags || [])]));
+
+    const newRoom: CreatedRoom = {
+      id: `room-${Date.now()}`,
+      title: params.title || `ROOM :: ${vibe.title}`,
+      description: vibe.content,
+      poster: vibe.images?.[0] || vibe.roomConfig?.bgImageUrl || 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1200&q=80',
+      originVibeId: vibe.id,
+      originVibeTitle: vibe.title,
+      isPublic: params.isPublic,
+      authorId: currentUser?.id || 'user-op-01',
+      authorName: currentUser?.username || 'operator',
+      createdAt: 'JUST NOW',
+      tags: roomTags,
+      images: vibe.images || [],
+      videoUrl: vibe.videoUrl,
+      musicUrl: vibe.musicUrl,
+      streamItems: [],
+      roomConfig: params.roomConfig || vibe.roomConfig || {
+        themeColor: '#00F0FF',
+        bgImageUrl: vibe.images?.[0] || '',
+      },
+    };
+
+    set((state) => ({
+      createdRooms: [newRoom, ...state.createdRooms],
+      activeCreatedRoom: newRoom,
+      selectedVibeRoom: vibe,
+      viewMode: 'rooms',
+    }));
+
+    updateHashRoute('rooms', get().activeRoomTag, undefined, newRoom.id);
+    return newRoom;
+  },
+
+  createStandaloneRoom: (params) => {
+    const currentUser = useAuthStore.getState().user;
+    const newRoom: CreatedRoom = {
+      id: `room-${Date.now()}`,
+      title: params.title,
+      description: params.description || '',
+      poster: params.poster || params.images?.[0] || 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1200&q=80',
+      isPublic: params.isPublic,
+      authorId: currentUser?.id || 'user-op-01',
+      authorName: currentUser?.username || 'operator',
+      createdAt: 'JUST NOW',
+      tags: params.tags && params.tags.length > 0 ? params.tags : ['#stream'],
+      images: params.images || [],
+      videoUrl: params.videoUrl || null,
+      musicUrl: params.musicUrl || null,
+      youtubeUrl: params.youtubeUrl || null,
+      streamItems: [],
+      roomConfig: params.roomConfig || {
+        themeColor: '#00F0FF',
+        bgImageUrl: params.poster || '',
+      },
+    };
+
+    set((state) => ({
+      createdRooms: [newRoom, ...state.createdRooms],
+      activeCreatedRoom: newRoom,
+      viewMode: 'rooms',
+    }));
+
+    updateHashRoute('rooms', get().activeRoomTag, undefined, newRoom.id);
+    return newRoom;
+  },
+
+  addStreamItemToRoom: (roomId, item) => {
+    const targetRoom = get().createdRooms.find((r) => r.id === roomId);
+    const authState = useAuthStore.getState();
+    const perm = checkRoomPostingPermission(targetRoom || null, authState.user, authState.isAuthenticated);
+    if (!perm.canPost) {
+      console.warn('Blocked posting attempt to room stream:', perm.reason);
+      return;
+    }
+
+    const currentUser = authState.user;
+    const newItem: RoomStreamItem = {
+      id: `rsi-${Date.now()}`,
+      ...item,
+      authorId: currentUser?.id || 'user-op-01',
+      authorName: currentUser?.username || 'operator',
+      createdAt: 'JUST NOW',
+    };
+
+    set((state) => {
+      const updatedRooms = state.createdRooms.map((r) => {
+        if (r.id === roomId) {
+          const items = r.streamItems || [];
+          const images = [...(r.images || [])];
+          if (item.type === 'image' && item.mediaUrls) {
+            item.mediaUrls.forEach((img) => {
+              if (!images.includes(img)) images.push(img);
+            });
+          }
+          return {
+            ...r,
+            images,
+            videoUrl: item.type === 'video' ? item.url || r.videoUrl : r.videoUrl,
+            youtubeUrl: item.type === 'youtube' ? item.url || r.youtubeUrl : r.youtubeUrl,
+            musicUrl: item.type === 'music' ? item.url || r.musicUrl : r.musicUrl,
+            streamItems: [newItem, ...items],
+          };
+        }
+        return r;
+      });
+
+      const updatedActive =
+        state.activeCreatedRoom?.id === roomId
+          ? updatedRooms.find((r) => r.id === roomId) || null
+          : state.activeCreatedRoom;
+
+      return {
+        createdRooms: updatedRooms,
+        activeCreatedRoom: updatedActive,
+      };
     });
   },
 
-  viewMode: 'vibes',
-  setViewMode: (mode) => set({ viewMode: mode }),
-  selectedVibeRoom: MOCK_INITIAL_VIBES[0],
-  setSelectedVibeRoom: (vibe) => set({ selectedVibeRoom: vibe }),
+  addRoomNews: (roomId, newsData) => {
+    const targetRoom = get().createdRooms.find((r) => r.id === roomId);
+    const authState = useAuthStore.getState();
+    const perm = checkRoomPostingPermission(targetRoom || null, authState.user, authState.isAuthenticated);
+    if (!perm.canPost) {
+      console.warn('Blocked adding news to room:', perm.reason);
+      return;
+    }
+
+    const currentUser = authState.user;
+    const newNews: RoomNewsItem = {
+      id: `news-${Date.now()}`,
+      title: newsData.title,
+      content: newsData.content,
+      authorId: currentUser?.id || 'user-op-01',
+      authorName: currentUser?.username || 'operator',
+      createdAt: 'JUST NOW',
+    };
+
+    set((state) => {
+      const updatedRooms = state.createdRooms.map((r) => {
+        if (r.id === roomId) {
+          const existingNews = r.news || [];
+          return {
+            ...r,
+            news: [newNews, ...existingNews],
+          };
+        }
+        return r;
+      });
+
+      const updatedActive =
+        state.activeCreatedRoom?.id === roomId
+          ? updatedRooms.find((r) => r.id === roomId) || null
+          : state.activeCreatedRoom;
+
+      return {
+        createdRooms: updatedRooms,
+        activeCreatedRoom: updatedActive,
+      };
+    });
+  },
+
+  deleteRoomNews: (roomId, newsId) => {
+    set((state) => {
+      const updatedRooms = state.createdRooms.map((r) => {
+        if (r.id === roomId) {
+          return {
+            ...r,
+            news: (r.news || []).filter((n) => n.id !== newsId),
+          };
+        }
+        return r;
+      });
+
+      const updatedActive =
+        state.activeCreatedRoom?.id === roomId
+          ? updatedRooms.find((r) => r.id === roomId) || null
+          : state.activeCreatedRoom;
+
+      return {
+        createdRooms: updatedRooms,
+        activeCreatedRoom: updatedActive,
+      };
+    });
+  },
+
+  addRoomNote: (roomId, noteData) => {
+    const targetRoom = get().createdRooms.find((r) => r.id === roomId);
+    const authState = useAuthStore.getState();
+    const perm = checkRoomPostingPermission(targetRoom || null, authState.user, authState.isAuthenticated);
+    if (!perm.canPost) {
+      console.warn('Blocked adding note to room:', perm.reason);
+      return;
+    }
+
+    const currentUser = authState.user;
+    const newNote: RoomNoteItem = {
+      id: `note-${Date.now()}`,
+      title: noteData.title,
+      content: noteData.content,
+      authorId: currentUser?.id || 'user-op-01',
+      authorName: currentUser?.username || 'operator',
+      createdAt: 'JUST NOW',
+    };
+
+    set((state) => {
+      const updatedRooms = state.createdRooms.map((r) => {
+        if (r.id === roomId) {
+          const existingNotes = r.notes || [];
+          return {
+            ...r,
+            notes: [newNote, ...existingNotes],
+          };
+        }
+        return r;
+      });
+
+      const updatedActive =
+        state.activeCreatedRoom?.id === roomId
+          ? updatedRooms.find((r) => r.id === roomId) || null
+          : state.activeCreatedRoom;
+
+      return {
+        createdRooms: updatedRooms,
+        activeCreatedRoom: updatedActive,
+      };
+    });
+  },
+
+  updateRoomNote: (roomId, noteId, updatedNote) => {
+    set((state) => {
+      const updatedRooms = state.createdRooms.map((r) => {
+        if (r.id === roomId) {
+          const updatedNotes = (r.notes || []).map((n) => {
+            if (n.id === noteId) {
+              return {
+                ...n,
+                title: updatedNote.title !== undefined ? updatedNote.title : n.title,
+                content: updatedNote.content !== undefined ? updatedNote.content : n.content,
+                updatedAt: 'EDITED JUST NOW',
+              };
+            }
+            return n;
+          });
+          return { ...r, notes: updatedNotes };
+        }
+        return r;
+      });
+
+      const updatedActive =
+        state.activeCreatedRoom?.id === roomId
+          ? updatedRooms.find((r) => r.id === roomId) || null
+          : state.activeCreatedRoom;
+
+      return {
+        createdRooms: updatedRooms,
+        activeCreatedRoom: updatedActive,
+      };
+    });
+  },
+
+  deleteRoomNote: (roomId, noteId) => {
+    set((state) => {
+      const updatedRooms = state.createdRooms.map((r) => {
+        if (r.id === roomId) {
+          return {
+            ...r,
+            notes: (r.notes || []).filter((n) => n.id !== noteId),
+          };
+        }
+        return r;
+      });
+
+      const updatedActive =
+        state.activeCreatedRoom?.id === roomId
+          ? updatedRooms.find((r) => r.id === roomId) || null
+          : state.activeCreatedRoom;
+
+      return {
+        createdRooms: updatedRooms,
+        activeCreatedRoom: updatedActive,
+      };
+    });
+  },
+
+  isCreateRoomModalOpen: false,
+  vibeToCreateRoom: null,
+  setCreateRoomModalOpen: (open, vibe = null) =>
+    set({ isCreateRoomModalOpen: open, vibeToCreateRoom: vibe }),
+
+  syncRouteFromUrl: () => {
+    const route = parseHashRoute();
+    if (route.authModalMode) {
+      useAuthStore.getState().setAuthModalOpen(true, route.authModalMode);
+    }
+
+    if (route.viewMode === 'vibe' && route.vibeId) {
+      const found = get().vibes.find((v) => v.id === route.vibeId);
+      if (found) {
+        set({ selectedVibePage: found, viewMode: 'vibe', activeVibeTag: route.tag, activeTag: route.tag });
+        return;
+      }
+    } else if (route.viewMode === 'rooms') {
+      if (route.roomId) {
+        const foundRoom = get().createdRooms.find((r) => r.id === route.roomId);
+        if (foundRoom) {
+          set({ activeCreatedRoom: foundRoom, viewMode: 'rooms', activeRoomTag: route.tag, activeTag: route.tag });
+          return;
+        }
+      }
+      set({ activeCreatedRoom: null, viewMode: 'rooms', activeRoomTag: route.tag, activeTag: route.tag });
+      return;
+    }
+
+    set({ viewMode: route.viewMode, activeVibeTag: route.tag, activeTag: route.tag });
+    get().fetchVibes(route.tag === '#ALL' ? undefined : route.tag);
+  },
 
   vibes: MOCK_INITIAL_VIBES,
   isLoadingVibes: false,
@@ -226,7 +1066,9 @@ export const useAtmosphericStore = create<AtmosphericState>((set, get) => ({
     set({ isLoadingVibes: true });
     try {
       const cleanTag = tag ? tag.replace('#', '') : undefined;
-      const url = cleanTag ? `/vibes?tag=${encodeURIComponent(cleanTag)}` : '/vibes';
+      const url = cleanTag
+        ? `/vibes?tag=${encodeURIComponent(cleanTag)}`
+        : '/vibes';
       const response = await fetchApi<{ data: any[] }>(url);
 
       if (Array.isArray(response.data) && response.data.length > 0) {
@@ -245,8 +1087,23 @@ export const useAtmosphericStore = create<AtmosphericState>((set, get) => ({
           authorId: item.authorId,
           createdAt: new Date(item.createdAt).toLocaleString(),
           roomConfig: item.roomConfig || null,
+          updates: (item.updates || []).map((u: any) => ({
+            id: u.id,
+            content: u.content,
+            mediaUrls: u.mediaUrls || [],
+            createdAt: new Date(u.createdAt).toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit',
+            }),
+          })),
         }));
-        set({ vibes: mapped, isLoadingVibes: false });
+
+        set((state) => {
+          const currentSelected = state.selectedVibePage
+            ? mapped.find((m) => m.id === state.selectedVibePage?.id) || state.selectedVibePage
+            : mapped[0] || null;
+          return { vibes: mapped, selectedVibePage: currentSelected, isLoadingVibes: false };
+        });
         return;
       }
     } catch (_) {}
@@ -274,7 +1131,9 @@ export const useAtmosphericStore = create<AtmosphericState>((set, get) => ({
         id: created.id,
         title: created.title,
         content: created.content,
-        tags: (created.keywords || []).map((k: string) => (k.startsWith('#') ? k : `#${k}`)),
+        tags: (created.keywords || []).map((k: string) =>
+          k.startsWith('#') ? k : `#${k}`,
+        ),
         keywords: created.keywords || [],
         images: created.images || [],
         videoUrl: created.videoUrl,
@@ -283,18 +1142,39 @@ export const useAtmosphericStore = create<AtmosphericState>((set, get) => ({
         authorId: created.authorId,
         createdAt: 'JUST NOW',
         roomConfig: created.roomConfig || null,
+        updates: [],
       };
 
       set((state) => ({ vibes: [mapped, ...state.vibes] }));
     } catch (_) {
-      // Fallback local add if server unreachable
       const created: VibeItem = {
         ...newVibe,
         id: `vibe-${Date.now()}`,
         createdAt: 'JUST NOW',
+        updates: [],
       };
       set((state) => ({ vibes: [created, ...state.vibes] }));
     }
+  },
+
+  updateVibe: async (id, updates) => {
+    try {
+      await fetchApi(`/vibes/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(updates),
+      });
+    } catch (_) {}
+
+    set((state) => {
+      const updatedVibes = state.vibes.map((v) =>
+        v.id === id ? { ...v, ...updates } : v,
+      );
+      const updatedSelected =
+        state.selectedVibePage?.id === id
+          ? { ...state.selectedVibePage, ...updates }
+          : state.selectedVibePage;
+      return { vibes: updatedVibes, selectedVibePage: updatedSelected };
+    });
   },
 
   deleteVibe: async (id) => {
@@ -306,10 +1186,135 @@ export const useAtmosphericStore = create<AtmosphericState>((set, get) => ({
       const updatedVibes = state.vibes.filter((v) => v.id !== id);
       return {
         vibes: updatedVibes,
+        selectedVibePage:
+          state.selectedVibePage?.id === id
+            ? updatedVibes[0] || null
+            : state.selectedVibePage,
         selectedVibeRoom:
-          state.selectedVibeRoom?.id === id ? updatedVibes[0] || null : state.selectedVibeRoom,
+          state.selectedVibeRoom?.id === id
+            ? updatedVibes[0] || null
+            : state.selectedVibeRoom,
       };
     });
+  },
+
+  addVibeUpdate: async (vibeId, content, mediaUrls = []) => {
+    const newUpdate: VibeUpdate = {
+      id: `upd-${Date.now()}`,
+      content,
+      mediaUrls,
+      createdAt: 'JUST NOW',
+    };
+
+    try {
+      const res = await fetchApi<any>(`/vibes/${vibeId}/updates`, {
+        method: 'POST',
+        body: JSON.stringify({ content, mediaUrls }),
+      });
+      if (res?.id) {
+        newUpdate.id = res.id;
+      }
+    } catch (_) {}
+
+    set((state) => {
+      const updatedVibes = state.vibes.map((v) => {
+        if (v.id === vibeId) {
+          const currentUpdates = v.updates || [];
+          return { ...v, updates: [newUpdate, ...currentUpdates] };
+        }
+        return v;
+      });
+
+      const updatedSelected =
+        state.selectedVibePage?.id === vibeId
+          ? {
+              ...state.selectedVibePage,
+              updates: [newUpdate, ...(state.selectedVibePage.updates || [])],
+            }
+          : state.selectedVibePage;
+
+      return { vibes: updatedVibes, selectedVibePage: updatedSelected };
+    });
+  },
+
+  addTagToVibe: async (vibeId, newTag) => {
+    const formattedTag = newTag.startsWith('#') ? newTag : `#${newTag}`;
+    const cleanKeyword = formattedTag.replace('#', '');
+
+    set((state) => {
+      const updatedVibes = state.vibes.map((v) => {
+        if (v.id === vibeId) {
+          const currentTags = v.tags || [];
+          if (currentTags.some((t) => t.toLowerCase() === formattedTag.toLowerCase())) {
+            return v;
+          }
+          const updatedTags = [...currentTags, formattedTag];
+          const updatedKeywords = Array.from(
+            new Set([...(v.keywords || []), cleanKeyword]),
+          );
+          return { ...v, tags: updatedTags, keywords: updatedKeywords };
+        }
+        return v;
+      });
+
+      const targetVibe = updatedVibes.find((v) => v.id === vibeId);
+      const updatedSelected =
+        state.selectedVibePage?.id === vibeId && targetVibe
+          ? targetVibe
+          : state.selectedVibePage;
+
+      return { vibes: updatedVibes, selectedVibePage: updatedSelected };
+    });
+
+    try {
+      const target = get().vibes.find((v) => v.id === vibeId);
+      if (target) {
+        const cleanKeywords = (target.tags || []).map((t) => t.replace('#', ''));
+        await fetchApi(`/vibes/${vibeId}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ keywords: cleanKeywords }),
+        });
+      }
+    } catch (_) {}
+  },
+
+  removeTagFromVibe: async (vibeId, tagToRemove) => {
+    const formattedTag = tagToRemove.startsWith('#') ? tagToRemove : `#${tagToRemove}`;
+    const cleanKeyword = formattedTag.replace('#', '');
+
+    set((state) => {
+      const updatedVibes = state.vibes.map((v) => {
+        if (v.id === vibeId) {
+          const updatedTags = (v.tags || []).filter(
+            (t) => t.toLowerCase() !== formattedTag.toLowerCase(),
+          );
+          const updatedKeywords = (v.keywords || []).filter(
+            (k) => k.toLowerCase() !== cleanKeyword.toLowerCase(),
+          );
+          return { ...v, tags: updatedTags, keywords: updatedKeywords };
+        }
+        return v;
+      });
+
+      const targetVibe = updatedVibes.find((v) => v.id === vibeId);
+      const updatedSelected =
+        state.selectedVibePage?.id === vibeId && targetVibe
+          ? targetVibe
+          : state.selectedVibePage;
+
+      return { vibes: updatedVibes, selectedVibePage: updatedSelected };
+    });
+
+    try {
+      const target = get().vibes.find((v) => v.id === vibeId);
+      if (target) {
+        const cleanKeywords = (target.tags || []).map((t) => t.replace('#', ''));
+        await fetchApi(`/vibes/${vibeId}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ keywords: cleanKeywords }),
+        });
+      }
+    } catch (_) {}
   },
 
   roomData: null,
@@ -319,7 +1324,9 @@ export const useAtmosphericStore = create<AtmosphericState>((set, get) => ({
     set({ isLoadingRoom: true });
     try {
       const cleanTag = tag.replace('#', '');
-      const response = await fetchApi<any>(`/rooms/${encodeURIComponent(cleanTag)}`);
+      const response = await fetchApi<any>(
+        `/rooms/${encodeURIComponent(cleanTag)}`,
+      );
       if (response.room) {
         set({ roomData: response.room, isLoadingRoom: false });
         return;

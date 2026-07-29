@@ -69,4 +69,15 @@ export class VibesController {
   deleteVibe(@Param('id') id: string, @GetUser() user: any) {
     return this.vibesService.deleteVibe(id, user);
   }
+
+  @Post(':id/updates')
+  @UseGuards(JwtAuthGuard)
+  addVibeUpdate(
+    @Param('id') id: string,
+    @GetUser() user: any,
+    @Body() dto: any,
+  ) {
+    return this.vibesService.addVibeUpdate(id, user, dto);
+  }
 }
+

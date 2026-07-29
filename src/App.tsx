@@ -5,7 +5,10 @@ import { HeaderNavbar } from './components/Navbar/HeaderNavbar';
 import { ActivitySwitcher } from './components/VibeSelector/ActivitySwitcher';
 import { OperatorSidebar } from './components/Sidebar/OperatorSidebar';
 import { VibeCard } from './components/VibeList/VibeCard';
+import { VibePage } from './components/VibePage/VibePage';
+import { RoomListView } from './components/VibeRoom/RoomListView';
 import { AtmosphericRoomView } from './components/VibeRoom/AtmosphericRoomView';
+import { CreateRoomModal } from './components/VibeRoom/CreateRoomModal';
 import { CreateVibeModal } from './components/VibeForm/CreateVibeModal';
 import { DeleteVibeModal } from './components/VibeList/DeleteVibeModal';
 import { BottomNavbar } from './components/Navbar/BottomNavbar';
@@ -15,12 +18,15 @@ export const App: React.FC = () => {
   const {
     activeTag,
     viewMode,
+    setViewMode,
     vibes,
     selectedVibeRoom,
+    activeCreatedRoom,
     deleteVibe,
     setCreateModalOpen,
     fetchVibes,
     fetchTopHashtags,
+    syncRouteFromUrl,
   } = useAtmosphericStore();
 
   const { isAuthenticated, user, checkAuth, setAuthModalOpen } = useAuthStore();
@@ -30,8 +36,17 @@ export const App: React.FC = () => {
   useEffect(() => {
     checkAuth();
     fetchTopHashtags();
-    fetchVibes();
-  }, [checkAuth, fetchTopHashtags, fetchVibes]);
+    syncRouteFromUrl();
+
+    const handleHashChange = () => {
+      syncRouteFromUrl();
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+    };
+  }, [checkAuth, fetchTopHashtags, syncRouteFromUrl]);
 
   // Dynamic hashtag feed filtering
   const filteredVibes =
@@ -60,14 +75,16 @@ export const App: React.FC = () => {
             <ActivitySwitcher />
           </header>
 
-          {/* Dynamic View: Main Vibes List OR Immersive Hashtag Room View */}
-          {viewMode === 'vibes' ? (
+          {/* Dynamic View: Main Vibes List OR Dedicated Vibe Page OR Rooms List OR Room View */}
+          {viewMode === 'vibe' ? (
+            <VibePage />
+          ) : viewMode === 'vibes' ? (
             <main className="flex-1 w-full h-full overflow-y-auto bg-zinc-950 bg-[radial-gradient(#27272a_1px,transparent_1px)] bg-[size:16px_16px] pb-20 lg:pb-8">
-              <div className="w-full max-w-[980px] mx-auto p-4 md:p-6">
+              <div className="w-full max-w-[1400px] mx-auto p-4 md:p-6 lg:p-8">
                 {/* Feed Header & Status */}
                 <div className="flex justify-between items-center mb-4 font-mono text-xs text-zinc-400 border-b border-zinc-800/80 pb-2">
                   <div>
-                    [HASHTAG_ROUTE: <span className="text-amber-400 font-bold">{activeTag}</span>]
+                    [VIBES_HASHTAG_ROUTE: <span className="text-amber-400 font-bold">{activeTag}</span>]
                   </div>
                   <div>{filteredVibes.length} VIBE LOGS</div>
                 </div>
@@ -91,7 +108,7 @@ export const App: React.FC = () => {
                     </button>
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-4 max-w-4xl mx-auto">
                     {filteredVibes.map((vibe) => (
                       <VibeCard
                         key={vibe.id}
@@ -116,12 +133,14 @@ export const App: React.FC = () => {
                 )}
               </div>
             </main>
-          ) : (
+          ) : activeCreatedRoom ? (
             <AtmosphericRoomView
-              vibeTitle={selectedVibeRoom?.title || `ROOM :: ${activeTag}`}
-              roomConfig={selectedVibeRoom?.roomConfig}
+              vibeTitle={activeCreatedRoom.title}
+              roomConfig={activeCreatedRoom.roomConfig}
               vibeItem={selectedVibeRoom || undefined}
             />
+          ) : (
+            <RoomListView />
           )}
         </div>
       </div>
@@ -131,6 +150,9 @@ export const App: React.FC = () => {
 
       {/* New Vibe Modal Dialog */}
       <CreateVibeModal />
+
+      {/* Create Room Modal Dialog */}
+      <CreateRoomModal />
 
       {/* Confirmation Modal for Deleting Top Level Vibe */}
       <DeleteVibeModal

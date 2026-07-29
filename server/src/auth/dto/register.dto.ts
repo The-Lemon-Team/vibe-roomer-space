@@ -1,5 +1,4 @@
-import { IsEmail, IsEnum, IsOptional, IsString, MinLength } from 'class-validator';
-import { Role } from '@prisma/client';
+import { IsEmail, IsString, MinLength } from 'class-validator';
 
 export class RegisterDto {
   @IsEmail()
@@ -12,8 +11,4 @@ export class RegisterDto {
   @IsString()
   @MinLength(6)
   password: string;
-
-  @IsOptional()
-  @IsEnum(Role)
-  role?: Role;
 }

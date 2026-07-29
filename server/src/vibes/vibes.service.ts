@@ -178,4 +178,26 @@ export class VibesService {
 
     return this.prisma.vibe.delete({ where: { id } });
   }
+
+  async addVibeUpdate(id: string, user: { id: string; role: Role }, dto: { content: string; mediaUrls?: string[] }) {
+    const existing = await this.prisma.vibe.findUnique({ where: { id } });
+    if (!existing) {
+      throw new NotFoundException(`Vibe with ID '${id}' not found`);
+    }
+
+    if (existing.authorId !== user.id && user.role !== Role.ADMIN) {
+      throw new ForbiddenException('You do not have permission to add updates to this vibe');
+    }
+
+    const vibeUpdate = await this.prisma.vibeUpdate.create({
+      data: {
+        content: dto.content,
+        mediaUrls: dto.mediaUrls || [],
+        vibeId: id,
+      },
+    });
+
+    return vibeUpdate;
+  }
 }
+
