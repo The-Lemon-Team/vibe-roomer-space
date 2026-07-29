@@ -46,11 +46,13 @@ export class AuthService {
       },
     });
 
-    const token = this.generateJwt(user.id, user.email, user.role);
+    const accessToken = this.generateJwt(user.id, user.email, user.role, '1d');
+    const refreshToken = this.generateJwt(user.id, user.email, user.role, '30d');
 
     return {
       user,
-      accessToken: token,
+      accessToken,
+      refreshToken,
     };
   }
 
@@ -68,7 +70,8 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    const token = this.generateJwt(user.id, user.email, user.role);
+    const accessToken = this.generateJwt(user.id, user.email, user.role, '1d');
+    const refreshToken = this.generateJwt(user.id, user.email, user.role, '30d');
 
     return {
       user: {
@@ -78,12 +81,38 @@ export class AuthService {
         role: user.role,
         createdAt: user.createdAt,
       },
-      accessToken: token,
+      accessToken,
+      refreshToken,
     };
   }
 
-  private generateJwt(userId: string, email: string, role: Role): string {
+  async refreshTokens(token: string) {
+    try {
+      const payload = this.jwtService.verify(token);
+      const user = await this.prisma.user.findUnique({
+        where: { id: payload.sub },
+        select: { id: true, email: true, username: true, role: true, createdAt: true },
+      });
+
+      if (!user) {
+        throw new UnauthorizedException('Invalid refresh token target');
+      }
+
+      const newAccessToken = this.generateJwt(user.id, user.email, user.role, '1d');
+      const newRefreshToken = this.generateJwt(user.id, user.email, user.role, '30d');
+
+      return {
+        user,
+        accessToken: newAccessToken,
+        refreshToken: newRefreshToken,
+      };
+    } catch (error) {
+      throw new UnauthorizedException('Refresh token is invalid or expired');
+    }
+  }
+
+  private generateJwt(userId: string, email: string, role: Role, expiresIn: string): string {
     const payload = { sub: userId, email, role };
-    return this.jwtService.sign(payload);
+    return this.jwtService.sign(payload, { expiresIn });
   }
 }

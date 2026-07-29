@@ -1,29 +1,31 @@
 import React, { useState } from 'react';
 import { useAtmosphericStore } from '../../store/useAtmosphericStore';
+import { useAuthStore } from '../../store/useAuthStore';
 
 export const OperatorSidebar: React.FC = () => {
-  const { 
-    activeTag, 
-    setActiveTag, 
-    pinnedTags, 
-    pinTag, 
-    unpinTag, 
-    setCreateModalOpen, 
-    viewMode, 
+  const {
+    activeTag,
+    setActiveTag,
+    pinnedTags,
+    pinTag,
+    unpinTag,
+    setCreateModalOpen,
+    viewMode,
     setViewMode,
-    vibes 
+    vibes,
   } = useAtmosphericStore();
 
+  const { user, isAuthenticated, setAuthModalOpen } = useAuthStore();
   const [sidebarTagInput, setSidebarTagInput] = useState('');
 
   // Extract all unique hashtags across all vibes
   const allDiscoveredTags = Array.from(
-    new Set(vibes.flatMap((v) => v.tags || []))
+    new Set(vibes.flatMap((v) => v.tags || [])),
   );
 
   // Tags that are not yet pinned to the menu
   const unpinnedDiscoveredTags = allDiscoveredTags.filter(
-    (t) => !pinnedTags.some((pt) => pt.toLowerCase() === t.toLowerCase())
+    (t) => !pinnedTags.some((pt) => pt.toLowerCase() === t.toLowerCase()),
   );
 
   const handleAddCustomTag = (e: React.FormEvent) => {
@@ -39,16 +41,18 @@ export const OperatorSidebar: React.FC = () => {
 
   return (
     <aside className="hidden lg:flex flex-col h-screen sticky left-0 top-0 z-40 p-4 bg-zinc-950 border-r border-zinc-800/80 w-64 select-none shrink-0 font-mono">
-      {/* Brand Header */}
+      {/* Brand / Operator Header */}
       <div className="mb-6 flex items-center gap-3 p-2.5 border border-zinc-800 bg-zinc-900/50 rounded">
         <div className="w-10 h-10 bg-zinc-900 border border-cyan-500/50 flex items-center justify-center overflow-hidden shrink-0">
           <span className="material-symbols-outlined text-cyan-400">person</span>
         </div>
         <div className="min-w-0">
-          <div className="text-sm font-bold text-cyan-400 truncate">OPERATOR_01</div>
+          <div className="text-sm font-bold text-cyan-400 truncate">
+            {isAuthenticated ? user?.username : 'GUEST_OPERATOR'}
+          </div>
           <div className="text-[10px] text-emerald-400 flex items-center space-x-1">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse inline-block" />
-            <span>SYS: ONLINE</span>
+            <span>ROLE: {user?.role || 'GUEST'}</span>
           </div>
         </div>
       </div>
@@ -58,7 +62,9 @@ export const OperatorSidebar: React.FC = () => {
         <button
           onClick={() => setViewMode('vibes')}
           className={`py-1.5 text-center font-bold rounded transition-colors ${
-            viewMode === 'vibes' ? 'bg-cyan-950 text-cyan-400 border border-cyan-700/50' : 'text-zinc-400 hover:text-zinc-200'
+            viewMode === 'vibes'
+              ? 'bg-cyan-950 text-cyan-400 border border-cyan-700/50'
+              : 'text-zinc-400 hover:text-zinc-200'
           }`}
         >
           [VIBES]
@@ -66,7 +72,9 @@ export const OperatorSidebar: React.FC = () => {
         <button
           onClick={() => setViewMode('rooms')}
           className={`py-1.5 text-center font-bold rounded transition-colors ${
-            viewMode === 'rooms' ? 'bg-cyan-950 text-cyan-400 border border-cyan-700/50' : 'text-zinc-400 hover:text-zinc-200'
+            viewMode === 'rooms'
+              ? 'bg-cyan-950 text-cyan-400 border border-cyan-700/50'
+              : 'text-zinc-400 hover:text-zinc-200'
           }`}
         >
           [ROOMS]
@@ -99,8 +107,8 @@ export const OperatorSidebar: React.FC = () => {
           <div className="space-y-1">
             {pinnedTags.map((tag) => {
               const isActive = activeTag.toLowerCase() === tag.toLowerCase();
-              const tagCount = vibes.filter((v) => 
-                v.tags.some((t) => t.toLowerCase() === tag.toLowerCase())
+              const tagCount = vibes.filter((v) =>
+                v.tags.some((t) => t.toLowerCase() === tag.toLowerCase()),
               ).length;
 
               return (
@@ -140,8 +148,8 @@ export const OperatorSidebar: React.FC = () => {
               onChange={(e) => setSidebarTagInput(e.target.value)}
               className="bg-transparent border-none outline-none text-xs text-zinc-200 p-2 w-full placeholder-zinc-600"
             />
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               className="px-2.5 py-2 bg-zinc-800 text-cyan-400 hover:bg-cyan-950 font-bold text-xs border-l border-zinc-800 transition-colors"
             >
               +
@@ -174,13 +182,23 @@ export const OperatorSidebar: React.FC = () => {
 
       {/* CTA Button */}
       <div className="mt-auto pt-4 border-t border-zinc-800">
-        <button
-          onClick={() => setCreateModalOpen(true)}
-          className="w-full bg-cyan-400 text-black py-2.5 px-3 font-bold text-xs uppercase tracking-wider rounded hover:bg-cyan-300 shadow-[0_0_12px_rgba(0,240,255,0.4)] transition-all flex items-center justify-center space-x-1.5"
-        >
-          <span className="material-symbols-outlined text-sm">add</span>
-          <span>NEW VIBE</span>
-        </button>
+        {isAuthenticated ? (
+          <button
+            onClick={() => setCreateModalOpen(true)}
+            className="w-full bg-cyan-400 text-black py-2.5 px-3 font-bold text-xs uppercase tracking-wider rounded hover:bg-cyan-300 shadow-[0_0_12px_rgba(0,240,255,0.4)] transition-all flex items-center justify-center space-x-1.5"
+          >
+            <span className="material-symbols-outlined text-sm">add</span>
+            <span>TRANSMIT VIBE</span>
+          </button>
+        ) : (
+          <button
+            onClick={() => setAuthModalOpen(true, 'login')}
+            className="w-full bg-amber-500/20 border border-amber-500/60 text-amber-400 py-2.5 px-3 font-bold text-xs uppercase tracking-wider rounded hover:bg-amber-500/30 transition-all flex items-center justify-center space-x-1.5"
+          >
+            <span className="material-symbols-outlined text-sm">login</span>
+            <span>[SIGN_IN]</span>
+          </button>
+        )}
       </div>
     </aside>
   );

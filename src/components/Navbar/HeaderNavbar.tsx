@@ -1,8 +1,11 @@
 import React from 'react';
 import { useAtmosphericStore } from '../../store/useAtmosphericStore';
+import { useAuthStore } from '../../store/useAuthStore';
 
 export const HeaderNavbar: React.FC = () => {
-  const { activeTag, setActiveTag, viewMode, setViewMode, setCreateModalOpen } = useAtmosphericStore();
+  const { activeTag, setActiveTag, viewMode, setViewMode, setCreateModalOpen } =
+    useAtmosphericStore();
+  const { isAuthenticated, user, logout, setAuthModalOpen } = useAuthStore();
 
   const handleLogoClick = () => {
     setActiveTag('#ALL');
@@ -22,9 +25,15 @@ export const HeaderNavbar: React.FC = () => {
         </button>
         <div className="hidden lg:flex items-center space-x-2 border-l border-zinc-800 pl-3">
           <span className="text-[10px] text-zinc-400 bg-zinc-900 px-2 py-0.5 rounded border border-zinc-800">
-            [SYS: ONLINE]
+            [SYS: {isAuthenticated ? 'AUTHENTICATED' : 'GUEST_MODE'}]
           </span>
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_4px_#00ff41]" />
+          <span
+            className={`w-1.5 h-1.5 rounded-full ${
+              isAuthenticated
+                ? 'bg-cyan-400 shadow-[0_0_6px_#00ffcc]'
+                : 'bg-emerald-400 shadow-[0_0_4px_#00ff41]'
+            }`}
+          />
         </div>
       </div>
 
@@ -40,7 +49,7 @@ export const HeaderNavbar: React.FC = () => {
       <div className="flex items-center space-x-2">
         <button
           onClick={() => setViewMode(viewMode === 'vibes' ? 'rooms' : 'vibes')}
-          className="px-3 py-1 text-xs font-mono rounded bg-zinc-900 border border-zinc-800 hover:border-cyan-500/50 text-cyan-400 transition-colors flex items-center space-x-1"
+          className="px-3 py-1.5 text-xs font-mono rounded bg-zinc-900 border border-zinc-800 hover:border-cyan-500/50 text-cyan-400 transition-colors flex items-center space-x-1"
         >
           <span className="material-symbols-outlined text-sm">
             {viewMode === 'vibes' ? 'sensors' : 'grid_view'}
@@ -48,12 +57,39 @@ export const HeaderNavbar: React.FC = () => {
           <span>[{viewMode === 'vibes' ? 'ENTER_ROOMS' : 'MAIN_VIBES'}]</span>
         </button>
 
-        <button 
-          onClick={() => setCreateModalOpen(true)}
-          className="lg:hidden p-1.5 text-cyan-400 bg-zinc-900 border border-zinc-800 rounded hover:bg-zinc-800"
-        >
-          <span className="material-symbols-outlined text-lg">add</span>
-        </button>
+        {/* Sign-in Button (Next to [ENTER_ROOMS]) or Logged-in Operator badge */}
+        {!isAuthenticated ? (
+          <button
+            onClick={() => setAuthModalOpen(true, 'login')}
+            className="px-3 py-1.5 text-xs font-mono rounded bg-amber-500/20 border border-amber-500/60 text-amber-400 hover:bg-amber-500/30 transition-colors flex items-center space-x-1 uppercase font-bold"
+          >
+            <span className="material-symbols-outlined text-sm">login</span>
+            <span>[SIGN_IN]</span>
+          </button>
+        ) : (
+          <div className="flex items-center space-x-2">
+            <span className="hidden sm:inline-block text-[11px] px-2 py-1 bg-zinc-900 border border-zinc-800 text-zinc-300 rounded">
+              OP: <strong className="text-cyan-400">{user?.username}</strong> ({user?.role})
+            </span>
+            <button
+              onClick={logout}
+              className="px-2.5 py-1.5 text-xs font-mono rounded bg-red-950/40 border border-red-500/50 text-red-400 hover:bg-red-900/50 transition-colors flex items-center space-x-1 uppercase"
+              title="Logout Operator Session"
+            >
+              <span className="material-symbols-outlined text-sm">logout</span>
+              <span className="hidden md:inline">[EXIT]</span>
+            </button>
+          </div>
+        )}
+
+        {isAuthenticated && (
+          <button
+            onClick={() => setCreateModalOpen(true)}
+            className="lg:hidden p-1.5 text-cyan-400 bg-zinc-900 border border-zinc-800 rounded hover:bg-zinc-800"
+          >
+            <span className="material-symbols-outlined text-lg">add</span>
+          </button>
+        )}
       </div>
     </div>
   );

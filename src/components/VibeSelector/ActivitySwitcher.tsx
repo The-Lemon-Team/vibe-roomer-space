@@ -1,16 +1,34 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAtmosphericStore } from '../../store/useAtmosphericStore';
 
 export const ActivitySwitcher: React.FC = () => {
-  const { activeTag, setActiveTag, pinnedTags, pinTag, unpinTag } = useAtmosphericStore();
+  const {
+    activeTag,
+    setActiveTag,
+    pinnedTags,
+    pinTag,
+    unpinTag,
+    topHashtags,
+    fetchTopHashtags,
+  } = useAtmosphericStore();
+
   const [newTagInput, setNewTagInput] = useState('');
   const [isAdding, setIsAdding] = useState(false);
+
+  useEffect(() => {
+    fetchTopHashtags();
+  }, [fetchTopHashtags]);
+
+  // Combine top backend hashtags with local pinned tags
+  const combinedTags = Array.from(
+    new Set([...pinnedTags, ...topHashtags]),
+  );
 
   const handleAddTag = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTagInput.trim()) return;
-    const formatted = newTagInput.trim().startsWith('#') 
-      ? newTagInput.trim().toLowerCase() 
+    const formatted = newTagInput.trim().startsWith('#')
+      ? newTagInput.trim().toLowerCase()
       : `#${newTagInput.trim().toLowerCase()}`;
     pinTag(formatted);
     setActiveTag(formatted);
@@ -39,8 +57,8 @@ export const ActivitySwitcher: React.FC = () => {
           <span>#ALL</span>
         </button>
 
-        {/* Pinned Hashtags List */}
-        {pinnedTags.map((tag) => {
+        {/* Dynamic Hashtags List */}
+        {combinedTags.map((tag) => {
           const isActive = activeTag.toLowerCase() === tag.toLowerCase();
 
           return (
@@ -74,7 +92,10 @@ export const ActivitySwitcher: React.FC = () => {
 
         {/* Add Tag to Menu Button / Input */}
         {isAdding ? (
-          <form onSubmit={handleAddTag} className="flex items-center space-x-1 bg-zinc-900 border border-cyan-500/60 rounded px-2 py-0.5">
+          <form
+            onSubmit={handleAddTag}
+            className="flex items-center space-x-1 bg-zinc-900 border border-cyan-500/60 rounded px-2 py-0.5"
+          >
             <span className="text-cyan-400 font-bold">#</span>
             <input
               type="text"
