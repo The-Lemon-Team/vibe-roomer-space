@@ -1,5 +1,5 @@
 import { IsArray, IsEnum, IsObject, IsOptional, IsString } from 'class-validator';
-import { ActivityContext } from '@prisma/client';
+import { ActivityContext } from '../../generated/client';
 
 export class CreateVibeDto {
   @IsString()

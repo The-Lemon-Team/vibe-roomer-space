@@ -6,7 +6,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { GetUser } from '../auth/decorators/get-user.decorator';
-import { Role } from '@prisma/client';
+import { Role } from '../generated/client';
 
 @Controller('admin/feed')
 @UseGuards(JwtAuthGuard, RolesGuard)
