@@ -3,7 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { HashtagsService } from '../hashtags/hashtags.service';
 import { CreateVibeDto } from './dto/create-vibe.dto';
 import { UpdateVibeDto } from './dto/update-vibe.dto';
-import { Role } from '@prisma/client';
+import { Role } from '../generated/client';
 
 @Injectable()
 export class VibesService {

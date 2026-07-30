@@ -38,3 +38,12 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+.filter-header {
+  background-color: rgb(14 14 20 / 95%);
+}
+
+.top-header {
+  background: rgb(39 39 42 / 0.8);
+}
+

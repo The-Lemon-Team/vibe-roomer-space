@@ -188,13 +188,29 @@ export const OperatorSidebar: React.FC = () => {
                     v.tags?.some((t) => t.toLowerCase() === tag.toLowerCase()),
                   ).length;
 
+              // Determine active color style based on viewMode and tagMode
+              let activeStyle = 'bg-zinc-900 border-l-amber-400 text-amber-400 shadow-[0_0_8px_rgba(255,176,0,0.15)]';
+              if (!isRoomsMode) {
+                if (tagMode === 'live') {
+                  activeStyle = 'bg-zinc-900 border-l-cyan-500 text-red-400 shadow-[0_0_8px_rgba(0,240,255,0.2)]';
+                } else if (tagMode === 'my_tags') {
+                  activeStyle = 'bg-zinc-900 border-l-cyan-500 text-cyan-400 shadow-[0_0_8px_rgba(0,240,255,0.2)]';
+                }
+              } else {
+                if (tagMode === 'live') {
+                  activeStyle = 'bg-zinc-900 border-l-amber-500 text-red-400 shadow-[0_0_8px_rgba(255,176,0,0.2)]';
+                } else if (tagMode === 'my_tags') {
+                  activeStyle = 'bg-zinc-900 border-l-amber-500 text-amber-400 shadow-[0_0_8px_rgba(255,176,0,0.2)]';
+                }
+              }
+
               return (
                 <div key={tag} className="flex items-center group">
                   <button
                     onClick={() => setActiveTag(tag)}
                     className={`flex-1 text-left p-2 text-xs font-bold uppercase transition-all rounded-l border-l-2 flex items-center justify-between ${
                       isActive
-                        ? 'bg-zinc-900 border-l-amber-400 text-amber-400 shadow-[0_0_8px_rgba(255,176,0,0.15)]'
+                        ? activeStyle
                         : 'text-zinc-400 border-l-transparent hover:bg-zinc-900/40 hover:text-zinc-200'
                     }`}
                   >

@@ -27,6 +27,7 @@ export const App: React.FC = () => {
     fetchVibes,
     fetchTopHashtags,
     syncRouteFromUrl,
+    tagMode,
   } = useAtmosphericStore();
 
   const { isAuthenticated, user, checkAuth, setAuthModalOpen } = useAuthStore();
@@ -53,10 +54,10 @@ export const App: React.FC = () => {
     activeTag === '#ALL'
       ? vibes
       : vibes.filter(
-          (v) =>
-            v.tags?.some((t) => t.toLowerCase() === activeTag.toLowerCase()) ||
-            v.keywords?.some((k) => `#${k.toLowerCase()}` === activeTag.toLowerCase()),
-        );
+        (v) =>
+          v.tags?.some((t) => t.toLowerCase() === activeTag.toLowerCase()) ||
+          v.keywords?.some((k) => `#${k.toLowerCase()}` === activeTag.toLowerCase()),
+      );
 
   return (
     <div className="h-screen bg-zinc-950 text-zinc-100 flex flex-col font-sans selection:bg-cyan-500 selection:text-black overflow-hidden">
@@ -70,7 +71,7 @@ export const App: React.FC = () => {
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
           {/* Fixed Sticky Navigation & Hashtag Menu Header */}
-          <header className="sticky top-0 z-40 shrink-0 bg-zinc-950/95 backdrop-blur-md border-b border-zinc-800 shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
+          <header className="sticky top-0 z-40 shrink-0 backdrop-blur-md border-b border-zinc-800 shadow-[0_4px_20px_rgba(0,0,0,0.5)] top-header">
             <HeaderNavbar />
             <ActivitySwitcher />
           </header>
@@ -79,15 +80,29 @@ export const App: React.FC = () => {
           {viewMode === 'vibe' ? (
             <VibePage />
           ) : viewMode === 'vibes' ? (
-            <main className="flex-1 w-full h-full overflow-y-auto bg-zinc-950 bg-[radial-gradient(#27272a_1px,transparent_1px)] bg-[size:16px_16px] pb-20 lg:pb-8">
-              <div className="w-full max-w-[1400px] mx-auto p-4 md:p-6 lg:p-8">
-                {/* Feed Header & Status */}
-                <div className="flex justify-between items-center mb-4 font-mono text-xs text-zinc-400 border-b border-zinc-800/80 pb-2">
-                  <div>
-                    [VIBES_HASHTAG_ROUTE: <span className="text-amber-400 font-bold">{activeTag}</span>]
-                  </div>
-                  <div>{filteredVibes.length} VIBE LOGS</div>
+            <main className="flex-1 w-full h-full overflow-y-auto bg-zinc-950 bg-[radial-gradient(#1a779d_1px,transparent_1px)] bg-[size:16px_16px] pb-20 lg:pb-8">
+              {/* Feed Header & Status */}
+              <div
+                className="toolbar w-full flex justify-between items-center font-mono text-xs text-zinc-400 border-b border-zinc-800/80 px-4 md:px-6 lg:px-8 py-3 backdrop-blur-sm"
+                style={{ backgroundColor: 'rgb(13 13 18 / 95%)' }}
+              >
+                <div>
+                  [VIBES_HASHTAG_ROUTE:{' '}
+                  <span
+                    className={`font-bold px-2 py-0.5 rounded border ${
+                      tagMode === 'live'
+                        ? 'bg-gradient-to-r from-cyan-950/80 to-red-950/80 border-cyan-500/50 text-red-200 shadow-[0_0_8px_rgba(239,68,68,0.25)]'
+                        : 'bg-cyan-950/80 border-cyan-500/50 text-cyan-400 shadow-[0_0_8px_rgba(0,240,255,0.2)]'
+                    }`}
+                  >
+                    {activeTag}
+                  </span>
+                  ]
                 </div>
+                <div>{filteredVibes.length} VIBE LOGS</div>
+              </div>
+
+              <div className="content-section w-full max-w-[1400px] mx-auto px-4 md:px-6 lg:px-8 pb-4 md:pb-6 lg:pb-8 pt-2 md:pt-3 lg:pt-4">
 
                 {/* Feed List */}
                 {filteredVibes.length === 0 ? (

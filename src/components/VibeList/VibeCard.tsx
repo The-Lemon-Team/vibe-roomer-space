@@ -55,6 +55,7 @@ export const VibeCard: React.FC<VibeCardProps> = ({
     pinnedTags, 
     pinTag, 
     unpinTag,
+    tagMode,
   } = useAtmosphericStore();
 
   // Combine tags and keywords fallback
@@ -82,6 +83,11 @@ export const VibeCard: React.FC<VibeCardProps> = ({
     }
   };
 
+  const isRouteActive = firstTag.toLowerCase() === activeTag.toLowerCase();
+  const routeActiveStyle = tagMode === 'live'
+    ? 'bg-cyan-950/80 text-red-200 border border-red-500/60 shadow-[0_0_8px_rgba(239,68,68,0.15)] hover:border-red-400'
+    : 'bg-cyan-950/80 text-cyan-400 border border-cyan-500/60 shadow-[0_0_8px_rgba(0,240,255,0.15)] hover:border-cyan-400';
+
   return (
     <article className="w-full max-w-2xl mx-auto my-4 bg-zinc-900/80 border border-zinc-800 rounded-lg overflow-hidden shadow-xl backdrop-blur-sm relative group font-sans">
       {/* Top Cyber Accent strip */}
@@ -100,7 +106,11 @@ export const VibeCard: React.FC<VibeCardProps> = ({
           <button
             onClick={() => setActiveTag(firstTag)}
             title="Route feed by primary tag"
-            className="text-[10px] font-mono px-2.5 py-0.5 rounded bg-amber-950/80 text-amber-400 border border-amber-500/60 uppercase tracking-widest hover:border-amber-400 transition-colors shadow-[0_0_8px_rgba(255,176,0,0.15)] flex items-center space-x-1"
+            className={`text-[10px] font-mono px-2.5 py-0.5 rounded uppercase tracking-widest transition-colors flex items-center space-x-1 ${
+              isRouteActive
+                ? routeActiveStyle
+                : 'bg-zinc-950/80 text-zinc-400 border border-zinc-800 hover:border-zinc-700 hover:text-zinc-200'
+            }`}
           >
             <span className="text-zinc-500 text-[9px]">ROUTE:</span>
             <span className="font-bold">{firstTag}</span>
@@ -234,12 +244,16 @@ export const VibeCard: React.FC<VibeCardProps> = ({
               const isPinned = pinnedTags.some((pt) => pt.toLowerCase() === formatted.toLowerCase());
               const isActive = activeTag.toLowerCase() === formatted.toLowerCase();
 
+              const activeStyle = tagMode === 'live'
+                ? 'bg-cyan-950/60 border-red-500/80 text-red-200 shadow-[0_0_8px_rgba(239,68,68,0.25)]'
+                : 'bg-cyan-950/60 border-cyan-500/80 text-cyan-300 shadow-[0_0_8px_rgba(0,240,255,0.2)]';
+
               return (
                 <div 
                   key={i} 
                   className={`group/chip flex items-center rounded border text-xs transition-all ${
                     isActive 
-                      ? 'bg-amber-950/60 border-amber-500/80 text-amber-300' 
+                      ? activeStyle 
                       : 'bg-zinc-950/60 border-zinc-800 text-zinc-400 hover:border-cyan-500/50 hover:text-cyan-300'
                   }`}
                 >
@@ -249,7 +263,7 @@ export const VibeCard: React.FC<VibeCardProps> = ({
                   >
                     <span>{formatted}</span>
                     {i === 0 && (
-                      <span className="text-[9px] text-amber-400 font-bold ml-1">★ 1st</span>
+                      <span className={`text-[9px] font-bold ml-1 ${tagMode === 'live' ? 'text-red-400' : 'text-cyan-400'}`}>★ 1st</span>
                     )}
                   </button>
 

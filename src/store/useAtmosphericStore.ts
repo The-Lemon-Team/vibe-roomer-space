@@ -674,7 +674,7 @@ export const useAtmosphericStore = create<AtmosphericState>((set, get) => ({
     });
   },
 
-  tagMode: 'live',
+  tagMode: localStorage.getItem('vibe_access_token') ? 'my_tags' : 'live',
   setTagMode: (mode) => set({ tagMode: mode }),
 
   pinnedTags: getStoredTags('vibe_admin_menu_tags', DEFAULT_ADMIN_VIBE_TAGS),

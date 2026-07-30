@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useAtmosphericStore } from '../../store/useAtmosphericStore';
 import { useAuthStore } from '../../store/useAuthStore';
 
@@ -28,6 +28,17 @@ export const ActivitySwitcher: React.FC = () => {
   const { isAuthenticated, user } = useAuthStore();
   const [newTagInput, setNewTagInput] = useState('');
   const [isAdding, setIsAdding] = useState(false);
+
+  const prevAuthRef = useRef(isAuthenticated);
+
+  useEffect(() => {
+    if (isAuthenticated && !prevAuthRef.current) {
+      setTagMode('my_tags');
+    } else if (!isAuthenticated && prevAuthRef.current) {
+      setTagMode('live');
+    }
+    prevAuthRef.current = isAuthenticated;
+  }, [isAuthenticated, setTagMode]);
 
   useEffect(() => {
     fetchTopHashtags();
@@ -96,7 +107,7 @@ export const ActivitySwitcher: React.FC = () => {
   };
 
   return (
-    <div className="w-full bg-zinc-950/90 font-mono text-xs select-none backdrop-blur-md border-t border-zinc-900">
+    <div className="w-full filter-header font-mono text-xs select-none backdrop-blur-md border-t border-zinc-900">
       <div className="max-w-[1400px] mx-auto w-full px-4 md:px-6 py-2 flex flex-wrap md:flex-nowrap items-center justify-between gap-2 overflow-x-auto no-scrollbar">
         {/* Left Section: Menu Title & Mode Switchers */}
         <div className="flex items-center space-x-2 shrink-0">
@@ -112,7 +123,9 @@ export const ActivitySwitcher: React.FC = () => {
                 onClick={() => setTagMode('live')}
                 className={`px-2 py-0.5 font-bold rounded transition-colors ${
                   tagMode === 'live'
-                    ? 'bg-cyan-950 text-cyan-400 border border-cyan-700/50'
+                    ? isRoomsMode
+                      ? 'bg-amber-950 text-red-400 border border-red-700/50 shadow-[0_0_8px_rgba(239,68,68,0.25)]'
+                      : 'bg-cyan-950 text-red-400 border border-cyan-700/50 shadow-[0_0_8px_rgba(239,68,68,0.25)]'
                     : 'text-zinc-400 hover:text-zinc-200'
                 }`}
                 title="Public Live Mode"
@@ -124,7 +137,9 @@ export const ActivitySwitcher: React.FC = () => {
                 onClick={() => setTagMode('my_tags')}
                 className={`px-2 py-0.5 font-bold rounded transition-colors ${
                   tagMode === 'my_tags'
-                    ? 'bg-amber-950 text-amber-400 border border-amber-700/50'
+                    ? isRoomsMode
+                      ? 'bg-amber-950 text-amber-400 border border-amber-700/50 shadow-[0_0_8px_rgba(255,176,0,0.25)]'
+                      : 'bg-cyan-950 text-cyan-400 border border-cyan-700/50 shadow-[0_0_8px_rgba(0,240,255,0.25)]'
                     : 'text-zinc-400 hover:text-zinc-200'
                 }`}
                 title="My Tags: Your personal saved list of tags"
@@ -156,11 +171,15 @@ export const ActivitySwitcher: React.FC = () => {
             onClick={() => setActiveTag('#ALL')}
             className={`px-3 py-1 font-bold uppercase transition-all duration-200 rounded border flex items-center space-x-1 shrink-0 ${
               activeTag === '#ALL'
-                ? 'bg-cyan-950/80 border-cyan-500 text-cyan-400 shadow-[0_0_10px_rgba(0,240,255,0.2)]'
+                ? isRoomsMode
+                  ? 'bg-amber-950/80 border-amber-500 text-amber-400 shadow-[0_0_10px_rgba(255,176,0,0.25)]'
+                  : 'bg-cyan-950/80 border-cyan-500 text-cyan-400 shadow-[0_0_10px_rgba(0,240,255,0.25)]'
                 : 'bg-zinc-900/40 border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200'
             }`}
           >
-            {activeTag === '#ALL' && <span className="text-cyan-400 text-[10px]">●</span>}
+            {activeTag === '#ALL' && (
+              <span className={isRoomsMode ? 'text-amber-400 text-[10px]' : 'text-cyan-400 text-[10px]'}>●</span>
+            )}
             <span>#ALL</span>
           </button>
 
@@ -171,17 +190,39 @@ export const ActivitySwitcher: React.FC = () => {
               isAuthenticated &&
               (tagMode === 'my_tags' || (tagMode === 'admin_config' && isAdmin));
 
+            // Determine active color style based on viewMode and tagMode
+            let activeStyle = 'bg-amber-950/80 border-amber-500 text-amber-400 shadow-[0_0_10px_rgba(255,176,0,0.25)]';
+            let activeDotStyle = 'text-amber-400';
+
+            if (!isRoomsMode) {
+              if (tagMode === 'live') {
+                activeStyle = 'bg-cyan-950/80 border-red-500/80 text-cyan-400 shadow-[0_0_10px_rgba(239,68,68,0.3)]';
+                activeDotStyle = 'text-red-500';
+              } else if (tagMode === 'my_tags') {
+                activeStyle = 'bg-cyan-950/80 border-cyan-500 text-cyan-400 shadow-[0_0_10px_rgba(0,240,255,0.25)]';
+                activeDotStyle = 'text-cyan-400';
+              }
+            } else {
+              if (tagMode === 'live') {
+                activeStyle = 'bg-amber-950/80 border-red-500/80 text-amber-400 shadow-[0_0_10px_rgba(239,68,68,0.3)]';
+                activeDotStyle = 'text-red-500';
+              } else if (tagMode === 'my_tags') {
+                activeStyle = 'bg-amber-950/80 border-amber-500 text-amber-400 shadow-[0_0_10px_rgba(255,176,0,0.25)]';
+                activeDotStyle = 'text-amber-400';
+              }
+            }
+
             return (
               <div key={tag} className="relative group flex items-center shrink-0">
                 <button
                   onClick={() => setActiveTag(tag)}
                   className={`px-3 py-1 font-bold uppercase transition-all duration-200 rounded border flex items-center space-x-1.5 ${
                     isActive
-                      ? 'bg-amber-950/80 border-amber-500 text-amber-400 shadow-[0_0_10px_rgba(255,176,0,0.25)]'
+                      ? activeStyle
                       : 'bg-zinc-900/40 border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200'
                   }`}
                 >
-                  {isActive && <span className="text-amber-400 text-[10px]">●</span>}
+                  {isActive && <span className={`${activeDotStyle} text-[10px]`}>●</span>}
                   <span>{tag}</span>
                 </button>
 

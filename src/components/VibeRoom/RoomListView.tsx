@@ -9,42 +9,77 @@ export const RoomListView: React.FC = () => {
     setActiveTag,
     openRoomPage,
     setCreateRoomModalOpen,
+    tagMode,
   } = useAtmosphericStore();
 
   const { isAuthenticated, setAuthModalOpen } = useAuthStore();
 
-  // Filter rooms by active tag in Rooms mode
-  const filteredRooms =
-    activeTag === '#ALL'
-      ? createdRooms
-      : createdRooms.filter(
-          (r) =>
-            r.tags?.some((t) => t.toLowerCase() === activeTag.toLowerCase()) ||
-            r.title.toLowerCase().includes(activeTag.replace('#', '').toLowerCase()),
-        );
+  const [privacyFilter, setPrivacyFilter] = React.useState<'public' | 'private'>('public');
+
+  // Filter rooms by active tag in Rooms mode and privacy
+  const filteredRooms = createdRooms.filter((r) => {
+    const matchesTag =
+      activeTag === '#ALL'
+        ? true
+        : r.tags?.some((t) => t.toLowerCase() === activeTag.toLowerCase()) ||
+          r.title.toLowerCase().includes(activeTag.replace('#', '').toLowerCase());
+
+    const matchesPrivacy = privacyFilter === 'public' ? r.isPublic !== false : r.isPublic === false;
+
+    return matchesTag && matchesPrivacy;
+  });
+
+  const headerFilterStyle = tagMode === 'live'
+    ? 'bg-gradient-to-r from-amber-950/80 to-red-950/80 border-amber-500/50 text-red-200 shadow-[0_0_8px_rgba(239,68,68,0.25)]'
+    : 'bg-amber-950/80 border-amber-500/50 text-amber-400 shadow-[0_0_8px_rgba(255,176,0,0.2)]';
 
   return (
-    <main className="flex-1 w-full h-full overflow-y-auto bg-zinc-950 bg-[radial-gradient(#27272a_1px,transparent_1px)] bg-[size:16px_16px] pb-20 lg:pb-8 font-sans">
+    <main className="flex-1 w-full h-full overflow-y-auto bg-zinc-950 bg-[radial-gradient(#1a779d_1px,transparent_1px)] bg-[size:16px_16px] pb-20 lg:pb-8 font-sans">
       <div className="w-full max-w-[1400px] mx-auto p-4 md:p-6 lg:p-8 space-y-6">
         {/* Header & Status Bar */}
-        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 bg-zinc-900/80 border border-zinc-800 p-4 rounded-lg backdrop-blur-md font-mono text-xs">
+        <div className="rooms-header flex flex-col sm:flex-row justify-between sm:items-center gap-4 bg-zinc-900/80 border border-zinc-800 p-4 rounded-lg backdrop-blur-md font-mono text-xs">
           <div>
             <div className="text-cyan-400 font-bold text-sm tracking-wider uppercase flex items-center gap-2">
               <span className="material-symbols-outlined text-base">sensors</span>
               <span>STREAM ROOMS DIRECTORY</span>
             </div>
-            <div className="text-zinc-400 mt-1 flex items-center space-x-2">
+            <div className="text-zinc-400 mt-1.5 flex items-center space-x-2">
               <span>[ACTIVE_TAG_FILTER:</span>
-              <span className="text-amber-400 font-bold bg-amber-950/60 px-2 py-0.5 rounded border border-amber-500/50">
+              <span className={`font-bold px-2 py-0.5 rounded border ${headerFilterStyle}`}>
                 {activeTag}
               </span>
+              <span>]</span>
+            </div>
+            <div className="text-zinc-400 mt-2 flex items-center space-x-2">
+              <span>[VISIBILITY:</span>
+              <button
+                onClick={() => setPrivacyFilter('public')}
+                className={`px-1.5 py-0.5 rounded border transition-colors ${
+                  privacyFilter === 'public'
+                    ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-400 font-bold shadow-[0_0_8px_rgba(6,182,212,0.15)]'
+                    : 'bg-zinc-950/60 border-zinc-800 text-zinc-500 hover:text-zinc-300'
+                }`}
+              >
+                PUBLIC ROOMS
+              </button>
+              <span className="text-zinc-600">/</span>
+              <button
+                onClick={() => setPrivacyFilter('private')}
+                className={`px-1.5 py-0.5 rounded border transition-colors ${
+                  privacyFilter === 'private'
+                    ? 'bg-amber-500/20 border-amber-500/50 text-amber-400 font-bold shadow-[0_0_8px_rgba(245,158,11,0.15)]'
+                    : 'bg-zinc-950/60 border-zinc-800 text-zinc-500 hover:text-zinc-300'
+                }`}
+              >
+                MY ROOMS
+              </button>
               <span>]</span>
             </div>
           </div>
 
           <div className="flex items-center space-x-3">
             <span className="text-zinc-400 bg-zinc-950 px-3 py-1.5 rounded border border-zinc-800">
-              {filteredRooms.length} ROOM{filteredRooms.length !== 1 ? 'S' : ''} ONLINE
+              {filteredRooms.length} {privacyFilter === 'public' ? 'PUBLIC' : 'MY'} ROOM{filteredRooms.length !== 1 ? 'S' : ''} ONLINE
             </span>
 
             <button
@@ -55,7 +90,7 @@ export const RoomListView: React.FC = () => {
                   setAuthModalOpen(true, 'login');
                 }
               }}
-              className="px-4 py-2 bg-cyan-400 text-black font-bold rounded hover:bg-cyan-300 transition-all shadow-[0_0_12px_rgba(0,240,255,0.3)] flex items-center space-x-1.5 uppercase"
+              className="px-4 py-2 bg-amber-400 text-black font-bold rounded hover:bg-amber-300 transition-all shadow-[0_0_12px_rgba(245,158,11,0.3)] flex items-center space-x-1.5 uppercase"
             >
               <span className="material-symbols-outlined text-sm">add_box</span>
               <span>+ CREATE ROOM</span>
@@ -67,8 +102,12 @@ export const RoomListView: React.FC = () => {
         {filteredRooms.length === 0 ? (
           <div className="text-center py-16 border border-dashed border-zinc-800 rounded-lg bg-zinc-900/40 p-8 font-mono text-xs text-zinc-500 space-y-4 max-w-xl mx-auto">
             <span className="material-symbols-outlined text-4xl text-zinc-600">sensors_off</span>
-            <div>NO ACTIVE STREAM ROOMS FOUND FOR HASHTAG [{activeTag}].</div>
-            <p className="text-zinc-400">Create a new stream room to share photos, videos, music, and YouTube links with the network.</p>
+            <div>NO ACTIVE {privacyFilter === 'public' ? 'PUBLIC' : 'MY (PRIVATE)'} STREAM ROOMS FOUND FOR HASHTAG [{activeTag}].</div>
+            <p className="text-zinc-400">
+              {privacyFilter === 'public'
+                ? 'Create a new public stream room to share photos, videos, music, and YouTube links with the network.'
+                : 'Create a new private stream room for restricted access or select participants.'}
+            </p>
             <button
               onClick={() => {
                 if (isAuthenticated) {
@@ -176,11 +215,12 @@ export const RoomListView: React.FC = () => {
                               e.stopPropagation();
                               setActiveTag(tag);
                             }}
-                            className={`px-2 py-0.5 rounded border uppercase transition-colors ${
-                              activeTag.toLowerCase() === tag.toLowerCase()
-                                ? 'bg-amber-950/80 border-amber-500 text-amber-400 font-bold'
+                            className={`px-2 py-0.5 rounded border uppercase transition-colors ${activeTag.toLowerCase() === tag.toLowerCase()
+                                ? tagMode === 'live'
+                                  ? 'bg-gradient-to-r from-amber-950/80 to-red-950/80 border-amber-500/80 text-red-200 shadow-[0_0_8px_rgba(239,68,68,0.25)] font-bold'
+                                  : 'bg-amber-950/80 border-amber-500 text-amber-400 shadow-[0_0_8px_rgba(255,176,0,0.2)] font-bold'
                                 : 'bg-zinc-950/60 border-zinc-800 text-zinc-400 hover:border-cyan-500/40 hover:text-cyan-300'
-                            }`}
+                              }`}
                           >
                             {tag}
                           </button>
@@ -209,7 +249,7 @@ export const RoomListView: React.FC = () => {
 
                       <button
                         onClick={() => openRoomPage(room)}
-                        className="px-4 py-1.5 bg-zinc-800 hover:bg-cyan-500 hover:text-black border border-zinc-700 hover:border-cyan-400 text-cyan-400 font-bold rounded transition-all flex items-center space-x-1 uppercase text-xs shadow-md"
+                        className="px-4 py-1.5 bg-zinc-800 hover:bg-amber-500 hover:text-black border border-zinc-700 hover:border-amber-400 text-amber-500 font-bold rounded transition-all flex items-center space-x-1 uppercase text-xs shadow-md"
                       >
                         <span>ENTER ROOM</span>
                         <span className="material-symbols-outlined text-sm">login</span>
