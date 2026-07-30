@@ -9,6 +9,7 @@
     "start": "node --require @swc-node/register src/main.ts",
     "start:dev": "node --watch --require @swc-node/register src/main.ts",
     "start:prod": "node dist/main.js",
+    "start:migrate": "prisma migrate deploy && node dist/main.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:push": "prisma db push",

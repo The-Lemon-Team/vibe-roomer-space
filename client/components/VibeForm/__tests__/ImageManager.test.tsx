@@ -64,7 +64,8 @@ describe('ImageManager & AddImageModal Component', () => {
     await user.click(screen.getByRole('button', { name: /\+ Add Image/i }));
 
     // Input URL
-    const urlInput = screen.getByPlaceholderText(/Paste Direct Image URL/i -1 || 'https://images.unsplash.com/photo-...');
+    const urlInput = screen.getByPlaceholderText('https://images.unsplash.com/photo-...');
+
     await user.type(urlInput, 'https://example.com/new-image.jpg');
 
     // Click Add URL

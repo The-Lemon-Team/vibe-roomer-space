@@ -30,6 +30,7 @@ server/uploads
 .env
 .env.local
 .env.*.local
+.env.prod
 *.db
 *.db-journal
 server/prisma/*.db

@@ -16,10 +16,13 @@
     "db:up": "docker compose up -d postgres",
     "db:down": "docker compose down",
     "db:migrate": "prisma migrate dev",
+    "db:migrate:prod": "prisma migrate deploy",
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "db:generate": "prisma generate",
-    "db:seed": "npm --prefix server run seed"
+    "db:seed": "npm --prefix server run seed",
+    "prod:build": "bash scripts/build.sh",
+    "prod:deploy": "bash scripts/deploy.sh"
   },
   "dependencies": {
     "@prisma/client": "^6.3.0",

@@ -1,10 +1,21 @@
 version: '3.8'
 
+name: vibe-roomer-dev
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Development only — local Postgres for offline dev / CI without Supabase.
+#
+# Production uses Supabase (external hosted Postgres).
+# Set DATABASE_URL + DIRECT_URL in .env to your Supabase connection strings
+# and this file is not needed at runtime.
+# ─────────────────────────────────────────────────────────────────────────────
+
 services:
+
   postgres:
     image: postgres:16-alpine
     container_name: vibe-roomer-db
-    restart: always
+    restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -13,22 +24,11 @@ services:
       - "5448:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-
-  backend:
-    build:
-      context: ./server
-      dockerfile: Dockerfile
-    container_name: vibe-roomer-backend
-    restart: always
-    ports:
-      - "3001:3001"
-    environment:
-      DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/viberoomer?schema=public"
-      PORT: 3001
-      JWT_SECRET: "super-secret-vibe-key-change-in-production"
-      UPLOADS_DIR: "./uploads"
-    depends_on:
-      - postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d viberoomer"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   postgres_data:

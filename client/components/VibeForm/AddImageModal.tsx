@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BaseModal } from '../Common/BaseModal';
-import { useAtmosphericStore } from '../../store/useAtmosphericStore';
+import { useAtmosphericStore, CreatedRoom } from '../../store/useAtmosphericStore';
 import { fetchApi } from '../../services/api';
 
 interface AddImageModalProps {
@@ -36,10 +36,14 @@ export const AddImageModal: React.FC<AddImageModalProps> = ({
   onClose,
   onSelect,
 }) => {
-  const [activeTab, setActiveTab] = useState<'url' | 'unsplash' | 'site'>('url');
-  
-  // URL & Upload Tab
+  // Unsplash is the default tab (priority)
+  const [activeTab, setActiveTab] = useState<'unsplash' | 'url' | 'site'>('unsplash');
+
+  // URL Tab
   const [imageUrl, setImageUrl] = useState('');
+
+  // File upload (secondary/fallback)
+  const [showUpload, setShowUpload] = useState(false);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -56,7 +60,7 @@ export const AddImageModal: React.FC<AddImageModalProps> = ({
   const [isSiteLoading, setIsSiteLoading] = useState(false);
   const [siteError, setSiteError] = useState<string | null>(null);
 
-  const { vibes, rooms, topHashtags } = useAtmosphericStore();
+  const { vibes, createdRooms, topHashtags } = useAtmosphericStore();
 
   // Load site images (from store + api)
   const loadSiteData = async () => {
@@ -93,7 +97,7 @@ export const AddImageModal: React.FC<AddImageModalProps> = ({
       });
 
       // 2. Extract from store rooms
-      rooms.forEach((r) => {
+      createdRooms.forEach((r: CreatedRoom) => {
         if (r.poster && !tempImages.some((t) => t.url === r.poster)) {
           tempImages.push({
             url: r.poster,
@@ -103,7 +107,7 @@ export const AddImageModal: React.FC<AddImageModalProps> = ({
           });
         }
         if (r.images) {
-          r.images.forEach((img) => {
+          r.images.forEach((img: string) => {
             if (img && !tempImages.some((t) => t.url === img)) {
               tempImages.push({
                 url: img,
@@ -127,7 +131,7 @@ export const AddImageModal: React.FC<AddImageModalProps> = ({
         }
       });
 
-      // 3. Fetch from /media endpoint
+      // 3. Fetch from /media endpoint (uploaded files)
       try {
         const uploadedList = await fetchApi<{ filename: string; url: string; size: number; updatedAt: string }[]>(
           '/media'
@@ -165,7 +169,17 @@ export const AddImageModal: React.FC<AddImageModalProps> = ({
     if (isOpen) {
       loadSiteData();
     }
-  }, [isOpen, vibes, rooms]);
+  }, [isOpen, vibes, createdRooms]);
+
+  // Reset upload section when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setShowUpload(false);
+      setUploadFile(null);
+      setUploadError(null);
+      setImageUrl('');
+    }
+  }, [isOpen]);
 
   // Handle URL Add
   const handleUrlSubmit = (e: React.FormEvent) => {
@@ -176,7 +190,7 @@ export const AddImageModal: React.FC<AddImageModalProps> = ({
     onClose();
   };
 
-  // Handle File Upload
+  // Handle File Upload (fallback)
   const handleUploadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!uploadFile) return;
@@ -198,6 +212,7 @@ export const AddImageModal: React.FC<AddImageModalProps> = ({
       const fullUrl = `${API_BASE_URL}${response.url}`;
       onSelect(fullUrl);
       setUploadFile(null);
+      setShowUpload(false);
       onClose();
     } catch (err: any) {
       setUploadError(err.message || 'File upload failed');
@@ -273,18 +288,7 @@ export const AddImageModal: React.FC<AddImageModalProps> = ({
       <div className="p-6 space-y-5 font-mono text-xs">
         {/* Tab Selection */}
         <div className="flex border-b border-zinc-800">
-          <button
-            type="button"
-            onClick={() => setActiveTab('url')}
-            className={`px-4 py-2 border-b-2 font-bold uppercase transition-all flex items-center gap-1.5 ${
-              activeTab === 'url'
-                ? 'border-cyan-500 text-cyan-400 bg-cyan-950/20'
-                : 'border-transparent text-zinc-400 hover:text-zinc-200'
-            }`}
-          >
-            <span className="material-symbols-outlined text-sm">link</span>
-            <span>Upload & URL</span>
-          </button>
+          {/* Tab 1: Unsplash (default/priority) */}
           <button
             type="button"
             onClick={() => setActiveTab('unsplash')}
@@ -296,11 +300,29 @@ export const AddImageModal: React.FC<AddImageModalProps> = ({
           >
             <span className="material-symbols-outlined text-sm">travel_explore</span>
             <span>Unsplash</span>
+            <span className="ml-1 text-[8px] px-1 py-0.5 bg-cyan-900/40 text-cyan-500 border border-cyan-800/50 rounded uppercase">
+              Recommended
+            </span>
           </button>
-          {/* Hide "Site Data" tab for now */}
-          {/* <button
+
+          {/* Tab 2: URL paste */}
+          <button
             type="button"
-            onClick={() => setActiveTab('site')}
+            onClick={() => setActiveTab('url')}
+            className={`px-4 py-2 border-b-2 font-bold uppercase transition-all flex items-center gap-1.5 ${
+              activeTab === 'url'
+                ? 'border-cyan-500 text-cyan-400 bg-cyan-950/20'
+                : 'border-transparent text-zinc-400 hover:text-zinc-200'
+            }`}
+          >
+            <span className="material-symbols-outlined text-sm">link</span>
+            <span>URL</span>
+          </button>
+
+          {/* Tab 3: Site library */}
+          <button
+            type="button"
+            onClick={() => { setActiveTab('site'); }}
             className={`px-4 py-2 border-b-2 font-bold uppercase transition-all flex items-center gap-1.5 ${
               activeTab === 'site'
                 ? 'border-cyan-500 text-cyan-400 bg-cyan-950/20'
@@ -308,81 +330,22 @@ export const AddImageModal: React.FC<AddImageModalProps> = ({
             }`}
           >
             <span className="material-symbols-outlined text-sm">database</span>
-            <span>Site Data</span>
-          </button> */}
+            <span>Library</span>
+          </button>
         </div>
 
-        {/* Tab 1: URL & Upload */}
-        {activeTab === 'url' && (
-          <div className="space-y-4">
-            {/* URL Input Form */}
-            <form onSubmit={handleUrlSubmit} className="space-y-2">
-              <label className="block text-zinc-400 font-bold uppercase text-[10px]">
-                Paste Direct Image URL
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="url"
-                  placeholder="https://images.unsplash.com/photo-..."
-                  value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
-                  className="flex-1 bg-zinc-900 border border-zinc-800 focus:border-cyan-500 rounded p-2 text-zinc-100 placeholder-zinc-600 outline-none"
-                />
-                <button
-                  type="submit"
-                  disabled={!imageUrl.trim()}
-                  className="px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-black font-bold rounded uppercase shrink-0 transition-all disabled:opacity-40"
-                >
-                  Add URL
-                </button>
-              </div>
-            </form>
-
-            <div className="flex items-center justify-center py-2">
-              <div className="h-[1px] bg-zinc-800 flex-1"></div>
-              <span className="px-3 text-zinc-600 text-[10px] uppercase font-bold">OR</span>
-              <div className="h-[1px] bg-zinc-800 flex-1"></div>
-            </div>
-
-            {/* Upload Form */}
-            <form onSubmit={handleUploadSubmit} className="space-y-3">
-              <label className="block text-zinc-400 font-bold uppercase text-[10px]">
-                Upload local file
-              </label>
-              <div className="flex flex-col sm:flex-row gap-2">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
-                  className="flex-1 bg-zinc-900 border border-zinc-800 focus:border-cyan-500 rounded p-1.5 text-zinc-300 outline-none file:mr-3 file:py-1 file:px-2 file:rounded file:border-0 file:text-[10px] file:font-bold file:bg-zinc-800 file:text-cyan-400 file:cursor-pointer hover:file:bg-zinc-700"
-                />
-                <button
-                  type="submit"
-                  disabled={isUploading || !uploadFile}
-                  className="px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-black font-bold rounded uppercase shrink-0 transition-all disabled:opacity-40 flex items-center justify-center gap-1"
-                >
-                  {isUploading ? 'Uploading...' : 'Upload Image'}
-                </button>
-              </div>
-              {uploadError && (
-                <div className="text-red-400 text-[10px] bg-red-950/20 border border-red-900 p-2 rounded">
-                  {uploadError}
-                </div>
-              )}
-            </form>
-          </div>
-        )}
-
-        {/* Tab 2: Unsplash Search */}
+        {/* ── Tab 1: Unsplash Search (default) ── */}
         {activeTab === 'unsplash' && (
           <div className="space-y-4">
             <form onSubmit={handleUnsplashSearch} className="flex gap-2">
               <input
                 type="text"
+                id="unsplash-search-input"
                 placeholder="Search aesthetic wallpaper..."
                 value={unsplashQuery}
                 onChange={(e) => setUnsplashQuery(e.target.value)}
                 className="flex-1 bg-zinc-900 border border-zinc-800 focus:border-cyan-500 rounded p-2 text-zinc-100 placeholder-zinc-600 outline-none"
+                autoFocus
               />
               <button
                 type="submit"
@@ -429,7 +392,7 @@ export const AddImageModal: React.FC<AddImageModalProps> = ({
                       onSelect(photo.urls.regular);
                       onClose();
                     }}
-                    className="group relative aspect-video rounded border border-zinc-850 overflow-hidden bg-zinc-950 hover:border-cyan-500 transition-colors"
+                    className="group relative aspect-video rounded border border-zinc-800 overflow-hidden bg-zinc-950 hover:border-cyan-500 transition-colors"
                   >
                     <img
                       src={photo.urls.thumb}
@@ -445,23 +408,110 @@ export const AddImageModal: React.FC<AddImageModalProps> = ({
               </div>
             ) : (
               <div className="h-40 flex flex-col items-center justify-center text-zinc-600 space-y-1.5">
-                <span className="material-symbols-outlined text-2xl">search</span>
-                <span className="font-bold uppercase text-[10px]">Type a query to search Unsplash</span>
+                <span className="material-symbols-outlined text-2xl">travel_explore</span>
+                <span className="font-bold uppercase text-[10px]">Search Unsplash for free high-quality images</span>
+                <span className="text-[10px] text-zinc-700">lofi · cyberpunk · nature · aesthetic · night</span>
               </div>
             )}
           </div>
         )}
 
-        {/* Tab 3: Site Data Search */}
+        {/* ── Tab 2: URL paste + file upload (fallback) ── */}
+        {activeTab === 'url' && (
+          <div className="space-y-4">
+            {/* URL paste — primary */}
+            <form onSubmit={handleUrlSubmit} className="space-y-2">
+              <label className="block text-zinc-400 font-bold uppercase text-[10px]">
+                Paste Direct Image URL
+              </label>
+              <div className="flex gap-2">
+                <input
+                  id="url-paste-input"
+                  type="url"
+                  placeholder="https://images.unsplash.com/photo-..."
+                  value={imageUrl}
+                  onChange={(e) => setImageUrl(e.target.value)}
+                  className="flex-1 bg-zinc-900 border border-zinc-800 focus:border-cyan-500 rounded p-2 text-zinc-100 placeholder-zinc-600 outline-none"
+                  autoFocus
+                />
+                <button
+                  type="submit"
+                  disabled={!imageUrl.trim()}
+                  className="px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-black font-bold rounded uppercase shrink-0 transition-all disabled:opacity-40"
+                >
+                  Add URL
+                </button>
+              </div>
+            </form>
+
+            {/* Divider + upload toggle */}
+            <div>
+              <button
+                type="button"
+                onClick={() => setShowUpload((v) => !v)}
+                className="flex items-center gap-1.5 text-[10px] text-zinc-500 hover:text-zinc-300 transition-colors group"
+              >
+                <span
+                  className={`material-symbols-outlined text-sm transition-transform ${showUpload ? 'rotate-90' : ''}`}
+                >
+                  chevron_right
+                </span>
+                <span className="uppercase font-bold">Upload local file</span>
+                <span className="text-zinc-700 normal-case font-normal">— fallback option</span>
+              </button>
+
+              {showUpload && (
+                <div className="mt-3 space-y-2 pl-4 border-l border-zinc-800">
+                  {/* Hint */}
+                  <p className="text-[10px] text-zinc-600 italic">
+                    ⚠ Prefer URLs or Unsplash when possible — local uploads are stored on the server
+                    and may not persist across deployments.
+                  </p>
+
+                  <form onSubmit={handleUploadSubmit} className="space-y-2">
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <input
+                        id="file-upload-input"
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          setUploadFile(e.target.files?.[0] || null);
+                          setUploadError(null);
+                        }}
+                        className="flex-1 bg-zinc-900 border border-zinc-800 focus:border-zinc-600 rounded p-1.5 text-zinc-400 outline-none file:mr-3 file:py-1 file:px-2 file:rounded file:border-0 file:text-[10px] file:font-bold file:bg-zinc-800 file:text-zinc-400 file:cursor-pointer hover:file:bg-zinc-700"
+                      />
+                      <button
+                        type="submit"
+                        disabled={isUploading || !uploadFile}
+                        className="px-4 py-2 bg-zinc-700 hover:bg-zinc-600 text-zinc-300 font-bold rounded uppercase shrink-0 transition-all disabled:opacity-40 flex items-center justify-center gap-1 text-[10px] border border-zinc-600"
+                      >
+                        {isUploading ? 'Uploading...' : 'Upload'}
+                      </button>
+                    </div>
+                    {uploadError && (
+                      <div className="text-red-400 text-[10px] bg-red-950/20 border border-red-900 p-2 rounded">
+                        {uploadError}
+                      </div>
+                    )}
+                  </form>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── Tab 3: Site Library ── */}
         {activeTab === 'site' && (
           <div className="space-y-4">
             <div className="flex gap-2">
               <input
+                id="site-library-search-input"
                 type="text"
                 placeholder="Search images from vibes, rooms, uploads..."
                 value={siteQuery}
                 onChange={(e) => setSiteQuery(e.target.value)}
                 className="flex-1 bg-zinc-900 border border-zinc-800 focus:border-cyan-500 rounded p-2 text-zinc-100 placeholder-zinc-600 outline-none"
+                autoFocus
               />
             </div>
 
@@ -485,7 +535,7 @@ export const AddImageModal: React.FC<AddImageModalProps> = ({
                       onSelect(img.url);
                       onClose();
                     }}
-                    className="group relative aspect-video rounded border border-zinc-850 overflow-hidden bg-zinc-950 hover:border-cyan-500 transition-colors text-left"
+                    className="group relative aspect-video rounded border border-zinc-800 overflow-hidden bg-zinc-950 hover:border-cyan-500 transition-colors text-left"
                   >
                     <img
                       src={img.url}
@@ -510,13 +560,16 @@ export const AddImageModal: React.FC<AddImageModalProps> = ({
             ) : (
               <div className="h-40 flex flex-col items-center justify-center text-zinc-600 space-y-1.5">
                 <span className="material-symbols-outlined text-2xl">database</span>
-                <span className="font-bold uppercase text-[10px]">No site images found</span>
+                <span className="font-bold uppercase text-[10px]">
+                  {siteImages.length === 0 ? 'No saved images yet' : 'No images match your search'}
+                </span>
+                <span className="text-[10px] text-zinc-700">Images from vibes, rooms &amp; uploads appear here</span>
               </div>
             )}
           </div>
         )}
 
-        {/* Footer Actions */}
+        {/* Footer */}
         <div className="flex justify-end pt-3 border-t border-zinc-800">
           <button
             type="button"
