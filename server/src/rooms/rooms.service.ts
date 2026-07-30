@@ -1,5 +1,8 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { CreateRoomDto } from './dto/create-room.dto';
+import { UpdateRoomDto } from './dto/update-room.dto';
+import { CreateStreamItemDto } from './dto/create-stream-item.dto';
 
 @Injectable()
 export class RoomsService {
@@ -74,6 +77,17 @@ export class RoomsService {
   async getRoomByTag(tagOrActivity: string) {
     if (!this.prisma.isConnected) {
       throw new NotFoundException(`Room '${tagOrActivity}' not available (DB offline)`);
+    }
+
+    // If tagOrActivity is a UUID, attempt to load the actual room first
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tagOrActivity);
+    if (isUuid) {
+      try {
+        const room = await this.getRoomById(tagOrActivity);
+        if (room) {
+          return { room };
+        }
+      } catch (_) {}
     }
 
     const cleanTag = tagOrActivity.toLowerCase().replace(/^#+/, '').trim();
@@ -287,5 +301,188 @@ export class RoomsService {
       where: { id: noteId, roomId },
     });
     return { success: true };
+  }
+
+  async getRooms(filters: { tag?: string; isPublic?: boolean; authorId?: string }) {
+    if (!this.prisma.isConnected) {
+      return [];
+    }
+    const where: any = {};
+    if (filters.tag) {
+      const cleanTag = filters.tag.toLowerCase().replace(/^#+/, '').trim();
+      where.tags = { has: `#${cleanTag}` };
+    }
+    if (filters.isPublic !== undefined) {
+      where.isPublic = filters.isPublic;
+    }
+    if (filters.authorId) {
+      where.authorId = filters.authorId;
+    }
+
+    return this.prisma.room.findMany({
+      where,
+      include: {
+        author: {
+          select: { id: true, username: true, email: true },
+        },
+        streamItems: {
+          include: {
+            author: {
+              select: { id: true, username: true },
+            },
+          },
+          orderBy: { createdAt: 'desc' },
+        },
+        news: {
+          include: {
+            author: {
+              select: { id: true, username: true },
+            },
+          },
+          orderBy: { createdAt: 'desc' },
+        },
+        notes: {
+          include: {
+            author: {
+              select: { id: true, username: true },
+            },
+          },
+          orderBy: { createdAt: 'desc' },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async getRoomById(id: string) {
+    if (!this.prisma.isConnected) {
+      throw new NotFoundException(`Room with ID ${id} not available (DB offline)`);
+    }
+    const room = await this.prisma.room.findUnique({
+      where: { id },
+      include: {
+        author: {
+          select: { id: true, username: true, email: true },
+        },
+        streamItems: {
+          include: {
+            author: {
+              select: { id: true, username: true },
+            },
+          },
+          orderBy: { createdAt: 'desc' },
+        },
+        news: {
+          include: {
+            author: {
+              select: { id: true, username: true },
+            },
+          },
+          orderBy: { createdAt: 'desc' },
+        },
+        notes: {
+          include: {
+            author: {
+              select: { id: true, username: true },
+            },
+          },
+          orderBy: { createdAt: 'desc' },
+        },
+      },
+    });
+    if (!room) {
+      throw new NotFoundException(`Room with ID ${id} not found`);
+    }
+    return room;
+  }
+
+  async createRoom(authorId: string, dto: CreateRoomDto) {
+    if (!this.prisma.isConnected) {
+      return {
+        id: `room-${Date.now()}`,
+        ...dto,
+        authorId,
+        authorName: 'operator',
+        createdAt: new Date().toISOString(),
+      };
+    }
+    return this.prisma.room.create({
+      data: {
+        title: dto.title,
+        description: dto.description,
+        poster: dto.poster,
+        originVibeId: dto.originVibeId,
+        isPublic: dto.isPublic !== false,
+        tags: dto.tags || [],
+        images: dto.images || [],
+        videoUrl: dto.videoUrl,
+        musicUrl: dto.musicUrl,
+        youtubeUrl: dto.youtubeUrl,
+        roomConfig: dto.roomConfig || {},
+        authorId,
+      },
+      include: {
+        author: {
+          select: { id: true, username: true, email: true },
+        },
+      },
+    });
+  }
+
+  async updateRoom(roomId: string, authorId: string, dto: UpdateRoomDto) {
+    if (!this.prisma.isConnected) {
+      return { id: roomId, ...dto };
+    }
+    const room = await this.prisma.room.findUnique({ where: { id: roomId } });
+    if (!room) {
+      throw new NotFoundException(`Room with ID ${roomId} not found`);
+    }
+    return this.prisma.room.update({
+      where: { id: roomId },
+      data: {
+        ...(dto.title !== undefined && { title: dto.title }),
+        ...(dto.description !== undefined && { description: dto.description }),
+        ...(dto.poster !== undefined && { poster: dto.poster }),
+        ...(dto.isPublic !== undefined && { isPublic: dto.isPublic }),
+        ...(dto.tags !== undefined && { tags: dto.tags }),
+        ...(dto.images !== undefined && { images: dto.images }),
+        ...(dto.videoUrl !== undefined && { videoUrl: dto.videoUrl }),
+        ...(dto.musicUrl !== undefined && { musicUrl: dto.musicUrl }),
+        ...(dto.youtubeUrl !== undefined && { youtubeUrl: dto.youtubeUrl }),
+        ...(dto.roomConfig !== undefined && { roomConfig: dto.roomConfig }),
+      },
+      include: {
+        author: {
+          select: { id: true, username: true, email: true },
+        },
+      },
+    });
+  }
+
+  async addStreamItemToRoom(roomId: string, authorId: string, dto: CreateStreamItemDto) {
+    if (!this.prisma.isConnected) {
+      return {
+        id: `rsi-${Date.now()}`,
+        ...dto,
+        authorId,
+        createdAt: new Date().toISOString(),
+      };
+    }
+    return this.prisma.roomStreamItem.create({
+      data: {
+        type: dto.type,
+        content: dto.content,
+        mediaUrls: dto.mediaUrls || [],
+        url: dto.url,
+        title: dto.title,
+        roomId,
+        authorId,
+      },
+      include: {
+        author: {
+          select: { id: true, username: true },
+        },
+      },
+    });
   }
 }

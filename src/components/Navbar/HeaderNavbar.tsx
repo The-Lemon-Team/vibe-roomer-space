@@ -3,8 +3,16 @@ import { useAtmosphericStore } from '../../store/useAtmosphericStore';
 import { useAuthStore } from '../../store/useAuthStore';
 
 export const HeaderNavbar: React.FC = () => {
-  const { activeTag, setActiveTag, viewMode, setViewMode, setCreateModalOpen, closeRoomPage } =
-    useAtmosphericStore();
+  const {
+    activeTag,
+    setActiveTag,
+    viewMode,
+    setViewMode,
+    setCreateModalOpen,
+    closeRoomPage,
+    isMobileSidebarOpen,
+    setMobileSidebarOpen,
+  } = useAtmosphericStore();
   const { isAuthenticated, user, logout, setAuthModalOpen, isAuthModalOpen, authModalMode } = useAuthStore();
   const [showExit, setShowExit] = React.useState(false);
 
@@ -16,6 +24,16 @@ export const HeaderNavbar: React.FC = () => {
       <div className="max-w-[1400px] mx-auto w-full flex justify-between items-center px-4 md:px-6 py-2 h-14">
         {/* Left Title & Status */}
         <div className="flex items-center space-x-3">
+          {/* Mobile Burger Menu Button */}
+          <button
+            onClick={() => setMobileSidebarOpen(!isMobileSidebarOpen)}
+            className="lg:hidden p-1 mr-1 text-zinc-400 hover:text-cyan-400 focus:outline-none transition-colors"
+            title="Toggle Operator Sidebar"
+          >
+            <span className="material-symbols-outlined text-2xl">
+              {isMobileSidebarOpen ? 'close' : 'menu'}
+            </span>
+          </button>
           <div className="font-sans italic font-black text-xl md:text-2xl tracking-tighter flex items-center space-x-1.5 select-none">
             <button
               onClick={() => {

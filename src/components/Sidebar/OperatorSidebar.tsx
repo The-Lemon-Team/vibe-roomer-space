@@ -25,10 +25,25 @@ export const OperatorSidebar: React.FC = () => {
     createdRooms,
     tagMode,
     closeRoomPage,
+    isMobileSidebarOpen,
+    setMobileSidebarOpen,
   } = useAtmosphericStore();
 
   const { user, isAuthenticated, setAuthModalOpen } = useAuthStore();
   const [sidebarTagInput, setSidebarTagInput] = useState('');
+
+  const handleSelectTag = (tag: string) => {
+    setActiveTag(tag);
+    setMobileSidebarOpen(false);
+  };
+
+  const handleSelectViewMode = (mode: 'vibes' | 'rooms') => {
+    if (mode === 'rooms') {
+      closeRoomPage();
+    }
+    setViewMode(mode);
+    setMobileSidebarOpen(false);
+  };
 
   const isAdmin = isAuthenticated && user?.role === 'ADMIN';
   const isRoomsMode = viewMode === 'rooms';
@@ -75,6 +90,7 @@ export const OperatorSidebar: React.FC = () => {
 
     setActiveTag(formatted);
     setSidebarTagInput('');
+    setMobileSidebarOpen(false);
   };
 
   const handleRemove = (tag: string) => {
@@ -107,192 +123,223 @@ export const OperatorSidebar: React.FC = () => {
         addMyTag(tag);
       }
     }
+    setActiveTag(tag);
+    setMobileSidebarOpen(false);
   };
 
   return (
-    <aside className="hidden lg:flex flex-col h-screen sticky left-0 top-0 z-40 p-4 bg-zinc-950 border-r border-zinc-800/80 w-64 select-none shrink-0 font-mono">
-      {/* Brand / Operator Header */}
-      <div className="mb-6 flex items-center gap-3 p-2.5 border border-zinc-800 bg-zinc-900/50 rounded">
-        <div className="w-10 h-10 bg-zinc-900 border border-cyan-500/50 flex items-center justify-center overflow-hidden shrink-0">
-          <span className="material-symbols-outlined text-cyan-400">person</span>
-        </div>
-        <div className="min-w-0">
-          <div className="text-sm font-bold text-cyan-400 truncate">
-            {isAuthenticated ? user?.username : 'GUEST_OPERATOR'}
-          </div>
-          <div className="text-[10px] text-emerald-400 flex items-center space-x-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse inline-block" />
-            <span>ROLE: {user?.role || 'GUEST'}</span>
-          </div>
-        </div>
-      </div>
+    <>
+      {/* Mobile Overlay Backdrop */}
+      {isMobileSidebarOpen && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-xs z-45 transition-opacity duration-300"
+          onClick={() => setMobileSidebarOpen(false)}
+        />
+      )}
 
-      {/* Main View Switcher */}
-      <div className="mb-4 grid grid-cols-2 gap-1 bg-zinc-900/90 p-1 border border-zinc-800 rounded text-xs">
-        <button
-          onClick={() => setViewMode('vibes')}
-          className={`py-1.5 text-center font-bold rounded transition-colors ${
-            viewMode === 'vibes' || viewMode === 'vibe'
-              ? 'bg-cyan-950 text-cyan-400 border border-cyan-700/50'
-              : 'text-zinc-400 hover:text-zinc-200'
-          }`}
-        >
-          [VIBES]
-        </button>
-        <button
-          onClick={() => {
-            closeRoomPage();
-            setViewMode('rooms');
-          }}
-          className={`py-1.5 text-center font-bold rounded transition-colors ${
-            viewMode === 'rooms'
-              ? 'bg-cyan-950 text-cyan-400 border border-cyan-700/50'
-              : 'text-zinc-400 hover:text-zinc-200'
-          }`}
-        >
-          [ROOMS]
-        </button>
-      </div>
-
-      {/* Dynamic Hashtag Section */}
-      <div className="flex-1 overflow-y-auto space-y-4 pr-1 no-scrollbar">
-        {/* Pinned Menu Tags */}
-        <div>
-          <div className="text-[10px] text-zinc-500 uppercase tracking-widest px-2 mb-2 border-b border-zinc-800 pb-1 flex justify-between items-center">
-            <span>{isRoomsMode ? 'ROOM HASHTAGS' : 'VIBE HASHTAGS'}</span>
-            <span className="text-cyan-400">{displayedTags.length}</span>
+      <aside
+        className={`
+          fixed inset-y-0 left-0 z-50 w-64 h-screen border-r border-zinc-800/80 bg-zinc-950 p-4 select-none shrink-0 font-mono transition-transform duration-300 ease-in-out flex flex-col
+          lg:translate-x-0 lg:sticky lg:top-0 lg:z-40
+          ${isAuthenticated ? 'lg:flex' : 'lg:hidden'}
+          ${isMobileSidebarOpen ? 'translate-x-0 shadow-[4px_0_24px_rgba(0,0,0,0.8)]' : '-translate-x-full lg:translate-x-0'}
+        `}
+      >
+        {/* Brand / Operator Header */}
+        <div className="mb-6 flex items-center justify-between gap-3 p-2.5 border border-zinc-800 bg-zinc-900/50 rounded">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 bg-zinc-900 border border-cyan-500/50 flex items-center justify-center overflow-hidden shrink-0">
+              <span className="material-symbols-outlined text-cyan-400">person</span>
+            </div>
+            <div className="min-w-0">
+              <div className="text-sm font-bold text-cyan-400 truncate">
+                {isAuthenticated ? user?.username : 'GUEST_OPERATOR'}
+              </div>
+              <div className="text-[10px] text-emerald-400 flex items-center space-x-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse inline-block" />
+                <span>ROLE: {user?.role || 'GUEST'}</span>
+              </div>
+            </div>
           </div>
-
-          {/* All Tag Option */}
           <button
-            onClick={() => setActiveTag('#ALL')}
-            className={`w-full text-left p-2 text-xs font-bold uppercase transition-all rounded border-l-2 mb-1 flex items-center justify-between ${
-              activeTag === '#ALL'
-                ? 'bg-zinc-900 border-l-cyan-400 text-cyan-400'
-                : 'text-zinc-400 border-l-transparent hover:bg-zinc-900/40 hover:text-zinc-200'
+            onClick={() => setMobileSidebarOpen(false)}
+            className="lg:hidden p-1 text-zinc-500 hover:text-red-400 focus:outline-none transition-colors"
+            title="Close Sidebar"
+          >
+            <span className="material-symbols-outlined text-lg">close</span>
+          </button>
+        </div>
+
+        {/* Main View Switcher */}
+        <div className="mb-4 grid grid-cols-2 gap-1 bg-zinc-900/90 p-1 border border-zinc-800 rounded text-xs">
+          <button
+            onClick={() => handleSelectViewMode('vibes')}
+            className={`py-1.5 text-center font-bold rounded transition-colors ${
+              viewMode === 'vibes' || viewMode === 'vibe'
+                ? 'bg-cyan-950 text-cyan-400 border border-cyan-700/50'
+                : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
-            <span>#ALL ({isRoomsMode ? 'ALL ROOMS' : 'ALL VIBES'})</span>
-            {activeTag === '#ALL' && <span className="text-[10px]">●</span>}
+            [VIBES]
           </button>
-
-          {/* List of Pinned Tags */}
-          <div className="space-y-1">
-            {displayedTags.map((tag) => {
-              const isActive = activeTag.toLowerCase() === tag.toLowerCase();
-              const tagCount = isRoomsMode
-                ? createdRooms.filter((r) =>
-                    r.tags?.some((t) => t.toLowerCase() === tag.toLowerCase()),
-                  ).length
-                : vibes.filter((v) =>
-                    v.tags?.some((t) => t.toLowerCase() === tag.toLowerCase()),
-                  ).length;
-
-              // Determine active color style based on viewMode and tagMode
-              let activeStyle = 'bg-zinc-900 border-l-amber-400 text-amber-400 shadow-[0_0_8px_rgba(255,176,0,0.15)]';
-              if (!isRoomsMode) {
-                if (tagMode === 'live') {
-                  activeStyle = 'bg-zinc-900 border-l-cyan-500 text-red-400 shadow-[0_0_8px_rgba(0,240,255,0.2)]';
-                } else if (tagMode === 'my_tags') {
-                  activeStyle = 'bg-zinc-900 border-l-cyan-500 text-cyan-400 shadow-[0_0_8px_rgba(0,240,255,0.2)]';
-                }
-              } else {
-                if (tagMode === 'live') {
-                  activeStyle = 'bg-zinc-900 border-l-amber-500 text-red-400 shadow-[0_0_8px_rgba(255,176,0,0.2)]';
-                } else if (tagMode === 'my_tags') {
-                  activeStyle = 'bg-zinc-900 border-l-amber-500 text-amber-400 shadow-[0_0_8px_rgba(255,176,0,0.2)]';
-                }
-              }
-
-              return (
-                <div key={tag} className="flex items-center group">
-                  <button
-                    onClick={() => setActiveTag(tag)}
-                    className={`flex-1 text-left p-2 text-xs font-bold uppercase transition-all rounded-l border-l-2 flex items-center justify-between ${
-                      isActive
-                        ? activeStyle
-                        : 'text-zinc-400 border-l-transparent hover:bg-zinc-900/40 hover:text-zinc-200'
-                    }`}
-                  >
-                    <span className="truncate">{tag}</span>
-                    <span className="text-[10px] text-zinc-600 font-normal">[{tagCount}]</span>
-                  </button>
-
-                  <button
-                    onClick={() => handleRemove(tag)}
-                    title="Remove tag"
-                    className="p-2 text-zinc-600 hover:text-red-400 bg-zinc-900/20 hover:bg-zinc-900 rounded-r text-xs transition-colors"
-                  >
-                    ✕
-                  </button>
-                </div>
-              );
-            })}
-          </div>
+          <button
+            onClick={() => handleSelectViewMode('rooms')}
+            className={`py-1.5 text-center font-bold rounded transition-colors ${
+              viewMode === 'rooms'
+                ? 'bg-cyan-950 text-cyan-400 border border-cyan-700/50'
+                : 'text-zinc-400 hover:text-zinc-200'
+            }`}
+          >
+            [ROOMS]
+          </button>
         </div>
 
-        {/* Pin Custom Tag Form */}
-        <form onSubmit={handleAddCustomTag} className="pt-1">
-          <div className="flex items-center bg-zinc-900 border border-zinc-800 rounded overflow-hidden">
-            <input
-              type="text"
-              placeholder={tagMode === 'admin_config' && isAdmin ? '+ Public top tag' : '+ Pin custom #tag'}
-              value={sidebarTagInput}
-              onChange={(e) => setSidebarTagInput(e.target.value)}
-              className="bg-transparent border-none outline-none text-xs text-zinc-200 p-2 w-full placeholder-zinc-600"
-            />
+        {/* Dynamic Hashtag Section */}
+        <div className="flex-1 overflow-y-auto space-y-4 pr-1 no-scrollbar">
+          {/* Pinned Menu Tags */}
+          <div>
+            <div className="text-[10px] text-zinc-500 uppercase tracking-widest px-2 mb-2 border-b border-zinc-800 pb-1 flex justify-between items-center">
+              <span>{isRoomsMode ? 'ROOM HASHTAGS' : 'VIBE HASHTAGS'}</span>
+              <span className="text-cyan-400">{displayedTags.length}</span>
+            </div>
+
+            {/* All Tag Option */}
             <button
-              type="submit"
-              className="px-2.5 py-2 bg-zinc-800 text-cyan-400 hover:bg-cyan-950 font-bold text-xs border-l border-zinc-800 transition-colors"
+              onClick={() => handleSelectTag('#ALL')}
+              className={`w-full text-left p-2 text-xs font-bold uppercase transition-all rounded border-l-2 mb-1 flex items-center justify-between ${
+                activeTag === '#ALL'
+                  ? 'bg-zinc-900 border-l-cyan-400 text-cyan-400'
+                  : 'text-zinc-400 border-l-transparent hover:bg-zinc-900/40 hover:text-zinc-200'
+              }`}
             >
-              +
+              <span>#ALL ({isRoomsMode ? 'ALL ROOMS' : 'ALL VIBES'})</span>
+              {activeTag === '#ALL' && <span className="text-[10px]">●</span>}
             </button>
-          </div>
-        </form>
 
-        {/* Discovered / Unpinned Tags */}
-        {unpinnedDiscoveredTags.length > 0 && (
-          <div className="pt-2 border-t border-zinc-800/80">
-            <div className="text-[10px] text-zinc-500 uppercase tracking-widest px-2 mb-2">
-              DISCOVERED HASHTAGS
-            </div>
-            <div className="flex flex-wrap gap-1.5 px-1">
-              {unpinnedDiscoveredTags.map((tag) => (
-                <button
-                  key={tag}
-                  onClick={() => handleAddDiscovered(tag)}
-                  title="Click to add tag to list"
-                  className="text-[10px] bg-zinc-900/60 border border-zinc-800 text-zinc-400 hover:border-cyan-500/50 hover:text-cyan-400 px-2 py-1 rounded transition-colors flex items-center gap-1"
-                >
-                  <span>{tag}</span>
-                  <span className="text-[9px] text-cyan-500 font-bold">+</span>
-                </button>
-              ))}
+            {/* List of Pinned Tags */}
+            <div className="space-y-1">
+              {displayedTags.map((tag) => {
+                const isActive = activeTag.toLowerCase() === tag.toLowerCase();
+                const tagCount = isRoomsMode
+                  ? createdRooms.filter((r) =>
+                      r.tags?.some((t) => t.toLowerCase() === tag.toLowerCase()),
+                    ).length
+                  : vibes.filter((v) =>
+                      v.tags?.some((t) => t.toLowerCase() === tag.toLowerCase()),
+                    ).length;
+
+                // Determine active color style based on viewMode and tagMode
+                let activeStyle = 'bg-zinc-900 border-l-amber-400 text-amber-400 shadow-[0_0_8px_rgba(255,176,0,0.15)]';
+                if (!isRoomsMode) {
+                  if (tagMode === 'live') {
+                    activeStyle = 'bg-zinc-900 border-l-cyan-500 text-red-400 shadow-[0_0_8px_rgba(0,240,255,0.2)]';
+                  } else if (tagMode === 'my_tags') {
+                    activeStyle = 'bg-zinc-900 border-l-cyan-500 text-cyan-400 shadow-[0_0_8px_rgba(0,240,255,0.2)]';
+                  }
+                } else {
+                  if (tagMode === 'live') {
+                    activeStyle = 'bg-zinc-900 border-l-amber-500 text-red-400 shadow-[0_0_8px_rgba(255,176,0,0.2)]';
+                  } else if (tagMode === 'my_tags') {
+                    activeStyle = 'bg-zinc-900 border-l-amber-500 text-amber-400 shadow-[0_0_8px_rgba(255,176,0,0.2)]';
+                  }
+                }
+
+                return (
+                  <div key={tag} className="flex items-center group">
+                    <button
+                      onClick={() => handleSelectTag(tag)}
+                      className={`flex-1 text-left p-2 text-xs font-bold uppercase transition-all rounded-l border-l-2 flex items-center justify-between ${
+                        isActive
+                          ? activeStyle
+                          : 'text-zinc-400 border-l-transparent hover:bg-zinc-900/40 hover:text-zinc-200'
+                      }`}
+                    >
+                      <span className="truncate">{tag}</span>
+                      <span className="text-[10px] text-zinc-600 font-normal">[{tagCount}]</span>
+                    </button>
+
+                    <button
+                      onClick={() => handleRemove(tag)}
+                      title="Remove tag"
+                      className="p-2 text-zinc-600 hover:text-red-400 bg-zinc-900/20 hover:bg-zinc-900 rounded-r text-xs transition-colors"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           </div>
-        )}
-      </div>
 
-      {/* CTA Button */}
-      <div className="mt-auto pt-4 border-t border-zinc-800">
-        {isAuthenticated ? (
-          <button
-            onClick={() => setCreateModalOpen(true)}
-            className="w-full bg-cyan-400 text-black py-2.5 px-3 font-bold text-xs uppercase tracking-wider rounded hover:bg-cyan-300 shadow-[0_0_12px_rgba(0,240,255,0.4)] transition-all flex items-center justify-center space-x-1.5"
-          >
-            <span className="material-symbols-outlined text-sm">add</span>
-            <span>TRANSMIT VIBE</span>
-          </button>
-        ) : (
-          <button
-            onClick={() => setAuthModalOpen(true, 'login')}
-            className="w-full bg-amber-500/20 border border-amber-500/60 text-amber-400 py-2.5 px-3 font-bold text-xs uppercase tracking-wider rounded hover:bg-amber-500/30 transition-all flex items-center justify-center space-x-1.5"
-          >
-            <span className="material-symbols-outlined text-sm">login</span>
-            <span>[SIGN_IN]</span>
-          </button>
-        )}
-      </div>
-    </aside>
+          {/* Pin Custom Tag Form */}
+          <form onSubmit={handleAddCustomTag} className="pt-1">
+            <div className="flex items-center bg-zinc-900 border border-zinc-800 rounded overflow-hidden">
+              <input
+                type="text"
+                placeholder={tagMode === 'admin_config' && isAdmin ? '+ Public top tag' : '+ Pin custom #tag'}
+                value={sidebarTagInput}
+                onChange={(e) => setSidebarTagInput(e.target.value)}
+                className="bg-transparent border-none outline-none text-xs text-zinc-200 p-2 w-full placeholder-zinc-600"
+              />
+              <button
+                type="submit"
+                className="px-2.5 py-2 bg-zinc-800 text-cyan-400 hover:bg-cyan-950 font-bold text-xs border-l border-zinc-800 transition-colors"
+              >
+                +
+              </button>
+            </div>
+          </form>
+
+          {/* Discovered / Unpinned Tags */}
+          {unpinnedDiscoveredTags.length > 0 && (
+            <div className="pt-2 border-t border-zinc-800/80">
+              <div className="text-[10px] text-zinc-500 uppercase tracking-widest px-2 mb-2">
+                DISCOVERED HASHTAGS
+              </div>
+              <div className="flex flex-wrap gap-1.5 px-1">
+                {unpinnedDiscoveredTags.map((tag) => (
+                  <button
+                    key={tag}
+                    onClick={() => handleAddDiscovered(tag)}
+                    title="Click to add tag to list"
+                    className="text-[10px] bg-zinc-900/60 border border-zinc-800 text-zinc-400 hover:border-cyan-500/50 hover:text-cyan-400 px-2 py-1 rounded transition-colors flex items-center gap-1"
+                  >
+                    <span>{tag}</span>
+                    <span className="text-[9px] text-cyan-500 font-bold">+</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* CTA Button */}
+        <div className="mt-auto pt-4 border-t border-zinc-800">
+          {isAuthenticated ? (
+            <button
+              onClick={() => {
+                setCreateModalOpen(true);
+                setMobileSidebarOpen(false);
+              }}
+              className="w-full bg-cyan-400 text-black py-2.5 px-3 font-bold text-xs uppercase tracking-wider rounded hover:bg-cyan-300 shadow-[0_0_12px_rgba(0,240,255,0.4)] transition-all flex items-center justify-center space-x-1.5"
+            >
+              <span className="material-symbols-outlined text-sm">add</span>
+              <span>TRANSMIT VIBE</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => {
+                setAuthModalOpen(true, 'login');
+                setMobileSidebarOpen(false);
+              }}
+              className="w-full bg-amber-500/20 border border-amber-500/60 text-amber-400 py-2.5 px-3 font-bold text-xs uppercase tracking-wider rounded hover:bg-amber-500/30 transition-all flex items-center justify-center space-x-1.5"
+            >
+              <span className="material-symbols-outlined text-sm">login</span>
+              <span>[SIGN_IN]</span>
+            </button>
+          )}
+        </div>
+      </aside>
+    </>
   );
 };

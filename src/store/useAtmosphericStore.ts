@@ -218,7 +218,7 @@ interface AtmosphericState {
   createRoomFromVibe: (
     vibe: VibeItem,
     params: { title: string; isPublic: boolean; tags?: string[]; roomConfig?: RoomConfig },
-  ) => CreatedRoom;
+  ) => Promise<CreatedRoom>;
   createStandaloneRoom: (params: {
     title: string;
     description?: string;
@@ -230,7 +230,7 @@ interface AtmosphericState {
     musicUrl?: string;
     youtubeUrl?: string;
     roomConfig?: RoomConfig;
-  }) => CreatedRoom;
+  }) => Promise<CreatedRoom>;
   addStreamItemToRoom: (
     roomId: string,
     item: {
@@ -240,14 +240,16 @@ interface AtmosphericState {
       url?: string;
       title?: string;
     },
-  ) => void;
-  addRoomNews: (roomId: string, news: { title: string; content: string }) => void;
-  deleteRoomNews: (roomId: string, newsId: string) => void;
-  addRoomNote: (roomId: string, note: { title: string; content: string }) => void;
-  updateRoomNote: (roomId: string, noteId: string, note: { title?: string; content?: string }) => void;
-  deleteRoomNote: (roomId: string, noteId: string) => void;
-  updateRoomBackground: (roomId: string, bgImageUrl: string | null) => void;
-  updateRoom: (roomId: string, updates: Partial<CreatedRoom>) => void;
+  ) => Promise<void>;
+  addRoomNews: (roomId: string, news: { title: string; content: string }) => Promise<void>;
+  deleteRoomNews: (roomId: string, newsId: string) => Promise<void>;
+  addRoomNote: (roomId: string, note: { title: string; content: string }) => Promise<void>;
+  updateRoomNote: (roomId: string, noteId: string, note: { title?: string; content?: string }) => Promise<void>;
+  deleteRoomNote: (roomId: string, noteId: string) => Promise<void>;
+  updateRoomBackground: (roomId: string, bgImageUrl: string | null) => Promise<void>;
+  updateRoom: (roomId: string, updates: Partial<CreatedRoom>) => Promise<void>;
+  fetchRooms: (tag?: string) => Promise<void>;
+  fetchRoomById: (id: string) => Promise<void>;
 
   // Create Room Modal State
   isCreateRoomModalOpen: boolean;
@@ -280,6 +282,10 @@ interface AtmosphericState {
   // Create Vibe Modal
   isCreateModalOpen: boolean;
   setCreateModalOpen: (open: boolean) => void;
+
+  // Mobile Sidebar
+  isMobileSidebarOpen: boolean;
+  setMobileSidebarOpen: (open: boolean) => void;
 
   // User context
   currentUserId: string;
@@ -555,6 +561,7 @@ export const useAtmosphericStore = create<AtmosphericState>((set, get) => ({
         activeTag: formatted,
       });
       updateHashRoute('rooms', formatted);
+      get().fetchRooms(formatted === '#ALL' ? undefined : formatted);
     } else {
       set({
         viewMode: 'vibes',
@@ -696,6 +703,7 @@ export const useAtmosphericStore = create<AtmosphericState>((set, get) => ({
   setViewMode: (mode) => {
     if (mode === 'rooms') {
       get().closeRoomPage();
+      get().fetchRooms();
       return;
     }
     const currentActiveTag = get().activeVibeTag;
@@ -708,23 +716,24 @@ export const useAtmosphericStore = create<AtmosphericState>((set, get) => ({
     );
   },
 
-  selectedVibePage: MOCK_INITIAL_VIBES[0],
+  selectedVibePage: null,
   setSelectedVibePage: (vibe) => set({ selectedVibePage: vibe }),
   enterVibePage: (vibe) => {
     set({ selectedVibePage: vibe, viewMode: 'vibe' });
     updateHashRoute('vibe', get().activeVibeTag, vibe.id);
   },
 
-  selectedVibeRoom: MOCK_INITIAL_VIBES[0],
+  selectedVibeRoom: null,
   setSelectedVibeRoom: (vibe) => set({ selectedVibeRoom: vibe }),
 
-  createdRooms: MOCK_INITIAL_ROOMS,
+  createdRooms: [],
   activeCreatedRoom: null,
   setActiveCreatedRoom: (room) => set({ activeCreatedRoom: room }),
 
   openRoomPage: (room) => {
     set({ activeCreatedRoom: room, viewMode: 'rooms' });
     updateHashRoute('rooms', get().activeRoomTag, undefined, room.id);
+    get().fetchRoomById(room.id);
   },
 
   closeRoomPage: () => {
@@ -737,348 +746,468 @@ export const useAtmosphericStore = create<AtmosphericState>((set, get) => ({
     updateHashRoute('rooms', '#ALL');
   },
 
-  createRoomFromVibe: (vibe, params) => {
-    const currentUser = useAuthStore.getState().user;
+  createRoomFromVibe: async (vibe, params) => {
     const roomTags = params.tags && params.tags.length > 0 
       ? params.tags 
       : Array.from(new Set(['#stream', ...(vibe.tags || [])]));
 
-    const newRoom: CreatedRoom = {
-      id: `room-${Date.now()}`,
+    const roomPayload = {
       title: params.title || `ROOM :: ${vibe.title}`,
       description: vibe.content,
       poster: params.roomConfig?.bgImageUrl || vibe.roomConfig?.bgImageUrl || vibe.images?.[0] || '',
       originVibeId: vibe.id,
-      originVibeTitle: vibe.title,
       isPublic: params.isPublic,
-      authorId: currentUser?.id || 'user-op-01',
-      authorName: currentUser?.username || 'operator',
-      createdAt: 'JUST NOW',
       tags: roomTags,
       images: vibe.images || [],
-      videoUrl: vibe.videoUrl,
-      musicUrl: vibe.musicUrl,
-      streamItems: [],
+      videoUrl: vibe.videoUrl || null,
+      musicUrl: vibe.musicUrl || null,
       roomConfig: params.roomConfig || vibe.roomConfig || {
         themeColor: '#00F0FF',
         bgImageUrl: '',
       },
     };
 
-    set((state) => ({
-      createdRooms: [newRoom, ...state.createdRooms],
-      activeCreatedRoom: newRoom,
-      selectedVibeRoom: vibe,
-      viewMode: 'rooms',
-    }));
+    try {
+      const created = await fetchApi<any>('/rooms', {
+        method: 'POST',
+        body: JSON.stringify(roomPayload),
+      });
 
-    updateHashRoute('rooms', get().activeRoomTag, undefined, newRoom.id);
-    return newRoom;
+      const newRoom: CreatedRoom = {
+        id: created.id,
+        title: created.title,
+        description: created.description || '',
+        poster: created.poster || '',
+        originVibeId: created.originVibeId,
+        isPublic: created.isPublic,
+        authorId: created.authorId,
+        authorName: created.author?.username || 'operator',
+        createdAt: 'JUST NOW',
+        tags: created.tags || [],
+        images: created.images || [],
+        videoUrl: created.videoUrl,
+        musicUrl: created.musicUrl,
+        youtubeUrl: created.youtubeUrl,
+        roomConfig: created.roomConfig || null,
+        streamItems: [],
+        news: [],
+        notes: [],
+      };
+
+      set((state) => ({
+        createdRooms: [newRoom, ...state.createdRooms],
+        activeCreatedRoom: newRoom,
+        selectedVibeRoom: vibe,
+        viewMode: 'rooms',
+      }));
+
+      updateHashRoute('rooms', get().activeRoomTag, undefined, newRoom.id);
+      return newRoom;
+    } catch (_) {
+      const currentUser = useAuthStore.getState().user;
+      const newRoom: CreatedRoom = {
+        id: `room-${Date.now()}`,
+        ...roomPayload,
+        authorId: currentUser?.id || 'user-op-01',
+        authorName: currentUser?.username || 'operator',
+        createdAt: 'JUST NOW',
+        streamItems: [],
+        news: [],
+        notes: [],
+      };
+      set((state) => ({
+        createdRooms: [newRoom, ...state.createdRooms],
+        activeCreatedRoom: newRoom,
+        selectedVibeRoom: vibe,
+        viewMode: 'rooms',
+      }));
+      updateHashRoute('rooms', get().activeRoomTag, undefined, newRoom.id);
+      return newRoom;
+    }
   },
 
-  createStandaloneRoom: (params) => {
-    const currentUser = useAuthStore.getState().user;
-    const newRoom: CreatedRoom = {
-      id: `room-${Date.now()}`,
+  createStandaloneRoom: async (params) => {
+    const roomPayload = {
       title: params.title,
       description: params.description || '',
       poster: params.poster || params.roomConfig?.bgImageUrl || '',
       isPublic: params.isPublic,
-      authorId: currentUser?.id || 'user-op-01',
-      authorName: currentUser?.username || 'operator',
-      createdAt: 'JUST NOW',
       tags: params.tags && params.tags.length > 0 ? params.tags : ['#stream'],
       images: params.images || [],
       videoUrl: params.videoUrl || null,
       musicUrl: params.musicUrl || null,
       youtubeUrl: params.youtubeUrl || null,
-      streamItems: [],
       roomConfig: params.roomConfig || {
         themeColor: '#00F0FF',
         bgImageUrl: params.poster || '',
       },
     };
 
-    set((state) => ({
-      createdRooms: [newRoom, ...state.createdRooms],
-      activeCreatedRoom: newRoom,
-      viewMode: 'rooms',
-    }));
+    try {
+      const created = await fetchApi<any>('/rooms', {
+        method: 'POST',
+        body: JSON.stringify(roomPayload),
+      });
 
-    updateHashRoute('rooms', get().activeRoomTag, undefined, newRoom.id);
-    return newRoom;
-  },
+      const newRoom: CreatedRoom = {
+        id: created.id,
+        title: created.title,
+        description: created.description || '',
+        poster: created.poster || '',
+        isPublic: created.isPublic,
+        authorId: created.authorId,
+        authorName: created.author?.username || 'operator',
+        createdAt: 'JUST NOW',
+        tags: created.tags || [],
+        images: created.images || [],
+        videoUrl: created.videoUrl,
+        musicUrl: created.musicUrl,
+        youtubeUrl: created.youtubeUrl,
+        roomConfig: created.roomConfig || null,
+        streamItems: [],
+        news: [],
+        notes: [],
+      };
 
-  addStreamItemToRoom: (roomId, item) => {
-    const targetRoom = get().createdRooms.find((r) => r.id === roomId);
-    const authState = useAuthStore.getState();
-    const perm = checkRoomPostingPermission(targetRoom || null, authState.user, authState.isAuthenticated);
-    if (!perm.canPost) {
-      console.warn('Blocked posting attempt to room stream:', perm.reason);
-      return;
+      set((state) => ({
+        createdRooms: [newRoom, ...state.createdRooms],
+        activeCreatedRoom: newRoom,
+        viewMode: 'rooms',
+      }));
+
+      updateHashRoute('rooms', get().activeRoomTag, undefined, newRoom.id);
+      return newRoom;
+    } catch (_) {
+      const currentUser = useAuthStore.getState().user;
+      const newRoom: CreatedRoom = {
+        id: `room-${Date.now()}`,
+        ...roomPayload,
+        authorId: currentUser?.id || 'user-op-01',
+        authorName: currentUser?.username || 'operator',
+        createdAt: 'JUST NOW',
+        streamItems: [],
+        news: [],
+        notes: [],
+      };
+      set((state) => ({
+        createdRooms: [newRoom, ...state.createdRooms],
+        activeCreatedRoom: newRoom,
+        viewMode: 'rooms',
+      }));
+      updateHashRoute('rooms', get().activeRoomTag, undefined, newRoom.id);
+      return newRoom;
     }
-
-    const currentUser = authState.user;
-    const newItem: RoomStreamItem = {
-      id: `rsi-${Date.now()}`,
-      ...item,
-      authorId: currentUser?.id || 'user-op-01',
-      authorName: currentUser?.username || 'operator',
-      createdAt: 'JUST NOW',
-    };
-
-    set((state) => {
-      const updatedRooms = state.createdRooms.map((r) => {
-        if (r.id === roomId) {
-          const items = r.streamItems || [];
-          const images = [...(r.images || [])];
-          if (item.type === 'image' && item.mediaUrls) {
-            item.mediaUrls.forEach((img) => {
-              if (!images.includes(img)) images.push(img);
-            });
-          }
-          return {
-            ...r,
-            images,
-            videoUrl: item.type === 'video' ? item.url || r.videoUrl : r.videoUrl,
-            youtubeUrl: item.type === 'youtube' ? item.url || r.youtubeUrl : r.youtubeUrl,
-            musicUrl: item.type === 'music' ? item.url || r.musicUrl : r.musicUrl,
-            streamItems: [newItem, ...items],
-          };
-        }
-        return r;
-      });
-
-      const updatedActive =
-        state.activeCreatedRoom?.id === roomId
-          ? updatedRooms.find((r) => r.id === roomId) || null
-          : state.activeCreatedRoom;
-
-      return {
-        createdRooms: updatedRooms,
-        activeCreatedRoom: updatedActive,
-      };
-    });
   },
 
-  addRoomNews: (roomId, newsData) => {
-    const targetRoom = get().createdRooms.find((r) => r.id === roomId);
-    const authState = useAuthStore.getState();
-    const perm = checkRoomPostingPermission(targetRoom || null, authState.user, authState.isAuthenticated);
-    if (!perm.canPost) {
-      console.warn('Blocked adding news to room:', perm.reason);
-      return;
-    }
-
-    const currentUser = authState.user;
-    const newNews: RoomNewsItem = {
-      id: `news-${Date.now()}`,
-      title: newsData.title,
-      content: newsData.content,
-      authorId: currentUser?.id || 'user-op-01',
-      authorName: currentUser?.username || 'operator',
-      createdAt: 'JUST NOW',
-    };
-
-    set((state) => {
-      const updatedRooms = state.createdRooms.map((r) => {
-        if (r.id === roomId) {
-          const existingNews = r.news || [];
-          return {
-            ...r,
-            news: [newNews, ...existingNews],
-          };
-        }
-        return r;
+  addStreamItemToRoom: async (roomId, item) => {
+    try {
+      const created = await fetchApi<any>(`/rooms/${roomId}/stream`, {
+        method: 'POST',
+        body: JSON.stringify(item),
       });
-
-      const updatedActive =
-        state.activeCreatedRoom?.id === roomId
-          ? updatedRooms.find((r) => r.id === roomId) || null
-          : state.activeCreatedRoom;
-
-      return {
-        createdRooms: updatedRooms,
-        activeCreatedRoom: updatedActive,
+      if (created && created.id) {
+        get().fetchRoomById(roomId);
+      }
+    } catch (_) {
+      const currentUser = useAuthStore.getState().user;
+      const newItem: RoomStreamItem = {
+        id: `rsi-${Date.now()}`,
+        ...item,
+        authorId: currentUser?.id || 'user-op-01',
+        authorName: currentUser?.username || 'operator',
+        createdAt: 'JUST NOW',
       };
-    });
-  },
-
-  deleteRoomNews: (roomId, newsId) => {
-    set((state) => {
-      const updatedRooms = state.createdRooms.map((r) => {
-        if (r.id === roomId) {
-          return {
-            ...r,
-            news: (r.news || []).filter((n) => n.id !== newsId),
-          };
-        }
-        return r;
-      });
-
-      const updatedActive =
-        state.activeCreatedRoom?.id === roomId
-          ? updatedRooms.find((r) => r.id === roomId) || null
-          : state.activeCreatedRoom;
-
-      return {
-        createdRooms: updatedRooms,
-        activeCreatedRoom: updatedActive,
-      };
-    });
-  },
-
-  addRoomNote: (roomId, noteData) => {
-    const targetRoom = get().createdRooms.find((r) => r.id === roomId);
-    const authState = useAuthStore.getState();
-    const perm = checkRoomPostingPermission(targetRoom || null, authState.user, authState.isAuthenticated);
-    if (!perm.canPost) {
-      console.warn('Blocked adding note to room:', perm.reason);
-      return;
-    }
-
-    const currentUser = authState.user;
-    const newNote: RoomNoteItem = {
-      id: `note-${Date.now()}`,
-      title: noteData.title,
-      content: noteData.content,
-      authorId: currentUser?.id || 'user-op-01',
-      authorName: currentUser?.username || 'operator',
-      createdAt: 'JUST NOW',
-    };
-
-    set((state) => {
-      const updatedRooms = state.createdRooms.map((r) => {
-        if (r.id === roomId) {
-          const existingNotes = r.notes || [];
-          return {
-            ...r,
-            notes: [newNote, ...existingNotes],
-          };
-        }
-        return r;
-      });
-
-      const updatedActive =
-        state.activeCreatedRoom?.id === roomId
-          ? updatedRooms.find((r) => r.id === roomId) || null
-          : state.activeCreatedRoom;
-
-      return {
-        createdRooms: updatedRooms,
-        activeCreatedRoom: updatedActive,
-      };
-    });
-  },
-
-  updateRoomNote: (roomId, noteId, updatedNote) => {
-    set((state) => {
-      const updatedRooms = state.createdRooms.map((r) => {
-        if (r.id === roomId) {
-          const updatedNotes = (r.notes || []).map((n) => {
-            if (n.id === noteId) {
-              return {
-                ...n,
-                title: updatedNote.title !== undefined ? updatedNote.title : n.title,
-                content: updatedNote.content !== undefined ? updatedNote.content : n.content,
-                updatedAt: 'EDITED JUST NOW',
-              };
+      set((state) => {
+        const updatedRooms = state.createdRooms.map((r) => {
+          if (r.id === roomId) {
+            const items = r.streamItems || [];
+            const images = [...(r.images || [])];
+            if (item.type === 'image' && item.mediaUrls) {
+              item.mediaUrls.forEach((img) => {
+                if (!images.includes(img)) images.push(img);
+              });
             }
-            return n;
-          });
-          return { ...r, notes: updatedNotes };
-        }
-        return r;
+            return {
+              ...r,
+              images,
+              videoUrl: item.type === 'video' ? item.url || r.videoUrl : r.videoUrl,
+              youtubeUrl: item.type === 'youtube' ? item.url || r.youtubeUrl : r.youtubeUrl,
+              musicUrl: item.type === 'music' ? item.url || r.musicUrl : r.musicUrl,
+              streamItems: [newItem, ...items],
+            };
+          }
+          return r;
+        });
+
+        const updatedActive =
+          state.activeCreatedRoom?.id === roomId
+            ? updatedRooms.find((r) => r.id === roomId) || null
+            : state.activeCreatedRoom;
+
+        return {
+          createdRooms: updatedRooms,
+          activeCreatedRoom: updatedActive,
+        };
       });
-
-      const updatedActive =
-        state.activeCreatedRoom?.id === roomId
-          ? updatedRooms.find((r) => r.id === roomId) || null
-          : state.activeCreatedRoom;
-
-      return {
-        createdRooms: updatedRooms,
-        activeCreatedRoom: updatedActive,
-      };
-    });
+    }
   },
 
-  deleteRoomNote: (roomId, noteId) => {
-    set((state) => {
-      const updatedRooms = state.createdRooms.map((r) => {
-        if (r.id === roomId) {
-          return {
-            ...r,
-            notes: (r.notes || []).filter((n) => n.id !== noteId),
-          };
-        }
-        return r;
+  addRoomNews: async (roomId, newsData) => {
+    try {
+      await fetchApi<any>(`/rooms/${roomId}/news`, {
+        method: 'POST',
+        body: JSON.stringify(newsData),
       });
-
-      const updatedActive =
-        state.activeCreatedRoom?.id === roomId
-          ? updatedRooms.find((r) => r.id === roomId) || null
-          : state.activeCreatedRoom;
-
-      return {
-        createdRooms: updatedRooms,
-        activeCreatedRoom: updatedActive,
+      get().fetchRoomById(roomId);
+    } catch (_) {
+      const currentUser = useAuthStore.getState().user;
+      const newNews: RoomNewsItem = {
+        id: `news-${Date.now()}`,
+        title: newsData.title,
+        content: newsData.content,
+        authorId: currentUser?.id || 'user-op-01',
+        authorName: currentUser?.username || 'operator',
+        createdAt: 'JUST NOW',
       };
-    });
+
+      set((state) => {
+        const updatedRooms = state.createdRooms.map((r) => {
+          if (r.id === roomId) {
+            const existingNews = r.news || [];
+            return {
+              ...r,
+              news: [newNews, ...existingNews],
+            };
+          }
+          return r;
+        });
+
+        const updatedActive =
+          state.activeCreatedRoom?.id === roomId
+            ? updatedRooms.find((r) => r.id === roomId) || null
+            : state.activeCreatedRoom;
+
+        return {
+          createdRooms: updatedRooms,
+          activeCreatedRoom: updatedActive,
+        };
+      });
+    }
   },
 
-  updateRoomBackground: (roomId, bgImageUrl) => {
+  deleteRoomNews: async (roomId, newsId) => {
+    try {
+      await fetchApi<any>(`/rooms/${roomId}/news/${newsId}`, {
+        method: 'DELETE',
+      });
+      get().fetchRoomById(roomId);
+    } catch (_) {
+      set((state) => {
+        const updatedRooms = state.createdRooms.map((r) => {
+          if (r.id === roomId) {
+            return {
+              ...r,
+              news: (r.news || []).filter((n) => n.id !== newsId),
+            };
+          }
+          return r;
+        });
+
+        const updatedActive =
+          state.activeCreatedRoom?.id === roomId
+            ? updatedRooms.find((r) => r.id === roomId) || null
+            : state.activeCreatedRoom;
+
+        return {
+          createdRooms: updatedRooms,
+          activeCreatedRoom: updatedActive,
+        };
+      });
+    }
+  },
+
+  addRoomNote: async (roomId, noteData) => {
+    try {
+      await fetchApi<any>(`/rooms/${roomId}/notes`, {
+        method: 'POST',
+        body: JSON.stringify(noteData),
+      });
+      get().fetchRoomById(roomId);
+    } catch (_) {
+      const currentUser = useAuthStore.getState().user;
+      const newNote: RoomNoteItem = {
+        id: `note-${Date.now()}`,
+        title: noteData.title,
+        content: noteData.content,
+        authorId: currentUser?.id || 'user-op-01',
+        authorName: currentUser?.username || 'operator',
+        createdAt: 'JUST NOW',
+      };
+
+      set((state) => {
+        const updatedRooms = state.createdRooms.map((r) => {
+          if (r.id === roomId) {
+            const existingNotes = r.notes || [];
+            return {
+              ...r,
+              notes: [newNote, ...existingNotes],
+            };
+          }
+          return r;
+        });
+
+        const updatedActive =
+          state.activeCreatedRoom?.id === roomId
+            ? updatedRooms.find((r) => r.id === roomId) || null
+            : state.activeCreatedRoom;
+
+        return {
+          createdRooms: updatedRooms,
+          activeCreatedRoom: updatedActive,
+        };
+      });
+    }
+  },
+
+  updateRoomNote: async (roomId, noteId, updatedNote) => {
+    try {
+      await fetchApi<any>(`/rooms/${roomId}/notes/${noteId}`, {
+        method: 'PATCH',
+        body: JSON.stringify(updatedNote),
+      });
+      get().fetchRoomById(roomId);
+    } catch (_) {
+      set((state) => {
+        const updatedRooms = state.createdRooms.map((r) => {
+          if (r.id === roomId) {
+            const updatedNotes = (r.notes || []).map((n) => {
+              if (n.id === noteId) {
+                return {
+                  ...n,
+                  title: updatedNote.title !== undefined ? updatedNote.title : n.title,
+                  content: updatedNote.content !== undefined ? updatedNote.content : n.content,
+                  updatedAt: 'EDITED JUST NOW',
+                };
+              }
+              return n;
+            });
+            return { ...r, notes: updatedNotes };
+          }
+          return r;
+        });
+
+        const updatedActive =
+          state.activeCreatedRoom?.id === roomId
+            ? updatedRooms.find((r) => r.id === roomId) || null
+            : state.activeCreatedRoom;
+
+        return {
+          createdRooms: updatedRooms,
+          activeCreatedRoom: updatedActive,
+        };
+      });
+    }
+  },
+
+  deleteRoomNote: async (roomId, noteId) => {
+    try {
+      await fetchApi<any>(`/rooms/${roomId}/notes/${noteId}`, {
+        method: 'DELETE',
+      });
+      get().fetchRoomById(roomId);
+    } catch (_) {
+      set((state) => {
+        const updatedRooms = state.createdRooms.map((r) => {
+          if (r.id === roomId) {
+            return {
+              ...r,
+              notes: (r.notes || []).filter((n) => n.id !== noteId),
+            };
+          }
+          return r;
+        });
+
+        const updatedActive =
+          state.activeCreatedRoom?.id === roomId
+            ? updatedRooms.find((r) => r.id === roomId) || null
+            : state.activeCreatedRoom;
+
+        return {
+          createdRooms: updatedRooms,
+          activeCreatedRoom: updatedActive,
+        };
+      });
+    }
+  },
+
+  updateRoomBackground: async (roomId, bgImageUrl) => {
     const cleanBg = bgImageUrl ? bgImageUrl.trim() : '';
-    set((state) => {
-      const updatedRooms = state.createdRooms.map((r) => {
-        if (r.id === roomId) {
-          return {
-            ...r,
-            poster: cleanBg,
-            roomConfig: {
-              ...r.roomConfig,
-              bgImageUrl: cleanBg,
-            },
-          };
-        }
-        return r;
+    try {
+      await fetchApi<any>(`/rooms/${roomId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ poster: cleanBg, roomConfig: { bgImageUrl: cleanBg } }),
       });
-
-      const updatedActive =
-        state.activeCreatedRoom?.id === roomId
-          ? {
-              ...state.activeCreatedRoom,
+      get().fetchRoomById(roomId);
+    } catch (_) {
+      set((state) => {
+        const updatedRooms = state.createdRooms.map((r) => {
+          if (r.id === roomId) {
+            return {
+              ...r,
               poster: cleanBg,
               roomConfig: {
-                ...state.activeCreatedRoom.roomConfig,
+                ...r.roomConfig,
                 bgImageUrl: cleanBg,
               },
-            }
-          : state.activeCreatedRoom;
+            };
+          }
+          return r;
+        });
 
-      return {
-        createdRooms: updatedRooms,
-        activeCreatedRoom: updatedActive,
-      };
-    });
+        const updatedActive =
+          state.activeCreatedRoom?.id === roomId
+            ? {
+                ...state.activeCreatedRoom,
+                poster: cleanBg,
+                roomConfig: {
+                  ...state.activeCreatedRoom.roomConfig,
+                  bgImageUrl: cleanBg,
+                },
+              }
+            : state.activeCreatedRoom;
+
+        return {
+          createdRooms: updatedRooms,
+          activeCreatedRoom: updatedActive,
+        };
+      });
+    }
   },
 
-  updateRoom: (roomId, updates) => {
-    set((state) => {
-      const updatedRooms = state.createdRooms.map((r) =>
-        r.id === roomId ? { ...r, ...updates } : r,
-      );
+  updateRoom: async (roomId, updates) => {
+    try {
+      await fetchApi<any>(`/rooms/${roomId}`, {
+        method: 'PATCH',
+        body: JSON.stringify(updates),
+      });
+      get().fetchRoomById(roomId);
+    } catch (_) {
+      set((state) => {
+        const updatedRooms = state.createdRooms.map((r) =>
+          r.id === roomId ? { ...r, ...updates } : r,
+        );
 
-      const updatedActive =
-        state.activeCreatedRoom?.id === roomId
-          ? { ...state.activeCreatedRoom, ...updates }
-          : state.activeCreatedRoom;
+        const updatedActive =
+          state.activeCreatedRoom?.id === roomId
+            ? { ...state.activeCreatedRoom, ...updates }
+            : state.activeCreatedRoom;
 
-      return {
-        createdRooms: updatedRooms,
-        activeCreatedRoom: updatedActive,
-      };
-    });
+        return {
+          createdRooms: updatedRooms,
+          activeCreatedRoom: updatedActive,
+        };
+      });
+    }
   },
 
   isCreateRoomModalOpen: false,
@@ -1103,10 +1232,16 @@ export const useAtmosphericStore = create<AtmosphericState>((set, get) => ({
         const foundRoom = get().createdRooms.find((r) => r.id === route.roomId);
         if (foundRoom) {
           set({ activeCreatedRoom: foundRoom, viewMode: 'rooms', activeRoomTag: route.tag, activeTag: route.tag });
+          get().fetchRoomById(route.roomId);
+          return;
+        } else {
+          set({ viewMode: 'rooms', activeRoomTag: route.tag, activeTag: route.tag });
+          get().fetchRoomById(route.roomId);
           return;
         }
       }
       set({ activeCreatedRoom: null, viewMode: 'rooms', activeRoomTag: route.tag, activeTag: route.tag });
+      get().fetchRooms();
       return;
     }
 
@@ -1114,7 +1249,7 @@ export const useAtmosphericStore = create<AtmosphericState>((set, get) => ({
     get().fetchVibes(route.tag === '#ALL' ? undefined : route.tag);
   },
 
-  vibes: MOCK_INITIAL_VIBES,
+  vibes: [],
   isLoadingVibes: false,
 
   fetchVibes: async (tag?: string) => {
@@ -1154,10 +1289,19 @@ export const useAtmosphericStore = create<AtmosphericState>((set, get) => ({
         }));
 
         set((state) => {
-          const currentSelected = state.selectedVibePage
-            ? mapped.find((m) => m.id === state.selectedVibePage?.id) || state.selectedVibePage
-            : mapped[0] || null;
-          return { vibes: mapped, selectedVibePage: currentSelected, isLoadingVibes: false };
+          const route = parseHashRoute();
+          const targetId = route.viewMode === 'vibe' ? route.vibeId : undefined;
+          const currentSelected = targetId
+            ? mapped.find((m) => m.id === targetId) || state.selectedVibePage
+            : state.selectedVibePage
+              ? mapped.find((m) => m.id === state.selectedVibePage?.id) || state.selectedVibePage
+              : mapped[0] || null;
+          return {
+            vibes: mapped,
+            selectedVibePage: currentSelected,
+            selectedVibeRoom: state.selectedVibeRoom || currentSelected,
+            isLoadingVibes: false,
+          };
         });
         return;
       }
@@ -1390,8 +1534,157 @@ export const useAtmosphericStore = create<AtmosphericState>((set, get) => ({
     set({ roomData: null, isLoadingRoom: false });
   },
 
+  fetchRooms: async (tag?: string) => {
+    try {
+      const cleanTag = tag ? tag.replace('#', '') : undefined;
+      const url = cleanTag
+        ? `/rooms?tag=${encodeURIComponent(cleanTag)}`
+        : '/rooms';
+      const data = await fetchApi<any[]>(url);
+      if (Array.isArray(data)) {
+        const mapped: CreatedRoom[] = data.map((room) => ({
+          id: room.id,
+          title: room.title,
+          description: room.description || '',
+          poster: room.poster || '',
+          originVibeId: room.originVibeId,
+          isPublic: room.isPublic,
+          authorId: room.authorId,
+          authorName: room.author?.username || 'operator',
+          createdAt: new Date(room.createdAt).toLocaleString(),
+          tags: room.tags || [],
+          images: room.images || [],
+          videoUrl: room.videoUrl,
+          musicUrl: room.musicUrl,
+          youtubeUrl: room.youtubeUrl,
+          roomConfig: room.roomConfig || null,
+          streamItems: (room.streamItems || []).map((item: any) => ({
+            id: item.id,
+            type: item.type,
+            content: item.content || '',
+            mediaUrls: item.mediaUrls || [],
+            url: item.url,
+            title: item.title,
+            authorName: item.author?.username || 'operator',
+            authorId: item.authorId,
+            createdAt: new Date(item.createdAt).toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit',
+            }),
+          })),
+          news: (room.news || []).map((n: any) => ({
+            id: n.id,
+            title: n.title,
+            content: n.content,
+            authorName: n.author?.username || 'operator',
+            authorId: n.authorId,
+            createdAt: new Date(n.createdAt).toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit',
+            }),
+          })),
+          notes: (room.notes || []).map((n: any) => ({
+            id: n.id,
+            title: n.title,
+            content: n.content,
+            authorName: n.author?.username || 'operator',
+            authorId: n.authorId,
+            createdAt: new Date(n.createdAt).toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit',
+            }),
+            updatedAt: n.updatedAt ? new Date(n.updatedAt).toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit',
+            }) : undefined,
+          })),
+        }));
+        set({ createdRooms: mapped });
+        const active = get().activeCreatedRoom;
+        if (active) {
+          const updatedActive = mapped.find((r) => r.id === active.id);
+          if (updatedActive) {
+            set({ activeCreatedRoom: updatedActive });
+          }
+        }
+      }
+    } catch (_) {}
+  },
+
+  fetchRoomById: async (id: string) => {
+    try {
+      const room = await fetchApi<any>(`/rooms/id/${id}`);
+      if (room && room.id) {
+        const mapped: CreatedRoom = {
+          id: room.id,
+          title: room.title,
+          description: room.description || '',
+          poster: room.poster || '',
+          originVibeId: room.originVibeId,
+          isPublic: room.isPublic,
+          authorId: room.authorId,
+          authorName: room.author?.username || 'operator',
+          createdAt: new Date(room.createdAt).toLocaleString(),
+          tags: room.tags || [],
+          images: room.images || [],
+          videoUrl: room.videoUrl,
+          musicUrl: room.musicUrl,
+          youtubeUrl: room.youtubeUrl,
+          roomConfig: room.roomConfig || null,
+          streamItems: (room.streamItems || []).map((item: any) => ({
+            id: item.id,
+            type: item.type,
+            content: item.content || '',
+            mediaUrls: item.mediaUrls || [],
+            url: item.url,
+            title: item.title,
+            authorName: item.author?.username || 'operator',
+            authorId: item.authorId,
+            createdAt: new Date(item.createdAt).toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit',
+            }),
+          })),
+          news: (room.news || []).map((n: any) => ({
+            id: n.id,
+            title: n.title,
+            content: n.content,
+            authorName: n.author?.username || 'operator',
+            authorId: n.authorId,
+            createdAt: new Date(n.createdAt).toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit',
+            }),
+          })),
+          notes: (room.notes || []).map((n: any) => ({
+            id: n.id,
+            title: n.title,
+            content: n.content,
+            authorName: n.author?.username || 'operator',
+            authorId: n.authorId,
+            createdAt: new Date(n.createdAt).toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit',
+            }),
+            updatedAt: n.updatedAt ? new Date(n.updatedAt).toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit',
+            }) : undefined,
+          })),
+        };
+        set((state) => ({
+          activeCreatedRoom: mapped,
+          createdRooms: state.createdRooms.map((r) => r.id === mapped.id ? mapped : r),
+        }));
+      }
+    } catch (_) {}
+  },
+
   isCreateModalOpen: false,
   setCreateModalOpen: (open) => set({ isCreateModalOpen: open }),
+
+  isMobileSidebarOpen: false,
+  setMobileSidebarOpen: (open) => set({ isMobileSidebarOpen: open }),
 
   currentUserId: 'user-op-01',
 }));

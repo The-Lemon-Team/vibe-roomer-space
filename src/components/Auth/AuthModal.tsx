@@ -87,8 +87,9 @@ export const AuthModal: React.FC = () => {
       <form onSubmit={handleSubmit} className="space-y-4 text-xs">
         {authModalMode === 'register' && (
           <div>
-            <label className="block text-zinc-400 mb-1">USERNAME</label>
+            <label htmlFor="auth-username" className="block text-zinc-400 mb-1">USERNAME</label>
             <input
+              id="auth-username"
               type="text"
               required
               value={username}
@@ -100,8 +101,9 @@ export const AuthModal: React.FC = () => {
         )}
 
         <div>
-          <label className="block text-zinc-400 mb-1">EMAIL ADDRESS</label>
+          <label htmlFor="auth-email" className="block text-zinc-400 mb-1">EMAIL ADDRESS</label>
           <input
+            id="auth-email"
             type="email"
             required
             value={email}
@@ -112,8 +114,9 @@ export const AuthModal: React.FC = () => {
         </div>
 
         <div>
-          <label className="block text-zinc-400 mb-1">PASSWORD</label>
+          <label htmlFor="auth-password" className="block text-zinc-400 mb-1">PASSWORD</label>
           <input
+            id="auth-password"
             type="password"
             required
             minLength={6}

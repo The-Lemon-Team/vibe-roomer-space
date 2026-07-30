@@ -34,7 +34,7 @@ export const RoomListView: React.FC = () => {
     : 'bg-amber-950/80 border-amber-500/50 text-amber-400 shadow-[0_0_8px_rgba(255,176,0,0.2)]';
 
   return (
-    <main className="flex-1 w-full h-full overflow-y-auto bg-zinc-950 bg-[radial-gradient(#1a779d_1px,transparent_1px)] bg-[size:16px_16px] pb-20 lg:pb-8 font-sans">
+    <main className="flex-1 w-full h-full overflow-y-auto bg-zinc-950 bg-[radial-gradient(#1a779d50_1px,transparent_1px)] bg-[size:16px_16px] pb-20 lg:pb-8 font-sans">
       <div className="w-full max-w-[1400px] mx-auto p-4 md:p-6 lg:p-8 space-y-6">
         {/* Header & Status Bar */}
         <div className="rooms-header flex flex-col sm:flex-row justify-between sm:items-center gap-4 bg-zinc-900/80 border border-zinc-800 p-4 rounded-lg backdrop-blur-md font-mono text-xs">

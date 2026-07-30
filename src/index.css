@@ -6,10 +6,8 @@
   body {
     background-color: #131317;
     color: #e4e1e7;
-    background-image: 
-      linear-gradient(to right, #2a292e 1px, transparent 1px),
-      linear-gradient(to bottom, #2a292e 1px, transparent 1px);
-    background-size: 40px 40px;
+    background-image: radial-gradient(#1a779d50 1px, transparent 1px);
+    background-size: 16px 16px;
     background-attachment: fixed;
   }
 }

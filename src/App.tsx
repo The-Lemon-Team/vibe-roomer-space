@@ -11,7 +11,6 @@ import { AtmosphericRoomView } from './components/VibeRoom/AtmosphericRoomView';
 import { CreateRoomModal } from './components/VibeRoom/CreateRoomModal';
 import { CreateVibeModal } from './components/VibeForm/CreateVibeModal';
 import { DeleteVibeModal } from './components/VibeList/DeleteVibeModal';
-import { BottomNavbar } from './components/Navbar/BottomNavbar';
 import { AuthModal } from './components/Auth/AuthModal';
 
 export const App: React.FC = () => {
@@ -65,8 +64,8 @@ export const App: React.FC = () => {
       <div className="fixed inset-0 pointer-events-none opacity-20 z-50 bg-[linear-gradient(to_bottom,rgba(255,255,255,0)_50%,rgba(0,0,0,0.4)_50%)] bg-[length:100%_4px]" />
 
       <div className="flex flex-1 overflow-hidden h-full">
-        {/* Left Operator Sidebar: Hidden when NOT logged in, Visible when Logged in */}
-        {isAuthenticated && <OperatorSidebar />}
+        {/* Operator Sidebar (Drawer on mobile, responsive on desktop) */}
+        <OperatorSidebar />
 
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
@@ -80,26 +79,28 @@ export const App: React.FC = () => {
           {viewMode === 'vibe' ? (
             <VibePage />
           ) : viewMode === 'vibes' ? (
-            <main className="flex-1 w-full h-full overflow-y-auto bg-zinc-950 bg-[radial-gradient(#1a779d_1px,transparent_1px)] bg-[size:16px_16px] pb-20 lg:pb-8">
+            <main className="flex-1 w-full h-full overflow-y-auto bg-zinc-950 bg-[radial-gradient(#1a779d50_1px,transparent_1px)] bg-[size:16px_16px] pb-8">
               {/* Feed Header & Status */}
               <div
-                className="toolbar w-full flex justify-between items-center font-mono text-xs text-zinc-400 border-b border-zinc-800/80 px-4 md:px-6 lg:px-8 py-3 backdrop-blur-sm"
+                className="toolbar w-full border-b border-zinc-800/80 backdrop-blur-sm"
                 style={{ backgroundColor: 'rgb(13 13 18 / 95%)' }}
               >
-                <div>
-                  [VIBES_HASHTAG_ROUTE:{' '}
-                  <span
-                    className={`font-bold px-2 py-0.5 rounded border ${
-                      tagMode === 'live'
-                        ? 'bg-gradient-to-r from-cyan-950/80 to-red-950/80 border-cyan-500/50 text-red-200 shadow-[0_0_8px_rgba(239,68,68,0.25)]'
-                        : 'bg-cyan-950/80 border-cyan-500/50 text-cyan-400 shadow-[0_0_8px_rgba(0,240,255,0.2)]'
-                    }`}
-                  >
-                    {activeTag}
-                  </span>
-                  ]
+                <div className="max-w-[1400px] mx-auto w-full flex justify-between items-center font-mono text-xs text-zinc-400 px-4 md:px-6 py-3">
+                  <div>
+                    [VIBES_HASHTAG_ROUTE:{' '}
+                    <span
+                      className={`font-bold px-2 py-0.5 rounded border ${
+                        tagMode === 'live'
+                          ? 'bg-gradient-to-r from-cyan-950/80 to-red-950/80 border-cyan-500/50 text-red-200 shadow-[0_0_8px_rgba(239,68,68,0.25)]'
+                          : 'bg-cyan-950/80 border-cyan-500/50 text-cyan-400 shadow-[0_0_8px_rgba(0,240,255,0.2)]'
+                      }`}
+                    >
+                      {activeTag}
+                    </span>
+                    ]
+                  </div>
+                  <div>{filteredVibes.length} VIBE LOGS</div>
                 </div>
-                <div>{filteredVibes.length} VIBE LOGS</div>
               </div>
 
               <div className="content-section w-full max-w-[1400px] mx-auto px-4 md:px-6 lg:px-8 pb-4 md:pb-6 lg:pb-8 pt-2 md:pt-3 lg:pt-4">
@@ -180,9 +181,6 @@ export const App: React.FC = () => {
         }}
         onCancel={() => setVibeToDelete(null)}
       />
-
-      {/* Mobile Navigation Toolbar */}
-      <BottomNavbar />
     </div>
   );
 };

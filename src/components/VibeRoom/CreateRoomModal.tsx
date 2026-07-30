@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useAtmosphericStore } from '../../store/useAtmosphericStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { BaseModal } from '../Common/BaseModal';
+import { BackgroundImageModal } from './BackgroundImageModal';
+import { HashtagAutocomplete } from '../VibeForm/HashtagAutocomplete';
 
 export const CreateRoomModal: React.FC = () => {
   const {
@@ -22,14 +24,15 @@ export const CreateRoomModal: React.FC = () => {
     }
   }, [isCreateRoomModalOpen, isAuthenticated, setCreateRoomModalOpen, setAuthModalOpen]);
 
-  const starterVibe = vibeToCreateRoom || selectedVibePage;
+  const starterVibe = vibeToCreateRoom;
 
   const [roomTitle, setRoomTitle] = useState('');
   const [description, setDescription] = useState('');
   const [posterUrl, setPosterUrl] = useState('');
-  const [hashtagsInput, setHashtagsInput] = useState('#stream, #lofi');
+  const [selectedTags, setSelectedTags] = useState<string[]>(['#stream', '#lofi']);
   const [isPublic, setIsPublic] = useState(true);
   const [themeColor, setThemeColor] = useState('#00F0FF');
+  const [isBgModalOpen, setIsBgModalOpen] = useState(false);
 
   useEffect(() => {
     if (starterVibe) {
@@ -38,12 +41,12 @@ export const CreateRoomModal: React.FC = () => {
       setThemeColor(starterVibe.roomConfig?.themeColor || '#00F0FF');
       setPosterUrl(starterVibe.roomConfig?.bgImageUrl || '');
       if (starterVibe.tags && starterVibe.tags.length > 0) {
-        setHashtagsInput(starterVibe.tags.join(', '));
+        setSelectedTags(starterVibe.tags);
       }
     } else {
       setRoomTitle('NEON STREAM ROOM');
       setPosterUrl('');
-      setHashtagsInput('#stream, #lofi, #ambient');
+      setSelectedTags(['#stream', '#lofi', '#ambient']);
     }
   }, [starterVibe, isCreateRoomModalOpen]);
 
@@ -51,11 +54,7 @@ export const CreateRoomModal: React.FC = () => {
     e.preventDefault();
     if (!roomTitle.trim()) return;
 
-    const parsedTags = hashtagsInput
-      .split(/[, ]+/)
-      .map((t) => t.trim())
-      .filter(Boolean)
-      .map((t) => (t.startsWith('#') ? t.toLowerCase() : `#${t.toLowerCase()}`));
+    const parsedTags = selectedTags;
 
     if (starterVibe) {
       createRoomFromVibe(starterVibe, {
@@ -85,7 +84,8 @@ export const CreateRoomModal: React.FC = () => {
   };
 
   return (
-    <BaseModal
+    <>
+      <BaseModal
       isOpen={isCreateRoomModalOpen}
       onClose={() => setCreateRoomModalOpen(false)}
       title="[ CREATE STREAM ROOM ]"
@@ -123,7 +123,7 @@ export const CreateRoomModal: React.FC = () => {
             STREAM DESCRIPTION
           </label>
           <textarea
-            rows={2}
+            rows={5}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Atmospheric audio/video stream description..."
@@ -134,21 +134,25 @@ export const CreateRoomModal: React.FC = () => {
         {/* Attached Hashtags */}
         <div className="space-y-1 font-mono text-xs">
           <label className="block text-zinc-300 font-semibold">
-            ATTACHED HASHTAGS (Comma-separated)
+            ATTACHED HASHTAGS
           </label>
-          <input
-            type="text"
-            value={hashtagsInput}
-            onChange={(e) => setHashtagsInput(e.target.value)}
-            placeholder="#stream, #lofi, #ambient"
-            className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-amber-400 focus:border-cyan-400 focus:outline-none"
+          <HashtagAutocomplete
+            selectedTags={selectedTags}
+            onChange={setSelectedTags}
           />
         </div>
 
         {/* Room Poster URL */}
         <div className="space-y-1 font-mono text-xs">
-          <label className="block text-zinc-300 font-semibold">
-            BACKGROUND IMAGE URL (OPTIONAL)
+          <label className="block text-zinc-300 font-semibold flex justify-between items-center">
+            <span>BACKGROUND IMAGE URL (OPTIONAL)</span>
+            <button
+              type="button"
+              onClick={() => setIsBgModalOpen(true)}
+              className="text-cyan-400 hover:text-cyan-300 font-bold uppercase text-[10px] tracking-wider transition-colors"
+            >
+              [ CHOOSE THEME / SEARCH UNSPLASH ]
+            </button>
           </label>
           <input
             type="url"
@@ -157,6 +161,19 @@ export const CreateRoomModal: React.FC = () => {
             placeholder="Default: Empty -> Standard Black Cells Grid"
             className="w-full bg-zinc-900 border border-zinc-800 rounded px-3 py-2 text-cyan-300 focus:border-cyan-400 focus:outline-none"
           />
+          {posterUrl && (
+            <div className="mt-2 relative rounded overflow-hidden border border-zinc-800 bg-zinc-950 aspect-video w-full max-w-sm">
+              <img
+                src={posterUrl}
+                alt="Background Preview"
+                className="w-full h-full object-cover"
+                onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+              />
+              <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm border border-zinc-700 text-cyan-400 text-[9px] uppercase px-1.5 py-0.5 rounded font-mono font-bold tracking-wider">
+                [ PREVIEW ]
+              </div>
+            </div>
+          )}
           <p className="text-[10px] text-zinc-500">
             Leave empty to use standard black cells grid background. You can also edit it anytime later.
           </p>
@@ -253,5 +270,12 @@ export const CreateRoomModal: React.FC = () => {
         </div>
       </form>
     </BaseModal>
+    <BackgroundImageModal
+      isOpen={isBgModalOpen}
+      onClose={() => setIsBgModalOpen(false)}
+      onSelect={(url) => setPosterUrl(url)}
+      currentUrl={posterUrl}
+    />
+    </>
   );
 };

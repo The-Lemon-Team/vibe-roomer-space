@@ -262,9 +262,6 @@ export const VibeCard: React.FC<VibeCardProps> = ({
                     className="px-2 py-0.5 hover:underline flex items-center space-x-1"
                   >
                     <span>{formatted}</span>
-                    {i === 0 && (
-                      <span className={`text-[9px] font-bold ml-1 ${tagMode === 'live' ? 'text-red-400' : 'text-cyan-400'}`}>★ 1st</span>
-                    )}
                   </button>
 
                   {/* Pin to Menu Button */}

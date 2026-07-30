@@ -175,7 +175,7 @@ export const VibePage: React.FC = () => {
   );
 
   return (
-    <div className="flex-1 w-full h-full overflow-y-auto bg-zinc-950 bg-[radial-gradient(#1a779d_1px,transparent_1px)] bg-[size:16px_16px] pb-20 lg:pb-8">
+    <div className="flex-1 w-full h-full overflow-y-auto bg-zinc-950 bg-[radial-gradient(#1a779d50_1px,transparent_1px)] bg-[size:16px_16px] pb-20 lg:pb-8">
       {/* Header Navigation & Layout Mode Switcher */}
       <header className="sticky top-0 z-30 bg-zinc-950/90 border-b border-zinc-800/80 backdrop-blur-md px-4 py-3 font-mono text-xs">
         <div className="max-w-[980px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">

@@ -9,6 +9,7 @@ import {
   UploadedFile,
   Res,
   BadRequestException,
+  Query,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
@@ -26,6 +27,24 @@ if (!diskFs.existsSync(uploadsDirectory)) {
 @Controller('media')
 export class MediaController {
   constructor(private readonly mediaService: MediaService) {}
+
+  @Get('unsplash/search')
+  async searchUnsplash(@Query('query') query: string) {
+    if (!query) {
+      return { results: [] };
+    }
+    try {
+      const response = await fetch(
+        `https://unsplash.com/napi/search/photos?query=${encodeURIComponent(query)}&per_page=24`,
+      );
+      if (!response.ok) {
+        throw new Error('Failed to fetch from Unsplash api');
+      }
+      return await response.json();
+    } catch (err: any) {
+      throw new BadRequestException('Could not search Unsplash: ' + err.message);
+    }
+  }
 
   @Post('upload')
   @UseInterceptors(
