@@ -5,7 +5,7 @@ export default defineWorkspace([
     extends: './vitest.config.ts',
     test: {
       name: 'frontend',
-      include: ['src/**/*.test.{ts,tsx}', 'src/**/*.spec.{ts,tsx}'],
+      include: ['client/**/*.test.{ts,tsx}', 'client/**/*.spec.{ts,tsx}'],
     },
   },
   {
