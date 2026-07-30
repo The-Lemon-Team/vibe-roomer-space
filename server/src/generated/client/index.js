@@ -245,7 +245,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "C:\\Users\\vboxuser\\projects\\vibe-roomer\\server\\src\\generated\\client",
+      "value": "C:\\Users\\Ilege\\projects\\vibe-roomer-space\\server\\src\\generated\\client",
       "fromEnvVar": null
     },
     "config": {
@@ -259,12 +259,11 @@ const config = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "C:\\Users\\vboxuser\\projects\\vibe-roomer\\server\\prisma\\schema.prisma",
+    "sourceFilePath": "C:\\Users\\Ilege\\projects\\vibe-roomer-space\\server\\prisma\\schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
-    "rootEnvPath": "../../../.env",
-    "schemaEnvPath": "../../../.env"
+    "rootEnvPath": null
   },
   "relativePath": "../../../prisma",
   "clientVersion": "6.19.3",
