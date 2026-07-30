@@ -223,7 +223,8 @@ export const CreateRoomModal: React.FC = () => {
           </div>
         </div>
 
-        {/* Theme Color Picker */}
+        {/* Theme Color Picker hidden for now, will be implemented later */}
+        {/*
         <div className="space-y-2 font-mono text-xs">
           <label className="block text-zinc-300 font-semibold">
             ATMOSPHERIC NEON THEME COLOR
@@ -251,6 +252,7 @@ export const CreateRoomModal: React.FC = () => {
             ))}
           </div>
         </div>
+        */}
 
         {/* Footer Actions */}
         <div className="flex items-center justify-end space-x-3 pt-4 border-t border-zinc-800 font-mono text-xs">

@@ -16,6 +16,32 @@ export class MediaService {
     return this.uploadsDir;
   }
 
+  listFiles() {
+    try {
+      if (!fs.existsSync(this.uploadsDir)) {
+        return [];
+      }
+      const files = fs.readdirSync(this.uploadsDir);
+      return files
+        .filter((file) => {
+          const ext = path.extname(file).toLowerCase();
+          return ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'].includes(ext);
+        })
+        .map((filename) => {
+          const filePath = path.join(this.uploadsDir, filename);
+          const stats = fs.statSync(filePath);
+          return {
+            filename,
+            url: `/media/${filename}`,
+            size: stats.size,
+            updatedAt: stats.mtime,
+          };
+        });
+    } catch (err) {
+      return [];
+    }
+  }
+
   getFileMeta(filename: string) {
     const filePath = path.join(this.uploadsDir, filename);
     if (!fs.existsSync(filePath)) {

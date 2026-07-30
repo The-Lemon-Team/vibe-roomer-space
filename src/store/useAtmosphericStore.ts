@@ -512,23 +512,16 @@ const MOCK_INITIAL_ROOMS: CreatedRoom[] = [
 
 const DEFAULT_ADMIN_VIBE_TAGS = [
   '#deepwork',
-  '#nightdrive',
   '#chill',
-  '#outside',
-  '#highenergy',
 ];
 
 const DEFAULT_ADMIN_ROOM_TAGS = [
   '#stream',
-  '#lofi',
   '#ambient',
-  '#gaming',
-  '#coding',
-  '#synthwave',
 ];
 
-const DEFAULT_MY_VIBE_TAGS = ['#deepwork', '#chill', '#nightdrive'];
-const DEFAULT_MY_ROOM_TAGS = ['#stream', '#lofi', '#ambient'];
+const DEFAULT_MY_VIBE_TAGS = ['#deepwork', '#chill'];
+const DEFAULT_MY_ROOM_TAGS = ['#stream', '#ambient'];
 
 const getStoredTags = (key: string, defaultTags: string[]): string[] => {
   try {
@@ -540,6 +533,7 @@ const getStoredTags = (key: string, defaultTags: string[]): string[] => {
 };
 
 const initialRoute = parseHashRoute();
+let topHashtagsPromise: Promise<void> | null = null;
 
 export const useAtmosphericStore = create<AtmosphericState>((set, get) => ({
   activeVibeTag: initialRoute.viewMode === 'vibes' ? initialRoute.tag : '#ALL',
@@ -576,17 +570,26 @@ export const useAtmosphericStore = create<AtmosphericState>((set, get) => ({
 
   topHashtags: DEFAULT_ADMIN_VIBE_TAGS,
   fetchTopHashtags: async () => {
-    try {
-      const data = await fetchApi<{ name: string; useCount: number }[]>(
-        '/hashtags/top?limit=10',
-      );
-      if (Array.isArray(data) && data.length > 0) {
-        const formatted = data.map((item) =>
-          item.name.startsWith('#') ? item.name : `#${item.name}`,
+    if (topHashtagsPromise) {
+      return topHashtagsPromise;
+    }
+    topHashtagsPromise = (async () => {
+      try {
+        const data = await fetchApi<{ name: string; useCount: number }[]>(
+          '/hashtags/top?limit=10',
         );
-        set({ topHashtags: formatted });
+        if (Array.isArray(data) && data.length > 0) {
+          const formatted = data.map((item) =>
+            item.name.startsWith('#') ? item.name : `#${item.name}`,
+          );
+          set({ topHashtags: formatted });
+        }
+      } catch (_) {
+      } finally {
+        topHashtagsPromise = null;
       }
-    } catch (_) {}
+    })();
+    return topHashtagsPromise;
   },
 
   // Vibes Admin Tags

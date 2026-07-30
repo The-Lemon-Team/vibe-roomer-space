@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { AddImageModal } from './AddImageModal';
 
 interface ImageManagerProps {
   images: string[];
@@ -15,6 +16,7 @@ const PRESET_IMAGES = [
 
 export const ImageManager: React.FC<ImageManagerProps> = ({ images, onChange }) => {
   const [newUrl, setNewUrl] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleAddImage = (urlToAdd?: string) => {
     const targetUrl = (urlToAdd || newUrl).trim();
@@ -77,12 +79,18 @@ export const ImageManager: React.FC<ImageManagerProps> = ({ images, onChange }) 
         />
         <button
           type="button"
-          onClick={() => handleAddImage()}
+          onClick={() => setIsModalOpen(true)}
           className="px-3 py-2 bg-zinc-800 hover:bg-zinc-700 text-cyan-400 border border-zinc-700 rounded text-xs font-bold uppercase shrink-0 transition-colors"
         >
           + Add Image
         </button>
       </div>
+
+      <AddImageModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSelect={(url) => handleAddImage(url)}
+      />
 
       {/* Preset Pickers */}
       <div className="flex flex-wrap gap-1 items-center pt-1">

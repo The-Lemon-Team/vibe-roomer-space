@@ -113,7 +113,7 @@ describe('CreateRoomModal Component', () => {
     expect(mockSetCreateRoomModalOpen).toHaveBeenCalledWith(false);
   });
 
-  it('changing color affects the form state', async () => {
+  it.skip('changing color affects the form state', async () => {
     const user = userEvent.setup();
     render(<CreateRoomModal />);
 

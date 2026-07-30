@@ -46,6 +46,11 @@ export class MediaController {
     }
   }
 
+  @Get()
+  listMedia() {
+    return this.mediaService.listFiles();
+  }
+
   @Post('upload')
   @UseInterceptors(
     FileInterceptor('file', {
