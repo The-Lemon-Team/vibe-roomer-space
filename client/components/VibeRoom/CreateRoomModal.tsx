@@ -1,28 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { useAtmosphericStore } from '../../store/useAtmosphericStore';
-import { useAuthStore } from '../../store/useAuthStore';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { setCreateRoomModalOpen } from '../../store/uiSlice';
+import { setAuthModalOpen } from '../../store/authSlice';
+import { useCreateRoomMutation, useCreateRoomFromVibeMutation } from '../../store/api/roomsApi';
 import { BaseModal } from '../Common/BaseModal';
 import { BackgroundImageModal } from './BackgroundImageModal';
 import { HashtagAutocomplete } from '../VibeForm/HashtagAutocomplete';
 
 export const CreateRoomModal: React.FC = () => {
-  const {
-    isCreateRoomModalOpen,
-    vibeToCreateRoom,
-    selectedVibePage,
-    setCreateRoomModalOpen,
-    createRoomFromVibe,
-    createStandaloneRoom,
-  } = useAtmosphericStore();
+  const dispatch = useAppDispatch();
+  const isCreateRoomModalOpen = useAppSelector((s) => s.ui.isCreateRoomModalOpen);
+  const vibeToCreateRoom = useAppSelector((s) => s.ui.vibeToCreateRoom);
+  const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
 
-  const { isAuthenticated, setAuthModalOpen } = useAuthStore();
+  const [createRoom] = useCreateRoomMutation();
+  const [createRoomFromVibe] = useCreateRoomFromVibeMutation();
 
   useEffect(() => {
     if (isCreateRoomModalOpen && !isAuthenticated) {
-      setCreateRoomModalOpen(false);
-      setAuthModalOpen(true, 'login');
+      dispatch(setCreateRoomModalOpen({ open: false }));
+      dispatch(setAuthModalOpen({ open: true, mode: 'login' }));
     }
-  }, [isCreateRoomModalOpen, isAuthenticated, setCreateRoomModalOpen, setAuthModalOpen]);
+  }, [isCreateRoomModalOpen, isAuthenticated, dispatch]);
 
   const starterVibe = vibeToCreateRoom;
 
@@ -57,7 +56,8 @@ export const CreateRoomModal: React.FC = () => {
     const parsedTags = selectedTags;
 
     if (starterVibe) {
-      createRoomFromVibe(starterVibe, {
+      createRoomFromVibe({
+        vibeId: starterVibe.id,
         title: roomTitle.trim(),
         isPublic,
         tags: parsedTags.length > 0 ? parsedTags : ['#stream'],
@@ -67,7 +67,7 @@ export const CreateRoomModal: React.FC = () => {
         },
       });
     } else {
-      createStandaloneRoom({
+      createRoom({
         title: roomTitle.trim(),
         description: description.trim(),
         poster: posterUrl.trim() || undefined,
@@ -80,14 +80,14 @@ export const CreateRoomModal: React.FC = () => {
       });
     }
 
-    setCreateRoomModalOpen(false);
+    dispatch(setCreateRoomModalOpen({ open: false }));
   };
 
   return (
     <>
       <BaseModal
       isOpen={isCreateRoomModalOpen}
-      onClose={() => setCreateRoomModalOpen(false)}
+      onClose={() => dispatch(setCreateRoomModalOpen({ open: false }))}
       title="[ CREATE STREAM ROOM ]"
       headerIcon="sensors"
       maxWidth="max-w-lg"
@@ -258,7 +258,7 @@ export const CreateRoomModal: React.FC = () => {
         <div className="flex items-center justify-end space-x-3 pt-4 border-t border-zinc-800 font-mono text-xs">
           <button
             type="button"
-            onClick={() => setCreateRoomModalOpen(false)}
+            onClick={() => dispatch(setCreateRoomModalOpen({ open: false }))}
             className="px-4 py-2 text-zinc-400 hover:text-zinc-200 transition-colors"
           >
             CANCEL

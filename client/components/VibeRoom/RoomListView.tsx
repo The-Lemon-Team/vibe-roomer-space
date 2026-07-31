@@ -1,18 +1,23 @@
 import React from 'react';
-import { useAtmosphericStore, CreatedRoom } from '../../store/useAtmosphericStore';
-import { useAuthStore } from '../../store/useAuthStore';
+import type { CreatedRoom } from '../../store/useAtmosphericStore';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import {
+  setActiveTag,
+  openRoomPage,
+  setCreateRoomModalOpen,
+} from '../../store/uiSlice';
+import { setAuthModalOpen } from '../../store/authSlice';
+import { useGetRoomsQuery } from '../../store/api/roomsApi';
 
 export const RoomListView: React.FC = () => {
-  const {
-    createdRooms,
-    activeTag,
-    setActiveTag,
-    openRoomPage,
-    setCreateRoomModalOpen,
-    tagMode,
-  } = useAtmosphericStore();
+  const dispatch = useAppDispatch();
+  const activeTag = useAppSelector((s) => s.ui.activeTag);
+  const tagMode = useAppSelector((s) => s.ui.tagMode);
+  const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
 
-  const { isAuthenticated, setAuthModalOpen } = useAuthStore();
+  const { data: createdRooms = [] } = useGetRoomsQuery(
+    activeTag !== '#ALL' ? activeTag : undefined,
+  );
 
   const [privacyFilter, setPrivacyFilter] = React.useState<'public' | 'private'>('public');
 
@@ -85,9 +90,9 @@ export const RoomListView: React.FC = () => {
             <button
               onClick={() => {
                 if (isAuthenticated) {
-                  setCreateRoomModalOpen(true);
+                  dispatch(setCreateRoomModalOpen({ open: true }));
                 } else {
-                  setAuthModalOpen(true, 'login');
+                  dispatch(setAuthModalOpen({ open: true, mode: 'login' }));
                 }
               }}
               className="px-4 py-2 bg-amber-400 text-black font-bold rounded hover:bg-amber-300 transition-all shadow-[0_0_12px_rgba(245,158,11,0.3)] flex items-center space-x-1.5 uppercase"
@@ -111,9 +116,9 @@ export const RoomListView: React.FC = () => {
             <button
               onClick={() => {
                 if (isAuthenticated) {
-                  setCreateRoomModalOpen(true);
+                  dispatch(setCreateRoomModalOpen({ open: true }));
                 } else {
-                  setAuthModalOpen(true, 'login');
+                  dispatch(setAuthModalOpen({ open: true, mode: 'login' }));
                 }
               }}
               className="px-5 py-2.5 bg-cyan-500/20 border border-cyan-500/60 text-cyan-400 font-bold rounded hover:bg-cyan-500/30 transition-colors uppercase"
@@ -213,7 +218,7 @@ export const RoomListView: React.FC = () => {
                             key={tag}
                             onClick={(e) => {
                               e.stopPropagation();
-                              setActiveTag(tag);
+                              dispatch(setActiveTag(tag));
                             }}
                             className={`px-2 py-0.5 rounded border uppercase transition-colors ${activeTag.toLowerCase() === tag.toLowerCase()
                                 ? tagMode === 'live'
@@ -248,7 +253,7 @@ export const RoomListView: React.FC = () => {
                       </div>
 
                       <button
-                        onClick={() => openRoomPage(room)}
+                        onClick={() => dispatch(openRoomPage(room))}
                         className="px-4 py-1.5 bg-zinc-800 hover:bg-amber-500 hover:text-black border border-zinc-700 hover:border-amber-400 text-amber-500 font-bold rounded transition-all flex items-center space-x-1 uppercase text-xs shadow-md"
                       >
                         <span>ENTER ROOM</span>

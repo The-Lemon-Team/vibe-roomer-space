@@ -36,7 +36,6 @@ export class RoomsService {
             orderBy: { createdAt: 'desc' },
             select: {
               roomConfig: true,
-              activity: true,
               images: true,
               videoUrl: true,
               musicUrl: true,
@@ -48,13 +47,12 @@ export class RoomsService {
             id: `room-${tag.name}`,
             title: `#${tag.name.toUpperCase()} ROOM`,
             tag: tag.name,
-            activity: latestVibe?.activity || 'CUSTOM',
             totalCollectedPoints: vibeCount,
             lastActivityAt: latestVibe?.createdAt || tag.lastUsedAt,
             previewMedia: {
               imagesCount: latestVibe?.images?.length || 0,
-              hasVideo: !!latestVibe?.videoUrl,
-              hasAudio: !!latestVibe?.musicUrl,
+              hasVideo: (latestVibe?.videoUrls?.length ?? 0) > 0,
+              hasAudio: (latestVibe?.musicUrls?.length ?? 0) > 0,
             },
             themeConfig: latestVibe?.roomConfig || {
               bgTheme: 'cyberpunk-dark',
@@ -115,13 +113,13 @@ export class RoomsService {
     }
 
     // Extract playlists for room widgets
-    const videoPlaylist = vibes
-      .filter((v) => v.videoUrl)
-      .map((v) => ({ vibeId: v.id, title: v.title, videoUrl: v.videoUrl }));
+    const videoPlaylist = vibes.flatMap((v) =>
+      v.videoUrls.map((url) => ({ vibeId: v.id, title: v.title, videoUrl: url })),
+    );
 
-    const audioPlaylist = vibes
-      .filter((v) => v.musicUrl)
-      .map((v) => ({ vibeId: v.id, title: v.title, musicUrl: v.musicUrl }));
+    const audioPlaylist = vibes.flatMap((v) =>
+      v.musicUrls.map((url) => ({ vibeId: v.id, title: v.title, musicUrl: url })),
+    );
 
     const imageGallery = vibes.flatMap((v) => v.images);
 
@@ -152,7 +150,7 @@ export class RoomsService {
   /**
    * Stream data points for a tag or activity context.
    */
-  async streamRoomData(tag?: string, activity?: string, page = 1, limit = 20) {
+  async streamRoomData(tag?: string, page = 1, limit = 20) {
     if (!this.prisma.isConnected) {
       return { dataPoints: [], total: 0 };
     }
@@ -160,9 +158,6 @@ export class RoomsService {
     const where: any = {};
     if (tag) {
       where.keywords = { has: tag.toLowerCase().replace(/^#+/, '').trim() };
-    }
-    if (activity) {
-      where.activity = activity;
     }
 
     const skip = (page - 1) * limit;
@@ -186,7 +181,6 @@ export class RoomsService {
     return {
       streamInfo: {
         tag: tag || null,
-        activity: activity || null,
         page,
         limit,
         totalPoints: total,
@@ -415,9 +409,9 @@ export class RoomsService {
         isPublic: dto.isPublic !== false,
         tags: dto.tags || [],
         images: dto.images || [],
-        videoUrl: dto.videoUrl,
-        musicUrl: dto.musicUrl,
-        youtubeUrl: dto.youtubeUrl,
+        videoUrls: dto.videoUrls || [],
+        musicUrls: dto.musicUrls || [],
+        youtubeUrls: dto.youtubeUrls || [],
         roomConfig: dto.roomConfig || {},
         authorId,
       },
@@ -446,9 +440,9 @@ export class RoomsService {
         ...(dto.isPublic !== undefined && { isPublic: dto.isPublic }),
         ...(dto.tags !== undefined && { tags: dto.tags }),
         ...(dto.images !== undefined && { images: dto.images }),
-        ...(dto.videoUrl !== undefined && { videoUrl: dto.videoUrl }),
-        ...(dto.musicUrl !== undefined && { musicUrl: dto.musicUrl }),
-        ...(dto.youtubeUrl !== undefined && { youtubeUrl: dto.youtubeUrl }),
+        ...(dto.videoUrls !== undefined && { videoUrls: dto.videoUrls }),
+        ...(dto.musicUrls !== undefined && { musicUrls: dto.musicUrls }),
+        ...(dto.youtubeUrls !== undefined && { youtubeUrls: dto.youtubeUrls }),
         ...(dto.roomConfig !== undefined && { roomConfig: dto.roomConfig }),
       },
       include: {

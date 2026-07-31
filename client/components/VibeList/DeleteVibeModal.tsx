@@ -1,5 +1,5 @@
 import React from 'react';
-import { VibeItem } from '../../store/useAtmosphericStore';
+import type { VibeItem } from '../../store/useAtmosphericStore';
 import { BaseModal } from '../Common/BaseModal';
 
 interface DeleteVibeModalProps {

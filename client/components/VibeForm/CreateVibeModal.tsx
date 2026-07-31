@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useAtmosphericStore, VibeWidget } from '../../store/useAtmosphericStore';
+import type { VibeWidget } from '../../store/useAtmosphericStore';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { setCreateModalOpen, addMyTag } from '../../store/uiSlice';
+import { useCreateVibeMutation } from '../../store/api/vibesApi';
 import { HashtagAutocomplete } from './HashtagAutocomplete';
 import { ImageManager } from './ImageManager';
 import { WidgetToolController } from './WidgetToolController';
@@ -7,7 +10,12 @@ import { AudioStreamController } from './AudioStreamController';
 import { BaseModal } from '../Common/BaseModal';
 
 export const CreateVibeModal: React.FC = () => {
-  const { isCreateModalOpen, setCreateModalOpen, addVibe, activeTag, pinTag } = useAtmosphericStore();
+  const dispatch = useAppDispatch();
+  const isCreateModalOpen = useAppSelector((s) => s.ui.isCreateModalOpen);
+  const activeTag = useAppSelector((s) => s.ui.activeTag);
+  const user = useAppSelector((s) => s.auth.user);
+
+  const [createVibeMutation] = useCreateVibeMutation();
 
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -24,34 +32,33 @@ export const CreateVibeModal: React.FC = () => {
     }
   }, [isCreateModalOpen, activeTag]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !content.trim()) return;
 
     const finalTags = selectedTags.length > 0 ? selectedTags : ['#general', '#vibe'];
 
-    // Automatically pin the primary tag to menu
-    const firstTag = finalTags[0];
-    pinTag(firstTag);
+    // Automatically pin the primary tag to my tags menu
+    dispatch(addMyTag(finalTags[0]));
 
-    // Extract first YouTube widget video URL for videoUrl property backwards compatibility
+    // Extract first YouTube widget video URL for backwards compatibility
     const ytWidget = widgets.find((w) => w.type === 'youtube');
 
-    addVibe({
+    await createVibeMutation({
       title: title.trim(),
       content: content.trim(),
       tags: finalTags,
       keywords: finalTags.map((t) => t.replace(/^#/, '')),
-      images: images,
-      widgets: widgets,
+      images,
+      widgets,
       musicUrl: musicUrl.trim() || null,
       videoUrl: ytWidget ? ytWidget.url : null,
-      authorName: 'cyber_junkie',
-      authorId: 'user-op-01',
+      authorName: user?.username || 'cyber_junkie',
+      authorId: user?.id || 'user-op-01',
       roomConfig: {
         themeColor: '#FFB000',
-        bgImageUrl: images[0] || undefined
-      }
+        bgImageUrl: images[0] || undefined,
+      },
     });
 
     // Reset state & close modal
@@ -61,13 +68,13 @@ export const CreateVibeModal: React.FC = () => {
     setImages([]);
     setWidgets([]);
     setMusicUrl('');
-    setCreateModalOpen(false);
+    dispatch(setCreateModalOpen(false));
   };
 
   return (
     <BaseModal
       isOpen={isCreateModalOpen}
-      onClose={() => setCreateModalOpen(false)}
+      onClose={() => dispatch(setCreateModalOpen(false))}
       systemTag="[ CREATE_NEW_VIBE_LOG ]"
       headerIcon="terminal"
       maxWidth="max-w-2xl"
@@ -134,7 +141,7 @@ export const CreateVibeModal: React.FC = () => {
         <div className="flex justify-end space-x-2 pt-3 border-t border-zinc-800 sticky bottom-0 bg-zinc-950/95 py-2">
           <button
             type="button"
-            onClick={() => setCreateModalOpen(false)}
+            onClick={() => dispatch(setCreateModalOpen(false))}
             className="px-4 py-2 bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200 rounded font-bold uppercase transition-colors"
           >
             [ CANCEL ]

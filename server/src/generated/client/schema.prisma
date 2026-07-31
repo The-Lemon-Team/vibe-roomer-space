@@ -13,15 +13,6 @@ enum Role {
   ADMIN
 }
 
-enum ActivityContext {
-  WORK
-  WALK
-  NIGHT_DRIVE
-  RELAX
-  SPORT
-  CUSTOM
-}
-
 model User {
   id              String           @id @default(uuid())
   email           String           @unique
@@ -38,16 +29,15 @@ model User {
 }
 
 model Vibe {
-  id       String          @id @default(uuid())
+  id       String   @id @default(uuid())
   title    String // e.g., "Cyber-Coffee & Heavy Code"
-  content  String          @db.Text
+  content  String   @db.Text
   keywords String[] // ["lofi", "nestjs", "night", "junkpunk"]
-  activity ActivityContext @default(CUSTOM) // crucial for the activity value proposition
 
   // media content for the post
-  images   String[]
-  videoUrl String?
-  musicUrl String?
+  images    String[]
+  videoUrls String[]
+  musicUrls String[]
 
   // placeholder for future "Atmospheric Rooms" functionality
   roomConfig Json? // JSON with settings (bg textures, neon colors)
@@ -87,9 +77,9 @@ model Room {
   isPublic     Boolean          @default(true)
   tags         String[]
   images       String[]
-  videoUrl     String?
-  musicUrl     String?
-  youtubeUrl   String?
+  videoUrls    String[]
+  musicUrls    String[]
+  youtubeUrls  String[]
   roomConfig   Json?
   authorId     String
   author       User             @relation(fields: [authorId], references: [id], onDelete: Cascade)

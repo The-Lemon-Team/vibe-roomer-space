@@ -1,19 +1,18 @@
 import React, { useState } from 'react';
-import { useAuthStore } from '../../store/useAuthStore';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { setAuthModalOpen, setAuthModalMode, clearError } from '../../store/authSlice';
+import { useLoginMutation, useRegisterMutation } from '../../store/api/authApi';
 import { BaseModal } from '../Common/BaseModal';
 
 export const AuthModal: React.FC = () => {
-  const {
-    isAuthModalOpen,
-    authModalMode,
-    setAuthModalOpen,
-    setAuthModalMode,
-    login,
-    register,
-    isLoading,
-    error,
-    clearError,
-  } = useAuthStore();
+  const dispatch = useAppDispatch();
+  const isAuthModalOpen = useAppSelector((s) => s.auth.isAuthModalOpen);
+  const authModalMode = useAppSelector((s) => s.auth.authModalMode);
+  const isLoading = useAppSelector((s) => s.auth.isLoading);
+  const error = useAppSelector((s) => s.auth.error);
+
+  const [loginMutation] = useLoginMutation();
+  const [registerMutation] = useRegisterMutation();
 
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
@@ -23,22 +22,22 @@ export const AuthModal: React.FC = () => {
     e.preventDefault();
     try {
       if (authModalMode === 'login') {
-        await login(email, password);
+        await loginMutation({ email, password }).unwrap();
       } else {
-        await register(email, username, password);
+        await registerMutation({ email, username, password }).unwrap();
       }
       setEmail('');
       setPassword('');
       setUsername('');
     } catch (_) {
-      // Error handled in auth store
+      // Error handled via authSlice.extraReducers
     }
   };
 
   return (
     <BaseModal
       isOpen={isAuthModalOpen}
-      onClose={() => setAuthModalOpen(false)}
+      onClose={() => dispatch(setAuthModalOpen({ open: false }))}
       systemTag="[SYSTEM_AUTHENTICATION]"
       title={authModalMode === 'login' ? 'USER LOGIN' : 'REGISTER NEW PROFILE'}
       maxWidth="max-w-md"
@@ -49,8 +48,8 @@ export const AuthModal: React.FC = () => {
         <button
           type="button"
           onClick={() => {
-            clearError();
-            setAuthModalMode('login');
+            dispatch(clearError());
+            dispatch(setAuthModalMode('login'));
           }}
           className={`flex-1 py-2 font-bold transition-colors text-center border-b-2 ${
             authModalMode === 'login'
@@ -63,8 +62,8 @@ export const AuthModal: React.FC = () => {
         <button
           type="button"
           onClick={() => {
-            clearError();
-            setAuthModalMode('register');
+            dispatch(clearError());
+            dispatch(setAuthModalMode('register'));
           }}
           className={`flex-1 py-2 font-bold transition-colors text-center border-b-2 ${
             authModalMode === 'register'

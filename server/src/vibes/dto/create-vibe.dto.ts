@@ -1,5 +1,4 @@
-import { IsArray, IsEnum, IsObject, IsOptional, IsString } from 'class-validator';
-import { ActivityContext } from '../../generated/client';
+import { IsArray, IsObject, IsOptional, IsString } from 'class-validator';
 
 export class CreateVibeDto {
   @IsString()
@@ -13,22 +12,21 @@ export class CreateVibeDto {
   @IsOptional()
   keywords?: string[];
 
-  @IsEnum(ActivityContext)
-  @IsOptional()
-  activity?: ActivityContext;
 
   @IsArray()
   @IsString({ each: true })
   @IsOptional()
   images?: string[];
 
-  @IsString()
+  @IsArray()
+  @IsString({ each: true })
   @IsOptional()
-  videoUrl?: string;
+  videoUrls?: string[];
 
-  @IsString()
+  @IsArray()
+  @IsString({ each: true })
   @IsOptional()
-  musicUrl?: string;
+  musicUrls?: string[];
 
   @IsObject()
   @IsOptional()

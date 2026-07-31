@@ -31,7 +31,6 @@ export class VibesController {
   @Get()
   getVibes(
     @Query('tag') tag?: string,
-    @Query('activity') activity?: string,
     @Query('authorId') authorId?: string,
     @Query('inMainFeed') inMainFeed?: boolean,
     @Query('search') search?: string,
@@ -40,7 +39,6 @@ export class VibesController {
   ) {
     return this.vibesService.getVibes({
       tag,
-      activity,
       authorId,
       inMainFeed,
       search,

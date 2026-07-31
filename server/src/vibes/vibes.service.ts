@@ -27,10 +27,9 @@ export class VibesService {
         title: dto.title,
         content: dto.content,
         keywords: allTags,
-        activity: dto.activity || 'CUSTOM',
         images: dto.images || [],
-        videoUrl: dto.videoUrl || null,
-        musicUrl: dto.musicUrl || null,
+        videoUrls: dto.videoUrls || [],
+        musicUrls: dto.musicUrls || [],
         roomConfig: dto.roomConfig || null,
         authorId: userId,
       },
@@ -49,7 +48,6 @@ export class VibesService {
 
   async getVibes(params: {
     tag?: string;
-    activity?: string;
     authorId?: string;
     inMainFeed?: boolean;
     search?: string;
@@ -70,9 +68,6 @@ export class VibesService {
       where.keywords = { has: params.tag.toLowerCase().trim() };
     }
 
-    if (params.activity) {
-      where.activity = params.activity;
-    }
 
     if (params.authorId) {
       where.authorId = params.authorId;
@@ -148,10 +143,9 @@ export class VibesService {
         ...(dto.title !== undefined && { title: dto.title }),
         ...(dto.content !== undefined && { content: dto.content }),
         keywords: allTags,
-        ...(dto.activity !== undefined && { activity: dto.activity }),
         ...(dto.images !== undefined && { images: dto.images }),
-        ...(dto.videoUrl !== undefined && { videoUrl: dto.videoUrl }),
-        ...(dto.musicUrl !== undefined && { musicUrl: dto.musicUrl }),
+        ...(dto.videoUrls !== undefined && { videoUrls: dto.videoUrls }),
+        ...(dto.musicUrls !== undefined && { musicUrls: dto.musicUrls }),
         ...(dto.roomConfig !== undefined && { roomConfig: dto.roomConfig }),
       },
       include: {

@@ -26,11 +26,13 @@
   },
   "dependencies": {
     "@prisma/client": "^6.3.0",
+    "@reduxjs/toolkit": "^2.12.0",
     "clsx": "^2.1.1",
     "lucide-react": "^0.474.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-player": "^3.4.0",
+    "react-redux": "^9.3.0",
     "tailwind-merge": "^3.0.1",
     "zustand": "^5.0.3"
   },

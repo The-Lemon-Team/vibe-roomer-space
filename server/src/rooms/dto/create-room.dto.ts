@@ -6,8 +6,8 @@ export class CreateRoomDto {
   isPublic?: boolean;
   tags?: string[];
   images?: string[];
-  videoUrl?: string;
-  musicUrl?: string;
-  youtubeUrl?: string;
+  videoUrls?: string[];
+  musicUrls?: string[];
+  youtubeUrls?: string[];
   roomConfig?: any;
 }

@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { BaseModal } from '../Common/BaseModal';
-import { useAtmosphericStore, CreatedRoom } from '../../store/useAtmosphericStore';
+import type { CreatedRoom } from '../../store/useAtmosphericStore';
+import { useGetVibesQuery } from '../../store/api/vibesApi';
+import { useGetRoomsQuery } from '../../store/api/roomsApi';
+import { useGetTopHashtagsQuery } from '../../store/api/vibesApi';
 import { fetchApi } from '../../services/api';
 
 interface AddImageModalProps {
@@ -60,7 +63,10 @@ export const AddImageModal: React.FC<AddImageModalProps> = ({
   const [isSiteLoading, setIsSiteLoading] = useState(false);
   const [siteError, setSiteError] = useState<string | null>(null);
 
-  const { vibes, createdRooms, topHashtags } = useAtmosphericStore();
+  const { data: vibes = [] } = useGetVibesQuery(undefined);
+  const { data: createdRooms = [] } = useGetRoomsQuery(undefined);
+  const { data: topHashtagsData = [] } = useGetTopHashtagsQuery(10);
+  const topHashtags = topHashtagsData.map((h) => (h.name.startsWith('#') ? h.name : `#${h.name}`));
 
   // Load site images (from store + api)
   const loadSiteData = async () => {
@@ -131,18 +137,16 @@ export const AddImageModal: React.FC<AddImageModalProps> = ({
         }
       });
 
-      // 3. Fetch from /media endpoint (uploaded files)
+      // 3. Fetch from /media endpoint (uploaded files — returns full Supabase CDN URLs)
       try {
         const uploadedList = await fetchApi<{ filename: string; url: string; size: number; updatedAt: string }[]>(
           '/media'
         );
         if (Array.isArray(uploadedList)) {
-          const API_BASE_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:3001`;
           uploadedList.forEach((file) => {
-            const absoluteUrl = `${API_BASE_URL}${file.url}`;
-            if (!tempImages.some((t) => t.url === absoluteUrl)) {
+            if (!tempImages.some((t) => t.url === file.url)) {
               tempImages.push({
-                url: absoluteUrl,
+                url: file.url,          // already a full CDN URL
                 source: `Upload: ${file.filename}`,
                 title: file.filename,
                 type: 'upload',
@@ -202,15 +206,14 @@ export const AddImageModal: React.FC<AddImageModalProps> = ({
     formData.append('file', uploadFile);
 
     try {
+      // Server now returns a full Supabase CDN URL in `url`
       const response = await fetchApi<{ url: string }>('/media/upload', {
         method: 'POST',
         body: formData,
         headers: {},
       });
 
-      const API_BASE_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:3001`;
-      const fullUrl = `${API_BASE_URL}${response.url}`;
-      onSelect(fullUrl);
+      onSelect(response.url);
       setUploadFile(null);
       setShowUpload(false);
       onClose();

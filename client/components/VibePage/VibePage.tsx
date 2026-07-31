@@ -1,20 +1,19 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useAtmosphericStore } from '../../store/useAtmosphericStore';
-import { useAuthStore } from '../../store/useAuthStore';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { setViewMode, setActiveTag, setCreateRoomModalOpen } from '../../store/uiSlice';
+import { useAddVibeUpdateMutation, useAddTagToVibeMutation, useRemoveTagFromVibeMutation } from '../../store/api/vibesApi';
 import { CyberAudioPlayer } from '../Player/CyberAudioPlayer';
 
 export const VibePage: React.FC = () => {
-  const {
-    selectedVibePage,
-    setViewMode,
-    addVibeUpdate,
-    addTagToVibe,
-    removeTagFromVibe,
-    setCreateRoomModalOpen,
-    setActiveTag,
-  } = useAtmosphericStore();
+  const dispatch = useAppDispatch();
+  const selectedVibePage = useAppSelector((s) => s.ui.selectedVibePage);
+  const user = useAppSelector((s) => s.auth.user);
+  const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
 
-  const { user, isAuthenticated } = useAuthStore();
+  const [addVibeUpdateMutation] = useAddVibeUpdateMutation();
+  const [addTagToVibeMutation] = useAddTagToVibeMutation();
+  const [removeTagFromVibeMutation] = useRemoveTagFromVibeMutation();
+
 
   // Layout View Mode: 'unified' (In One Bar/Container) vs 'constructor' (Separated Modular Blocks)
   const [layoutMode, setLayoutMode] = useState<'unified' | 'constructor'>('unified');
@@ -47,7 +46,7 @@ export const VibePage: React.FC = () => {
       <div className="flex-1 flex flex-col items-center justify-center p-8 bg-zinc-950 text-zinc-400 font-mono">
         <div className="text-amber-400 font-bold mb-2">[NO_VIBE_SELECTED]</div>
         <button
-          onClick={() => setViewMode('vibes')}
+          onClick={() => dispatch(setViewMode('vibes'))}
           className="px-4 py-2 bg-zinc-900 border border-zinc-800 rounded hover:border-cyan-500 text-xs"
         >
           RETURN TO MAIN FEED
@@ -67,7 +66,7 @@ export const VibePage: React.FC = () => {
 
     setIsPostingUpdate(true);
     const mediaUrls = updateMediaUrl.trim() ? [updateMediaUrl.trim()] : [];
-    await addVibeUpdate(selectedVibePage.id, updateContent.trim(), mediaUrls);
+    await addVibeUpdateMutation({ vibeId: selectedVibePage.id, content: updateContent.trim(), mediaUrls }).unwrap();
     setUpdateContent('');
     setUpdateMediaUrl('');
     setIsPostingUpdate(false);
@@ -77,7 +76,7 @@ export const VibePage: React.FC = () => {
     e.preventDefault();
     if (!newTagInput.trim()) return;
     setIsAddingTag(true);
-    await addTagToVibe(selectedVibePage.id, newTagInput.trim());
+    await addTagToVibeMutation({ vibeId: selectedVibePage.id, tag: newTagInput.trim() }).unwrap();
     setNewTagInput('');
     setIsAddingTag(false);
   };
@@ -92,7 +91,7 @@ export const VibePage: React.FC = () => {
       <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
         <div className="relative group/tooltip inline-block">
           <button
-            onClick={() => setCreateRoomModalOpen(true, selectedVibePage)}
+            onClick={() => dispatch(setCreateRoomModalOpen({ open: true, vibe: selectedVibePage }))}
             className="p-1.5 bg-zinc-900/90 hover:bg-cyan-950 border border-zinc-700 hover:border-cyan-400 text-cyan-400 hover:text-cyan-200 rounded transition-all shadow-md flex items-center justify-center cursor-pointer"
             aria-label="Create Room from vibe"
           >
@@ -130,14 +129,14 @@ export const VibePage: React.FC = () => {
             className="flex items-center space-x-1 px-2.5 py-1 bg-zinc-950 border border-zinc-800 hover:border-amber-500/80 text-amber-300 rounded transition-all group"
           >
             <button
-              onClick={() => setActiveTag(tag)}
+              onClick={() => dispatch(setActiveTag(tag))}
               className="hover:underline flex items-center space-x-1"
             >
               <span>{tag}</span>
             </button>
             {isAuthenticated && (
               <button
-                onClick={() => removeTagFromVibe(selectedVibePage.id, tag)}
+                onClick={() => removeTagFromVibeMutation({ vibeId: selectedVibePage.id, tag })}
                 title="Remove tag"
                 className="text-zinc-600 hover:text-red-400 text-xs ml-1 font-bold"
               >
@@ -181,7 +180,7 @@ export const VibePage: React.FC = () => {
         <div className="max-w-[980px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center space-x-3 w-full sm:w-auto justify-between sm:justify-start">
             <button
-              onClick={() => setViewMode('vibes')}
+              onClick={() => dispatch(setViewMode('vibes'))}
               className="flex items-center space-x-1.5 px-3 py-1 bg-zinc-900 border border-zinc-800 hover:border-cyan-500/60 rounded text-zinc-300 hover:text-cyan-400 transition-colors"
             >
               <span className="material-symbols-outlined text-sm">arrow_back</span>

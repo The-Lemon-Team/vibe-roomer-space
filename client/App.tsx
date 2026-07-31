@@ -1,6 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { useAtmosphericStore, VibeItem } from './store/useAtmosphericStore';
-import { useAuthStore } from './store/useAuthStore';
+import type { VibeItem } from './store/useAtmosphericStore';
+import { useAppDispatch, useAppSelector } from './store/hooks';
+import {
+  syncRouteFromUrl,
+  setCreateModalOpen,
+} from './store/uiSlice';
+import { setAuthModalOpen } from './store/authSlice';
+import { useGetVibesQuery, useDeleteVibeMutation, useGetTopHashtagsQuery } from './store/api/vibesApi';
+import { useMeQuery } from './store/api/authApi';
 import { HeaderNavbar } from './components/Navbar/HeaderNavbar';
 import { ActivitySwitcher } from './components/VibeSelector/ActivitySwitcher';
 import { OperatorSidebar } from './components/Sidebar/OperatorSidebar';
@@ -14,49 +21,50 @@ import { DeleteVibeModal } from './components/VibeList/DeleteVibeModal';
 import { AuthModal } from './components/Auth/AuthModal';
 
 export const App: React.FC = () => {
-  const {
-    activeTag,
-    viewMode,
-    setViewMode,
-    vibes,
-    selectedVibeRoom,
-    activeCreatedRoom,
-    deleteVibe,
-    setCreateModalOpen,
-    fetchVibes,
-    fetchTopHashtags,
-    syncRouteFromUrl,
-    tagMode,
-  } = useAtmosphericStore();
+  const dispatch = useAppDispatch();
 
-  const { isAuthenticated, user, checkAuth, setAuthModalOpen } = useAuthStore();
+  // ── UI selectors ────────────────────────────────────────────────────────
+  const viewMode = useAppSelector((s) => s.ui.viewMode);
+  const activeTag = useAppSelector((s) => s.ui.activeTag);
+  const tagMode = useAppSelector((s) => s.ui.tagMode);
+  const selectedVibeRoom = useAppSelector((s) => s.ui.selectedVibeRoom);
+  const activeCreatedRoom = useAppSelector((s) => s.ui.activeCreatedRoom);
+
+  // ── Auth selectors ──────────────────────────────────────────────────────
+  const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
+  const user = useAppSelector((s) => s.auth.user);
+
+  // ── RTK Query ───────────────────────────────────────────────────────────
+  const { data: vibes = [] } = useGetVibesQuery(
+    activeTag !== '#ALL' ? activeTag : undefined,
+  );
+  const [deleteVibeMutation] = useDeleteVibeMutation();
+
+  // Validate session on mount (skip if not authenticated)
+  useMeQuery(undefined, { skip: !isAuthenticated });
+
+  // Pre-fetch top hashtags (used in tag menus & autocomplete)
+  useGetTopHashtagsQuery(10);
+
   const [vibeToDelete, setVibeToDelete] = useState<VibeItem | null>(null);
 
-  // Initialize auth check & initial feed on mount
+  // Sync URL hash → store on mount and on hash changes
   useEffect(() => {
-    checkAuth();
-    fetchTopHashtags();
-    syncRouteFromUrl();
-
-    const handleHashChange = () => {
-      syncRouteFromUrl();
-    };
-
+    dispatch(syncRouteFromUrl());
+    const handleHashChange = () => dispatch(syncRouteFromUrl());
     window.addEventListener('hashchange', handleHashChange);
-    return () => {
-      window.removeEventListener('hashchange', handleHashChange);
-    };
-  }, [checkAuth, fetchTopHashtags, syncRouteFromUrl]);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, [dispatch]);
 
-  // Dynamic hashtag feed filtering
+  // Dynamic hashtag feed filtering (server already filters, but local double-filter is kept for #ALL)
   const filteredVibes =
     activeTag === '#ALL'
       ? vibes
       : vibes.filter(
-        (v) =>
-          v.tags?.some((t) => t.toLowerCase() === activeTag.toLowerCase()) ||
-          v.keywords?.some((k) => `#${k.toLowerCase()}` === activeTag.toLowerCase()),
-      );
+          (v) =>
+            v.tags?.some((t) => t.toLowerCase() === activeTag.toLowerCase()) ||
+            v.keywords?.some((k) => `#${k.toLowerCase()}` === activeTag.toLowerCase()),
+        );
 
   return (
     <div className="h-screen bg-zinc-950 text-zinc-100 flex flex-col font-sans selection:bg-cyan-500 selection:text-black overflow-hidden">
@@ -104,7 +112,6 @@ export const App: React.FC = () => {
               </div>
 
               <div className="content-section w-full max-w-[1400px] mx-auto px-4 md:px-6 lg:px-8 pb-4 md:pb-6 lg:pb-8 pt-2 md:pt-3 lg:pt-4">
-
                 {/* Feed List */}
                 {filteredVibes.length === 0 ? (
                   <div className="text-center py-12 border border-dashed border-zinc-800 rounded bg-zinc-900/40 p-8 font-mono text-xs text-zinc-500 space-y-3">
@@ -113,9 +120,9 @@ export const App: React.FC = () => {
                     <button
                       onClick={() => {
                         if (isAuthenticated) {
-                          setCreateModalOpen(true);
+                          dispatch(setCreateModalOpen(true));
                         } else {
-                          setAuthModalOpen(true, 'login');
+                          dispatch(setAuthModalOpen({ open: true, mode: 'login' }));
                         }
                       }}
                       className="px-4 py-2 bg-amber-500/20 border border-amber-500/60 text-amber-400 font-bold rounded hover:bg-amber-500/30 transition-colors uppercase"
@@ -175,7 +182,7 @@ export const App: React.FC = () => {
         vibe={vibeToDelete}
         onConfirm={() => {
           if (vibeToDelete) {
-            deleteVibe(vibeToDelete.id);
+            deleteVibeMutation(vibeToDelete.id);
             setVibeToDelete(null);
           }
         }}

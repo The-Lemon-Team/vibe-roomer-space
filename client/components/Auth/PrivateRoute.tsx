@@ -1,5 +1,6 @@
 import React from 'react';
-import { useAuthStore } from '../../store/useAuthStore';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { setAuthModalOpen } from '../../store/authSlice';
 
 interface PrivateRouteProps {
   children: React.ReactNode;
@@ -7,7 +8,9 @@ interface PrivateRouteProps {
 }
 
 export const PrivateRoute: React.FC<PrivateRouteProps> = ({ children, requireAdmin = false }) => {
-  const { isAuthenticated, user, setAuthModalOpen } = useAuthStore();
+  const dispatch = useAppDispatch();
+  const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
+  const user = useAppSelector((s) => s.auth.user);
 
   if (!isAuthenticated) {
     return (
@@ -19,7 +22,7 @@ export const PrivateRoute: React.FC<PrivateRouteProps> = ({ children, requireAdm
           Authentication required to view or modify this resource. Please sign in to your operator account.
         </p>
         <button
-          onClick={() => setAuthModalOpen(true, 'login')}
+          onClick={() => dispatch(setAuthModalOpen({ open: true, mode: 'login' }))}
           className="px-4 py-2 bg-cyan-500/20 border border-cyan-500 text-cyan-400 rounded text-xs font-bold hover:bg-cyan-500/30 transition-colors uppercase"
         >
           [AUTHENTICATE_OPERATOR]

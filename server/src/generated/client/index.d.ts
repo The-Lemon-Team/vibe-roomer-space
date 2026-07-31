@@ -65,27 +65,11 @@ export namespace $Enums {
 
 export type Role = (typeof Role)[keyof typeof Role]
 
-
-export const ActivityContext: {
-  WORK: 'WORK',
-  WALK: 'WALK',
-  NIGHT_DRIVE: 'NIGHT_DRIVE',
-  RELAX: 'RELAX',
-  SPORT: 'SPORT',
-  CUSTOM: 'CUSTOM'
-};
-
-export type ActivityContext = (typeof ActivityContext)[keyof typeof ActivityContext]
-
 }
 
 export type Role = $Enums.Role
 
 export const Role: typeof $Enums.Role
-
-export type ActivityContext = $Enums.ActivityContext
-
-export const ActivityContext: typeof $Enums.ActivityContext
 
 /**
  * ##  Prisma Client ʲˢ
@@ -2899,9 +2883,6 @@ export namespace Prisma {
     id: string | null
     title: string | null
     content: string | null
-    activity: $Enums.ActivityContext | null
-    videoUrl: string | null
-    musicUrl: string | null
     inMainFeed: boolean | null
     authorId: string | null
     createdAt: Date | null
@@ -2912,9 +2893,6 @@ export namespace Prisma {
     id: string | null
     title: string | null
     content: string | null
-    activity: $Enums.ActivityContext | null
-    videoUrl: string | null
-    musicUrl: string | null
     inMainFeed: boolean | null
     authorId: string | null
     createdAt: Date | null
@@ -2926,10 +2904,9 @@ export namespace Prisma {
     title: number
     content: number
     keywords: number
-    activity: number
     images: number
-    videoUrl: number
-    musicUrl: number
+    videoUrls: number
+    musicUrls: number
     roomConfig: number
     inMainFeed: number
     authorId: number
@@ -2943,9 +2920,6 @@ export namespace Prisma {
     id?: true
     title?: true
     content?: true
-    activity?: true
-    videoUrl?: true
-    musicUrl?: true
     inMainFeed?: true
     authorId?: true
     createdAt?: true
@@ -2956,9 +2930,6 @@ export namespace Prisma {
     id?: true
     title?: true
     content?: true
-    activity?: true
-    videoUrl?: true
-    musicUrl?: true
     inMainFeed?: true
     authorId?: true
     createdAt?: true
@@ -2970,10 +2941,9 @@ export namespace Prisma {
     title?: true
     content?: true
     keywords?: true
-    activity?: true
     images?: true
-    videoUrl?: true
-    musicUrl?: true
+    videoUrls?: true
+    musicUrls?: true
     roomConfig?: true
     inMainFeed?: true
     authorId?: true
@@ -3059,10 +3029,9 @@ export namespace Prisma {
     title: string
     content: string
     keywords: string[]
-    activity: $Enums.ActivityContext
     images: string[]
-    videoUrl: string | null
-    musicUrl: string | null
+    videoUrls: string[]
+    musicUrls: string[]
     roomConfig: JsonValue | null
     inMainFeed: boolean
     authorId: string
@@ -3092,10 +3061,9 @@ export namespace Prisma {
     title?: boolean
     content?: boolean
     keywords?: boolean
-    activity?: boolean
     images?: boolean
-    videoUrl?: boolean
-    musicUrl?: boolean
+    videoUrls?: boolean
+    musicUrls?: boolean
     roomConfig?: boolean
     inMainFeed?: boolean
     authorId?: boolean
@@ -3111,10 +3079,9 @@ export namespace Prisma {
     title?: boolean
     content?: boolean
     keywords?: boolean
-    activity?: boolean
     images?: boolean
-    videoUrl?: boolean
-    musicUrl?: boolean
+    videoUrls?: boolean
+    musicUrls?: boolean
     roomConfig?: boolean
     inMainFeed?: boolean
     authorId?: boolean
@@ -3128,10 +3095,9 @@ export namespace Prisma {
     title?: boolean
     content?: boolean
     keywords?: boolean
-    activity?: boolean
     images?: boolean
-    videoUrl?: boolean
-    musicUrl?: boolean
+    videoUrls?: boolean
+    musicUrls?: boolean
     roomConfig?: boolean
     inMainFeed?: boolean
     authorId?: boolean
@@ -3145,10 +3111,9 @@ export namespace Prisma {
     title?: boolean
     content?: boolean
     keywords?: boolean
-    activity?: boolean
     images?: boolean
-    videoUrl?: boolean
-    musicUrl?: boolean
+    videoUrls?: boolean
+    musicUrls?: boolean
     roomConfig?: boolean
     inMainFeed?: boolean
     authorId?: boolean
@@ -3156,7 +3121,7 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type VibeOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "title" | "content" | "keywords" | "activity" | "images" | "videoUrl" | "musicUrl" | "roomConfig" | "inMainFeed" | "authorId" | "createdAt" | "updatedAt", ExtArgs["result"]["vibe"]>
+  export type VibeOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "title" | "content" | "keywords" | "images" | "videoUrls" | "musicUrls" | "roomConfig" | "inMainFeed" | "authorId" | "createdAt" | "updatedAt", ExtArgs["result"]["vibe"]>
   export type VibeInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     author?: boolean | UserDefaultArgs<ExtArgs>
     updates?: boolean | Vibe$updatesArgs<ExtArgs>
@@ -3180,10 +3145,9 @@ export namespace Prisma {
       title: string
       content: string
       keywords: string[]
-      activity: $Enums.ActivityContext
       images: string[]
-      videoUrl: string | null
-      musicUrl: string | null
+      videoUrls: string[]
+      musicUrls: string[]
       roomConfig: Prisma.JsonValue | null
       inMainFeed: boolean
       authorId: string
@@ -3618,10 +3582,9 @@ export namespace Prisma {
     readonly title: FieldRef<"Vibe", 'String'>
     readonly content: FieldRef<"Vibe", 'String'>
     readonly keywords: FieldRef<"Vibe", 'String[]'>
-    readonly activity: FieldRef<"Vibe", 'ActivityContext'>
     readonly images: FieldRef<"Vibe", 'String[]'>
-    readonly videoUrl: FieldRef<"Vibe", 'String'>
-    readonly musicUrl: FieldRef<"Vibe", 'String'>
+    readonly videoUrls: FieldRef<"Vibe", 'String[]'>
+    readonly musicUrls: FieldRef<"Vibe", 'String[]'>
     readonly roomConfig: FieldRef<"Vibe", 'Json'>
     readonly inMainFeed: FieldRef<"Vibe", 'Boolean'>
     readonly authorId: FieldRef<"Vibe", 'String'>
@@ -6165,9 +6128,6 @@ export namespace Prisma {
     poster: string | null
     originVibeId: string | null
     isPublic: boolean | null
-    videoUrl: string | null
-    musicUrl: string | null
-    youtubeUrl: string | null
     authorId: string | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -6180,9 +6140,6 @@ export namespace Prisma {
     poster: string | null
     originVibeId: string | null
     isPublic: boolean | null
-    videoUrl: string | null
-    musicUrl: string | null
-    youtubeUrl: string | null
     authorId: string | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -6197,9 +6154,9 @@ export namespace Prisma {
     isPublic: number
     tags: number
     images: number
-    videoUrl: number
-    musicUrl: number
-    youtubeUrl: number
+    videoUrls: number
+    musicUrls: number
+    youtubeUrls: number
     roomConfig: number
     authorId: number
     createdAt: number
@@ -6215,9 +6172,6 @@ export namespace Prisma {
     poster?: true
     originVibeId?: true
     isPublic?: true
-    videoUrl?: true
-    musicUrl?: true
-    youtubeUrl?: true
     authorId?: true
     createdAt?: true
     updatedAt?: true
@@ -6230,9 +6184,6 @@ export namespace Prisma {
     poster?: true
     originVibeId?: true
     isPublic?: true
-    videoUrl?: true
-    musicUrl?: true
-    youtubeUrl?: true
     authorId?: true
     createdAt?: true
     updatedAt?: true
@@ -6247,9 +6198,9 @@ export namespace Prisma {
     isPublic?: true
     tags?: true
     images?: true
-    videoUrl?: true
-    musicUrl?: true
-    youtubeUrl?: true
+    videoUrls?: true
+    musicUrls?: true
+    youtubeUrls?: true
     roomConfig?: true
     authorId?: true
     createdAt?: true
@@ -6338,9 +6289,9 @@ export namespace Prisma {
     isPublic: boolean
     tags: string[]
     images: string[]
-    videoUrl: string | null
-    musicUrl: string | null
-    youtubeUrl: string | null
+    videoUrls: string[]
+    musicUrls: string[]
+    youtubeUrls: string[]
     roomConfig: JsonValue | null
     authorId: string
     createdAt: Date
@@ -6373,9 +6324,9 @@ export namespace Prisma {
     isPublic?: boolean
     tags?: boolean
     images?: boolean
-    videoUrl?: boolean
-    musicUrl?: boolean
-    youtubeUrl?: boolean
+    videoUrls?: boolean
+    musicUrls?: boolean
+    youtubeUrls?: boolean
     roomConfig?: boolean
     authorId?: boolean
     createdAt?: boolean
@@ -6396,9 +6347,9 @@ export namespace Prisma {
     isPublic?: boolean
     tags?: boolean
     images?: boolean
-    videoUrl?: boolean
-    musicUrl?: boolean
-    youtubeUrl?: boolean
+    videoUrls?: boolean
+    musicUrls?: boolean
+    youtubeUrls?: boolean
     roomConfig?: boolean
     authorId?: boolean
     createdAt?: boolean
@@ -6415,9 +6366,9 @@ export namespace Prisma {
     isPublic?: boolean
     tags?: boolean
     images?: boolean
-    videoUrl?: boolean
-    musicUrl?: boolean
-    youtubeUrl?: boolean
+    videoUrls?: boolean
+    musicUrls?: boolean
+    youtubeUrls?: boolean
     roomConfig?: boolean
     authorId?: boolean
     createdAt?: boolean
@@ -6434,16 +6385,16 @@ export namespace Prisma {
     isPublic?: boolean
     tags?: boolean
     images?: boolean
-    videoUrl?: boolean
-    musicUrl?: boolean
-    youtubeUrl?: boolean
+    videoUrls?: boolean
+    musicUrls?: boolean
+    youtubeUrls?: boolean
     roomConfig?: boolean
     authorId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type RoomOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "title" | "description" | "poster" | "originVibeId" | "isPublic" | "tags" | "images" | "videoUrl" | "musicUrl" | "youtubeUrl" | "roomConfig" | "authorId" | "createdAt" | "updatedAt", ExtArgs["result"]["room"]>
+  export type RoomOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "title" | "description" | "poster" | "originVibeId" | "isPublic" | "tags" | "images" | "videoUrls" | "musicUrls" | "youtubeUrls" | "roomConfig" | "authorId" | "createdAt" | "updatedAt", ExtArgs["result"]["room"]>
   export type RoomInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     author?: boolean | UserDefaultArgs<ExtArgs>
     streamItems?: boolean | Room$streamItemsArgs<ExtArgs>
@@ -6475,9 +6426,9 @@ export namespace Prisma {
       isPublic: boolean
       tags: string[]
       images: string[]
-      videoUrl: string | null
-      musicUrl: string | null
-      youtubeUrl: string | null
+      videoUrls: string[]
+      musicUrls: string[]
+      youtubeUrls: string[]
       roomConfig: Prisma.JsonValue | null
       authorId: string
       createdAt: Date
@@ -6917,9 +6868,9 @@ export namespace Prisma {
     readonly isPublic: FieldRef<"Room", 'Boolean'>
     readonly tags: FieldRef<"Room", 'String[]'>
     readonly images: FieldRef<"Room", 'String[]'>
-    readonly videoUrl: FieldRef<"Room", 'String'>
-    readonly musicUrl: FieldRef<"Room", 'String'>
-    readonly youtubeUrl: FieldRef<"Room", 'String'>
+    readonly videoUrls: FieldRef<"Room", 'String[]'>
+    readonly musicUrls: FieldRef<"Room", 'String[]'>
+    readonly youtubeUrls: FieldRef<"Room", 'String[]'>
     readonly roomConfig: FieldRef<"Room", 'Json'>
     readonly authorId: FieldRef<"Room", 'String'>
     readonly createdAt: FieldRef<"Room", 'DateTime'>
@@ -10727,10 +10678,9 @@ export namespace Prisma {
     title: 'title',
     content: 'content',
     keywords: 'keywords',
-    activity: 'activity',
     images: 'images',
-    videoUrl: 'videoUrl',
-    musicUrl: 'musicUrl',
+    videoUrls: 'videoUrls',
+    musicUrls: 'musicUrls',
     roomConfig: 'roomConfig',
     inMainFeed: 'inMainFeed',
     authorId: 'authorId',
@@ -10772,9 +10722,9 @@ export namespace Prisma {
     isPublic: 'isPublic',
     tags: 'tags',
     images: 'images',
-    videoUrl: 'videoUrl',
-    musicUrl: 'musicUrl',
-    youtubeUrl: 'youtubeUrl',
+    videoUrls: 'videoUrls',
+    musicUrls: 'musicUrls',
+    youtubeUrls: 'youtubeUrls',
     roomConfig: 'roomConfig',
     authorId: 'authorId',
     createdAt: 'createdAt',
@@ -10909,20 +10859,6 @@ export namespace Prisma {
    * Reference to a field of type 'DateTime[]'
    */
   export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>
-    
-
-
-  /**
-   * Reference to a field of type 'ActivityContext'
-   */
-  export type EnumActivityContextFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ActivityContext'>
-    
-
-
-  /**
-   * Reference to a field of type 'ActivityContext[]'
-   */
-  export type ListEnumActivityContextFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ActivityContext[]'>
     
 
 
@@ -11063,10 +10999,9 @@ export namespace Prisma {
     title?: StringFilter<"Vibe"> | string
     content?: StringFilter<"Vibe"> | string
     keywords?: StringNullableListFilter<"Vibe">
-    activity?: EnumActivityContextFilter<"Vibe"> | $Enums.ActivityContext
     images?: StringNullableListFilter<"Vibe">
-    videoUrl?: StringNullableFilter<"Vibe"> | string | null
-    musicUrl?: StringNullableFilter<"Vibe"> | string | null
+    videoUrls?: StringNullableListFilter<"Vibe">
+    musicUrls?: StringNullableListFilter<"Vibe">
     roomConfig?: JsonNullableFilter<"Vibe">
     inMainFeed?: BoolFilter<"Vibe"> | boolean
     authorId?: StringFilter<"Vibe"> | string
@@ -11081,10 +11016,9 @@ export namespace Prisma {
     title?: SortOrder
     content?: SortOrder
     keywords?: SortOrder
-    activity?: SortOrder
     images?: SortOrder
-    videoUrl?: SortOrderInput | SortOrder
-    musicUrl?: SortOrderInput | SortOrder
+    videoUrls?: SortOrder
+    musicUrls?: SortOrder
     roomConfig?: SortOrderInput | SortOrder
     inMainFeed?: SortOrder
     authorId?: SortOrder
@@ -11102,10 +11036,9 @@ export namespace Prisma {
     title?: StringFilter<"Vibe"> | string
     content?: StringFilter<"Vibe"> | string
     keywords?: StringNullableListFilter<"Vibe">
-    activity?: EnumActivityContextFilter<"Vibe"> | $Enums.ActivityContext
     images?: StringNullableListFilter<"Vibe">
-    videoUrl?: StringNullableFilter<"Vibe"> | string | null
-    musicUrl?: StringNullableFilter<"Vibe"> | string | null
+    videoUrls?: StringNullableListFilter<"Vibe">
+    musicUrls?: StringNullableListFilter<"Vibe">
     roomConfig?: JsonNullableFilter<"Vibe">
     inMainFeed?: BoolFilter<"Vibe"> | boolean
     authorId?: StringFilter<"Vibe"> | string
@@ -11120,10 +11053,9 @@ export namespace Prisma {
     title?: SortOrder
     content?: SortOrder
     keywords?: SortOrder
-    activity?: SortOrder
     images?: SortOrder
-    videoUrl?: SortOrderInput | SortOrder
-    musicUrl?: SortOrderInput | SortOrder
+    videoUrls?: SortOrder
+    musicUrls?: SortOrder
     roomConfig?: SortOrderInput | SortOrder
     inMainFeed?: SortOrder
     authorId?: SortOrder
@@ -11142,10 +11074,9 @@ export namespace Prisma {
     title?: StringWithAggregatesFilter<"Vibe"> | string
     content?: StringWithAggregatesFilter<"Vibe"> | string
     keywords?: StringNullableListFilter<"Vibe">
-    activity?: EnumActivityContextWithAggregatesFilter<"Vibe"> | $Enums.ActivityContext
     images?: StringNullableListFilter<"Vibe">
-    videoUrl?: StringNullableWithAggregatesFilter<"Vibe"> | string | null
-    musicUrl?: StringNullableWithAggregatesFilter<"Vibe"> | string | null
+    videoUrls?: StringNullableListFilter<"Vibe">
+    musicUrls?: StringNullableListFilter<"Vibe">
     roomConfig?: JsonNullableWithAggregatesFilter<"Vibe">
     inMainFeed?: BoolWithAggregatesFilter<"Vibe"> | boolean
     authorId?: StringWithAggregatesFilter<"Vibe"> | string
@@ -11274,9 +11205,9 @@ export namespace Prisma {
     isPublic?: BoolFilter<"Room"> | boolean
     tags?: StringNullableListFilter<"Room">
     images?: StringNullableListFilter<"Room">
-    videoUrl?: StringNullableFilter<"Room"> | string | null
-    musicUrl?: StringNullableFilter<"Room"> | string | null
-    youtubeUrl?: StringNullableFilter<"Room"> | string | null
+    videoUrls?: StringNullableListFilter<"Room">
+    musicUrls?: StringNullableListFilter<"Room">
+    youtubeUrls?: StringNullableListFilter<"Room">
     roomConfig?: JsonNullableFilter<"Room">
     authorId?: StringFilter<"Room"> | string
     createdAt?: DateTimeFilter<"Room"> | Date | string
@@ -11296,9 +11227,9 @@ export namespace Prisma {
     isPublic?: SortOrder
     tags?: SortOrder
     images?: SortOrder
-    videoUrl?: SortOrderInput | SortOrder
-    musicUrl?: SortOrderInput | SortOrder
-    youtubeUrl?: SortOrderInput | SortOrder
+    videoUrls?: SortOrder
+    musicUrls?: SortOrder
+    youtubeUrls?: SortOrder
     roomConfig?: SortOrderInput | SortOrder
     authorId?: SortOrder
     createdAt?: SortOrder
@@ -11321,9 +11252,9 @@ export namespace Prisma {
     isPublic?: BoolFilter<"Room"> | boolean
     tags?: StringNullableListFilter<"Room">
     images?: StringNullableListFilter<"Room">
-    videoUrl?: StringNullableFilter<"Room"> | string | null
-    musicUrl?: StringNullableFilter<"Room"> | string | null
-    youtubeUrl?: StringNullableFilter<"Room"> | string | null
+    videoUrls?: StringNullableListFilter<"Room">
+    musicUrls?: StringNullableListFilter<"Room">
+    youtubeUrls?: StringNullableListFilter<"Room">
     roomConfig?: JsonNullableFilter<"Room">
     authorId?: StringFilter<"Room"> | string
     createdAt?: DateTimeFilter<"Room"> | Date | string
@@ -11343,9 +11274,9 @@ export namespace Prisma {
     isPublic?: SortOrder
     tags?: SortOrder
     images?: SortOrder
-    videoUrl?: SortOrderInput | SortOrder
-    musicUrl?: SortOrderInput | SortOrder
-    youtubeUrl?: SortOrderInput | SortOrder
+    videoUrls?: SortOrder
+    musicUrls?: SortOrder
+    youtubeUrls?: SortOrder
     roomConfig?: SortOrderInput | SortOrder
     authorId?: SortOrder
     createdAt?: SortOrder
@@ -11367,9 +11298,9 @@ export namespace Prisma {
     isPublic?: BoolWithAggregatesFilter<"Room"> | boolean
     tags?: StringNullableListFilter<"Room">
     images?: StringNullableListFilter<"Room">
-    videoUrl?: StringNullableWithAggregatesFilter<"Room"> | string | null
-    musicUrl?: StringNullableWithAggregatesFilter<"Room"> | string | null
-    youtubeUrl?: StringNullableWithAggregatesFilter<"Room"> | string | null
+    videoUrls?: StringNullableListFilter<"Room">
+    musicUrls?: StringNullableListFilter<"Room">
+    youtubeUrls?: StringNullableListFilter<"Room">
     roomConfig?: JsonNullableWithAggregatesFilter<"Room">
     authorId?: StringWithAggregatesFilter<"Room"> | string
     createdAt?: DateTimeWithAggregatesFilter<"Room"> | Date | string
@@ -11680,10 +11611,9 @@ export namespace Prisma {
     title: string
     content: string
     keywords?: VibeCreatekeywordsInput | string[]
-    activity?: $Enums.ActivityContext
     images?: VibeCreateimagesInput | string[]
-    videoUrl?: string | null
-    musicUrl?: string | null
+    videoUrls?: VibeCreatevideoUrlsInput | string[]
+    musicUrls?: VibeCreatemusicUrlsInput | string[]
     roomConfig?: NullableJsonNullValueInput | InputJsonValue
     inMainFeed?: boolean
     createdAt?: Date | string
@@ -11697,10 +11627,9 @@ export namespace Prisma {
     title: string
     content: string
     keywords?: VibeCreatekeywordsInput | string[]
-    activity?: $Enums.ActivityContext
     images?: VibeCreateimagesInput | string[]
-    videoUrl?: string | null
-    musicUrl?: string | null
+    videoUrls?: VibeCreatevideoUrlsInput | string[]
+    musicUrls?: VibeCreatemusicUrlsInput | string[]
     roomConfig?: NullableJsonNullValueInput | InputJsonValue
     inMainFeed?: boolean
     authorId: string
@@ -11714,10 +11643,9 @@ export namespace Prisma {
     title?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     keywords?: VibeUpdatekeywordsInput | string[]
-    activity?: EnumActivityContextFieldUpdateOperationsInput | $Enums.ActivityContext
     images?: VibeUpdateimagesInput | string[]
-    videoUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    musicUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    videoUrls?: VibeUpdatevideoUrlsInput | string[]
+    musicUrls?: VibeUpdatemusicUrlsInput | string[]
     roomConfig?: NullableJsonNullValueInput | InputJsonValue
     inMainFeed?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -11731,10 +11659,9 @@ export namespace Prisma {
     title?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     keywords?: VibeUpdatekeywordsInput | string[]
-    activity?: EnumActivityContextFieldUpdateOperationsInput | $Enums.ActivityContext
     images?: VibeUpdateimagesInput | string[]
-    videoUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    musicUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    videoUrls?: VibeUpdatevideoUrlsInput | string[]
+    musicUrls?: VibeUpdatemusicUrlsInput | string[]
     roomConfig?: NullableJsonNullValueInput | InputJsonValue
     inMainFeed?: BoolFieldUpdateOperationsInput | boolean
     authorId?: StringFieldUpdateOperationsInput | string
@@ -11748,10 +11675,9 @@ export namespace Prisma {
     title: string
     content: string
     keywords?: VibeCreatekeywordsInput | string[]
-    activity?: $Enums.ActivityContext
     images?: VibeCreateimagesInput | string[]
-    videoUrl?: string | null
-    musicUrl?: string | null
+    videoUrls?: VibeCreatevideoUrlsInput | string[]
+    musicUrls?: VibeCreatemusicUrlsInput | string[]
     roomConfig?: NullableJsonNullValueInput | InputJsonValue
     inMainFeed?: boolean
     authorId: string
@@ -11764,10 +11690,9 @@ export namespace Prisma {
     title?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     keywords?: VibeUpdatekeywordsInput | string[]
-    activity?: EnumActivityContextFieldUpdateOperationsInput | $Enums.ActivityContext
     images?: VibeUpdateimagesInput | string[]
-    videoUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    musicUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    videoUrls?: VibeUpdatevideoUrlsInput | string[]
+    musicUrls?: VibeUpdatemusicUrlsInput | string[]
     roomConfig?: NullableJsonNullValueInput | InputJsonValue
     inMainFeed?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -11779,10 +11704,9 @@ export namespace Prisma {
     title?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     keywords?: VibeUpdatekeywordsInput | string[]
-    activity?: EnumActivityContextFieldUpdateOperationsInput | $Enums.ActivityContext
     images?: VibeUpdateimagesInput | string[]
-    videoUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    musicUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    videoUrls?: VibeUpdatevideoUrlsInput | string[]
+    musicUrls?: VibeUpdatemusicUrlsInput | string[]
     roomConfig?: NullableJsonNullValueInput | InputJsonValue
     inMainFeed?: BoolFieldUpdateOperationsInput | boolean
     authorId?: StringFieldUpdateOperationsInput | string
@@ -11910,9 +11834,9 @@ export namespace Prisma {
     isPublic?: boolean
     tags?: RoomCreatetagsInput | string[]
     images?: RoomCreateimagesInput | string[]
-    videoUrl?: string | null
-    musicUrl?: string | null
-    youtubeUrl?: string | null
+    videoUrls?: RoomCreatevideoUrlsInput | string[]
+    musicUrls?: RoomCreatemusicUrlsInput | string[]
+    youtubeUrls?: RoomCreateyoutubeUrlsInput | string[]
     roomConfig?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -11931,9 +11855,9 @@ export namespace Prisma {
     isPublic?: boolean
     tags?: RoomCreatetagsInput | string[]
     images?: RoomCreateimagesInput | string[]
-    videoUrl?: string | null
-    musicUrl?: string | null
-    youtubeUrl?: string | null
+    videoUrls?: RoomCreatevideoUrlsInput | string[]
+    musicUrls?: RoomCreatemusicUrlsInput | string[]
+    youtubeUrls?: RoomCreateyoutubeUrlsInput | string[]
     roomConfig?: NullableJsonNullValueInput | InputJsonValue
     authorId: string
     createdAt?: Date | string
@@ -11952,9 +11876,9 @@ export namespace Prisma {
     isPublic?: BoolFieldUpdateOperationsInput | boolean
     tags?: RoomUpdatetagsInput | string[]
     images?: RoomUpdateimagesInput | string[]
-    videoUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    musicUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    youtubeUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    videoUrls?: RoomUpdatevideoUrlsInput | string[]
+    musicUrls?: RoomUpdatemusicUrlsInput | string[]
+    youtubeUrls?: RoomUpdateyoutubeUrlsInput | string[]
     roomConfig?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -11973,9 +11897,9 @@ export namespace Prisma {
     isPublic?: BoolFieldUpdateOperationsInput | boolean
     tags?: RoomUpdatetagsInput | string[]
     images?: RoomUpdateimagesInput | string[]
-    videoUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    musicUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    youtubeUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    videoUrls?: RoomUpdatevideoUrlsInput | string[]
+    musicUrls?: RoomUpdatemusicUrlsInput | string[]
+    youtubeUrls?: RoomUpdateyoutubeUrlsInput | string[]
     roomConfig?: NullableJsonNullValueInput | InputJsonValue
     authorId?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -11994,9 +11918,9 @@ export namespace Prisma {
     isPublic?: boolean
     tags?: RoomCreatetagsInput | string[]
     images?: RoomCreateimagesInput | string[]
-    videoUrl?: string | null
-    musicUrl?: string | null
-    youtubeUrl?: string | null
+    videoUrls?: RoomCreatevideoUrlsInput | string[]
+    musicUrls?: RoomCreatemusicUrlsInput | string[]
+    youtubeUrls?: RoomCreateyoutubeUrlsInput | string[]
     roomConfig?: NullableJsonNullValueInput | InputJsonValue
     authorId: string
     createdAt?: Date | string
@@ -12012,9 +11936,9 @@ export namespace Prisma {
     isPublic?: BoolFieldUpdateOperationsInput | boolean
     tags?: RoomUpdatetagsInput | string[]
     images?: RoomUpdateimagesInput | string[]
-    videoUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    musicUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    youtubeUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    videoUrls?: RoomUpdatevideoUrlsInput | string[]
+    musicUrls?: RoomUpdatemusicUrlsInput | string[]
+    youtubeUrls?: RoomUpdateyoutubeUrlsInput | string[]
     roomConfig?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -12029,9 +11953,9 @@ export namespace Prisma {
     isPublic?: BoolFieldUpdateOperationsInput | boolean
     tags?: RoomUpdatetagsInput | string[]
     images?: RoomUpdateimagesInput | string[]
-    videoUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    musicUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    youtubeUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    videoUrls?: RoomUpdatevideoUrlsInput | string[]
+    musicUrls?: RoomUpdatemusicUrlsInput | string[]
+    youtubeUrls?: RoomUpdateyoutubeUrlsInput | string[]
     roomConfig?: NullableJsonNullValueInput | InputJsonValue
     authorId?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -12411,28 +12335,6 @@ export namespace Prisma {
     hasSome?: string[] | ListStringFieldRefInput<$PrismaModel>
     isEmpty?: boolean
   }
-
-  export type EnumActivityContextFilter<$PrismaModel = never> = {
-    equals?: $Enums.ActivityContext | EnumActivityContextFieldRefInput<$PrismaModel>
-    in?: $Enums.ActivityContext[] | ListEnumActivityContextFieldRefInput<$PrismaModel>
-    notIn?: $Enums.ActivityContext[] | ListEnumActivityContextFieldRefInput<$PrismaModel>
-    not?: NestedEnumActivityContextFilter<$PrismaModel> | $Enums.ActivityContext
-  }
-
-  export type StringNullableFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    contains?: string | StringFieldRefInput<$PrismaModel>
-    startsWith?: string | StringFieldRefInput<$PrismaModel>
-    endsWith?: string | StringFieldRefInput<$PrismaModel>
-    mode?: QueryMode
-    not?: NestedStringNullableFilter<$PrismaModel> | string | null
-  }
   export type JsonNullableFilter<$PrismaModel = never> =
     | PatchUndefined<
         Either<Required<JsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>,
@@ -12487,10 +12389,9 @@ export namespace Prisma {
     title?: SortOrder
     content?: SortOrder
     keywords?: SortOrder
-    activity?: SortOrder
     images?: SortOrder
-    videoUrl?: SortOrder
-    musicUrl?: SortOrder
+    videoUrls?: SortOrder
+    musicUrls?: SortOrder
     roomConfig?: SortOrder
     inMainFeed?: SortOrder
     authorId?: SortOrder
@@ -12502,9 +12403,6 @@ export namespace Prisma {
     id?: SortOrder
     title?: SortOrder
     content?: SortOrder
-    activity?: SortOrder
-    videoUrl?: SortOrder
-    musicUrl?: SortOrder
     inMainFeed?: SortOrder
     authorId?: SortOrder
     createdAt?: SortOrder
@@ -12515,41 +12413,10 @@ export namespace Prisma {
     id?: SortOrder
     title?: SortOrder
     content?: SortOrder
-    activity?: SortOrder
-    videoUrl?: SortOrder
-    musicUrl?: SortOrder
     inMainFeed?: SortOrder
     authorId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
-  }
-
-  export type EnumActivityContextWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: $Enums.ActivityContext | EnumActivityContextFieldRefInput<$PrismaModel>
-    in?: $Enums.ActivityContext[] | ListEnumActivityContextFieldRefInput<$PrismaModel>
-    notIn?: $Enums.ActivityContext[] | ListEnumActivityContextFieldRefInput<$PrismaModel>
-    not?: NestedEnumActivityContextWithAggregatesFilter<$PrismaModel> | $Enums.ActivityContext
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedEnumActivityContextFilter<$PrismaModel>
-    _max?: NestedEnumActivityContextFilter<$PrismaModel>
-  }
-
-  export type StringNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    contains?: string | StringFieldRefInput<$PrismaModel>
-    startsWith?: string | StringFieldRefInput<$PrismaModel>
-    endsWith?: string | StringFieldRefInput<$PrismaModel>
-    mode?: QueryMode
-    not?: NestedStringNullableWithAggregatesFilter<$PrismaModel> | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedStringNullableFilter<$PrismaModel>
-    _max?: NestedStringNullableFilter<$PrismaModel>
   }
   export type JsonNullableWithAggregatesFilter<$PrismaModel = never> =
     | PatchUndefined<
@@ -12672,6 +12539,21 @@ export namespace Prisma {
     _max?: NestedIntFilter<$PrismaModel>
   }
 
+  export type StringNullableFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedStringNullableFilter<$PrismaModel> | string | null
+  }
+
   export type RoomCountOrderByAggregateInput = {
     id?: SortOrder
     title?: SortOrder
@@ -12681,9 +12563,9 @@ export namespace Prisma {
     isPublic?: SortOrder
     tags?: SortOrder
     images?: SortOrder
-    videoUrl?: SortOrder
-    musicUrl?: SortOrder
-    youtubeUrl?: SortOrder
+    videoUrls?: SortOrder
+    musicUrls?: SortOrder
+    youtubeUrls?: SortOrder
     roomConfig?: SortOrder
     authorId?: SortOrder
     createdAt?: SortOrder
@@ -12697,9 +12579,6 @@ export namespace Prisma {
     poster?: SortOrder
     originVibeId?: SortOrder
     isPublic?: SortOrder
-    videoUrl?: SortOrder
-    musicUrl?: SortOrder
-    youtubeUrl?: SortOrder
     authorId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -12712,12 +12591,27 @@ export namespace Prisma {
     poster?: SortOrder
     originVibeId?: SortOrder
     isPublic?: SortOrder
-    videoUrl?: SortOrder
-    musicUrl?: SortOrder
-    youtubeUrl?: SortOrder
     authorId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+  }
+
+  export type StringNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedStringNullableWithAggregatesFilter<$PrismaModel> | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedStringNullableFilter<$PrismaModel>
+    _max?: NestedStringNullableFilter<$PrismaModel>
   }
 
   export type RoomScalarRelationFilter = {
@@ -13046,6 +12940,14 @@ export namespace Prisma {
     set: string[]
   }
 
+  export type VibeCreatevideoUrlsInput = {
+    set: string[]
+  }
+
+  export type VibeCreatemusicUrlsInput = {
+    set: string[]
+  }
+
   export type UserCreateNestedOneWithoutVibesInput = {
     create?: XOR<UserCreateWithoutVibesInput, UserUncheckedCreateWithoutVibesInput>
     connectOrCreate?: UserCreateOrConnectWithoutVibesInput
@@ -13071,17 +12973,19 @@ export namespace Prisma {
     push?: string | string[]
   }
 
-  export type EnumActivityContextFieldUpdateOperationsInput = {
-    set?: $Enums.ActivityContext
-  }
-
   export type VibeUpdateimagesInput = {
     set?: string[]
     push?: string | string[]
   }
 
-  export type NullableStringFieldUpdateOperationsInput = {
-    set?: string | null
+  export type VibeUpdatevideoUrlsInput = {
+    set?: string[]
+    push?: string | string[]
+  }
+
+  export type VibeUpdatemusicUrlsInput = {
+    set?: string[]
+    push?: string | string[]
   }
 
   export type BoolFieldUpdateOperationsInput = {
@@ -13163,6 +13067,18 @@ export namespace Prisma {
     set: string[]
   }
 
+  export type RoomCreatevideoUrlsInput = {
+    set: string[]
+  }
+
+  export type RoomCreatemusicUrlsInput = {
+    set: string[]
+  }
+
+  export type RoomCreateyoutubeUrlsInput = {
+    set: string[]
+  }
+
   export type UserCreateNestedOneWithoutRoomsInput = {
     create?: XOR<UserCreateWithoutRoomsInput, UserUncheckedCreateWithoutRoomsInput>
     connectOrCreate?: UserCreateOrConnectWithoutRoomsInput
@@ -13211,12 +13127,31 @@ export namespace Prisma {
     connect?: RoomNoteWhereUniqueInput | RoomNoteWhereUniqueInput[]
   }
 
+  export type NullableStringFieldUpdateOperationsInput = {
+    set?: string | null
+  }
+
   export type RoomUpdatetagsInput = {
     set?: string[]
     push?: string | string[]
   }
 
   export type RoomUpdateimagesInput = {
+    set?: string[]
+    push?: string | string[]
+  }
+
+  export type RoomUpdatevideoUrlsInput = {
+    set?: string[]
+    push?: string | string[]
+  }
+
+  export type RoomUpdatemusicUrlsInput = {
+    set?: string[]
+    push?: string | string[]
+  }
+
+  export type RoomUpdateyoutubeUrlsInput = {
     set?: string[]
     push?: string | string[]
   }
@@ -13490,57 +13425,9 @@ export namespace Prisma {
     _max?: NestedDateTimeFilter<$PrismaModel>
   }
 
-  export type NestedEnumActivityContextFilter<$PrismaModel = never> = {
-    equals?: $Enums.ActivityContext | EnumActivityContextFieldRefInput<$PrismaModel>
-    in?: $Enums.ActivityContext[] | ListEnumActivityContextFieldRefInput<$PrismaModel>
-    notIn?: $Enums.ActivityContext[] | ListEnumActivityContextFieldRefInput<$PrismaModel>
-    not?: NestedEnumActivityContextFilter<$PrismaModel> | $Enums.ActivityContext
-  }
-
-  export type NestedStringNullableFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    contains?: string | StringFieldRefInput<$PrismaModel>
-    startsWith?: string | StringFieldRefInput<$PrismaModel>
-    endsWith?: string | StringFieldRefInput<$PrismaModel>
-    not?: NestedStringNullableFilter<$PrismaModel> | string | null
-  }
-
   export type NestedBoolFilter<$PrismaModel = never> = {
     equals?: boolean | BooleanFieldRefInput<$PrismaModel>
     not?: NestedBoolFilter<$PrismaModel> | boolean
-  }
-
-  export type NestedEnumActivityContextWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: $Enums.ActivityContext | EnumActivityContextFieldRefInput<$PrismaModel>
-    in?: $Enums.ActivityContext[] | ListEnumActivityContextFieldRefInput<$PrismaModel>
-    notIn?: $Enums.ActivityContext[] | ListEnumActivityContextFieldRefInput<$PrismaModel>
-    not?: NestedEnumActivityContextWithAggregatesFilter<$PrismaModel> | $Enums.ActivityContext
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedEnumActivityContextFilter<$PrismaModel>
-    _max?: NestedEnumActivityContextFilter<$PrismaModel>
-  }
-
-  export type NestedStringNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    contains?: string | StringFieldRefInput<$PrismaModel>
-    startsWith?: string | StringFieldRefInput<$PrismaModel>
-    endsWith?: string | StringFieldRefInput<$PrismaModel>
-    not?: NestedStringNullableWithAggregatesFilter<$PrismaModel> | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedStringNullableFilter<$PrismaModel>
-    _max?: NestedStringNullableFilter<$PrismaModel>
   }
 
   export type NestedIntNullableFilter<$PrismaModel = never> = {
@@ -13612,15 +13499,45 @@ export namespace Prisma {
     not?: NestedFloatFilter<$PrismaModel> | number
   }
 
+  export type NestedStringNullableFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    not?: NestedStringNullableFilter<$PrismaModel> | string | null
+  }
+
+  export type NestedStringNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    not?: NestedStringNullableWithAggregatesFilter<$PrismaModel> | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedStringNullableFilter<$PrismaModel>
+    _max?: NestedStringNullableFilter<$PrismaModel>
+  }
+
   export type VibeCreateWithoutAuthorInput = {
     id?: string
     title: string
     content: string
     keywords?: VibeCreatekeywordsInput | string[]
-    activity?: $Enums.ActivityContext
     images?: VibeCreateimagesInput | string[]
-    videoUrl?: string | null
-    musicUrl?: string | null
+    videoUrls?: VibeCreatevideoUrlsInput | string[]
+    musicUrls?: VibeCreatemusicUrlsInput | string[]
     roomConfig?: NullableJsonNullValueInput | InputJsonValue
     inMainFeed?: boolean
     createdAt?: Date | string
@@ -13633,10 +13550,9 @@ export namespace Prisma {
     title: string
     content: string
     keywords?: VibeCreatekeywordsInput | string[]
-    activity?: $Enums.ActivityContext
     images?: VibeCreateimagesInput | string[]
-    videoUrl?: string | null
-    musicUrl?: string | null
+    videoUrls?: VibeCreatevideoUrlsInput | string[]
+    musicUrls?: VibeCreatemusicUrlsInput | string[]
     roomConfig?: NullableJsonNullValueInput | InputJsonValue
     inMainFeed?: boolean
     createdAt?: Date | string
@@ -13663,9 +13579,9 @@ export namespace Prisma {
     isPublic?: boolean
     tags?: RoomCreatetagsInput | string[]
     images?: RoomCreateimagesInput | string[]
-    videoUrl?: string | null
-    musicUrl?: string | null
-    youtubeUrl?: string | null
+    videoUrls?: RoomCreatevideoUrlsInput | string[]
+    musicUrls?: RoomCreatemusicUrlsInput | string[]
+    youtubeUrls?: RoomCreateyoutubeUrlsInput | string[]
     roomConfig?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -13683,9 +13599,9 @@ export namespace Prisma {
     isPublic?: boolean
     tags?: RoomCreatetagsInput | string[]
     images?: RoomCreateimagesInput | string[]
-    videoUrl?: string | null
-    musicUrl?: string | null
-    youtubeUrl?: string | null
+    videoUrls?: RoomCreatevideoUrlsInput | string[]
+    musicUrls?: RoomCreatemusicUrlsInput | string[]
+    youtubeUrls?: RoomCreateyoutubeUrlsInput | string[]
     roomConfig?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -13814,10 +13730,9 @@ export namespace Prisma {
     title?: StringFilter<"Vibe"> | string
     content?: StringFilter<"Vibe"> | string
     keywords?: StringNullableListFilter<"Vibe">
-    activity?: EnumActivityContextFilter<"Vibe"> | $Enums.ActivityContext
     images?: StringNullableListFilter<"Vibe">
-    videoUrl?: StringNullableFilter<"Vibe"> | string | null
-    musicUrl?: StringNullableFilter<"Vibe"> | string | null
+    videoUrls?: StringNullableListFilter<"Vibe">
+    musicUrls?: StringNullableListFilter<"Vibe">
     roomConfig?: JsonNullableFilter<"Vibe">
     inMainFeed?: BoolFilter<"Vibe"> | boolean
     authorId?: StringFilter<"Vibe"> | string
@@ -13853,9 +13768,9 @@ export namespace Prisma {
     isPublic?: BoolFilter<"Room"> | boolean
     tags?: StringNullableListFilter<"Room">
     images?: StringNullableListFilter<"Room">
-    videoUrl?: StringNullableFilter<"Room"> | string | null
-    musicUrl?: StringNullableFilter<"Room"> | string | null
-    youtubeUrl?: StringNullableFilter<"Room"> | string | null
+    videoUrls?: StringNullableListFilter<"Room">
+    musicUrls?: StringNullableListFilter<"Room">
+    youtubeUrls?: StringNullableListFilter<"Room">
     roomConfig?: JsonNullableFilter<"Room">
     authorId?: StringFilter<"Room"> | string
     createdAt?: DateTimeFilter<"Room"> | Date | string
@@ -14078,10 +13993,9 @@ export namespace Prisma {
     title: string
     content: string
     keywords?: VibeCreatekeywordsInput | string[]
-    activity?: $Enums.ActivityContext
     images?: VibeCreateimagesInput | string[]
-    videoUrl?: string | null
-    musicUrl?: string | null
+    videoUrls?: VibeCreatevideoUrlsInput | string[]
+    musicUrls?: VibeCreatemusicUrlsInput | string[]
     roomConfig?: NullableJsonNullValueInput | InputJsonValue
     inMainFeed?: boolean
     createdAt?: Date | string
@@ -14094,10 +14008,9 @@ export namespace Prisma {
     title: string
     content: string
     keywords?: VibeCreatekeywordsInput | string[]
-    activity?: $Enums.ActivityContext
     images?: VibeCreateimagesInput | string[]
-    videoUrl?: string | null
-    musicUrl?: string | null
+    videoUrls?: VibeCreatevideoUrlsInput | string[]
+    musicUrls?: VibeCreatemusicUrlsInput | string[]
     roomConfig?: NullableJsonNullValueInput | InputJsonValue
     inMainFeed?: boolean
     authorId: string
@@ -14126,10 +14039,9 @@ export namespace Prisma {
     title?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     keywords?: VibeUpdatekeywordsInput | string[]
-    activity?: EnumActivityContextFieldUpdateOperationsInput | $Enums.ActivityContext
     images?: VibeUpdateimagesInput | string[]
-    videoUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    musicUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    videoUrls?: VibeUpdatevideoUrlsInput | string[]
+    musicUrls?: VibeUpdatemusicUrlsInput | string[]
     roomConfig?: NullableJsonNullValueInput | InputJsonValue
     inMainFeed?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14142,10 +14054,9 @@ export namespace Prisma {
     title?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     keywords?: VibeUpdatekeywordsInput | string[]
-    activity?: EnumActivityContextFieldUpdateOperationsInput | $Enums.ActivityContext
     images?: VibeUpdateimagesInput | string[]
-    videoUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    musicUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    videoUrls?: VibeUpdatevideoUrlsInput | string[]
+    musicUrls?: VibeUpdatemusicUrlsInput | string[]
     roomConfig?: NullableJsonNullValueInput | InputJsonValue
     inMainFeed?: BoolFieldUpdateOperationsInput | boolean
     authorId?: StringFieldUpdateOperationsInput | string
@@ -14368,9 +14279,9 @@ export namespace Prisma {
     isPublic?: boolean
     tags?: RoomCreatetagsInput | string[]
     images?: RoomCreateimagesInput | string[]
-    videoUrl?: string | null
-    musicUrl?: string | null
-    youtubeUrl?: string | null
+    videoUrls?: RoomCreatevideoUrlsInput | string[]
+    musicUrls?: RoomCreatemusicUrlsInput | string[]
+    youtubeUrls?: RoomCreateyoutubeUrlsInput | string[]
     roomConfig?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -14388,9 +14299,9 @@ export namespace Prisma {
     isPublic?: boolean
     tags?: RoomCreatetagsInput | string[]
     images?: RoomCreateimagesInput | string[]
-    videoUrl?: string | null
-    musicUrl?: string | null
-    youtubeUrl?: string | null
+    videoUrls?: RoomCreatevideoUrlsInput | string[]
+    musicUrls?: RoomCreatemusicUrlsInput | string[]
+    youtubeUrls?: RoomCreateyoutubeUrlsInput | string[]
     roomConfig?: NullableJsonNullValueInput | InputJsonValue
     authorId: string
     createdAt?: Date | string
@@ -14457,9 +14368,9 @@ export namespace Prisma {
     isPublic?: BoolFieldUpdateOperationsInput | boolean
     tags?: RoomUpdatetagsInput | string[]
     images?: RoomUpdateimagesInput | string[]
-    videoUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    musicUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    youtubeUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    videoUrls?: RoomUpdatevideoUrlsInput | string[]
+    musicUrls?: RoomUpdatemusicUrlsInput | string[]
+    youtubeUrls?: RoomUpdateyoutubeUrlsInput | string[]
     roomConfig?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14477,9 +14388,9 @@ export namespace Prisma {
     isPublic?: BoolFieldUpdateOperationsInput | boolean
     tags?: RoomUpdatetagsInput | string[]
     images?: RoomUpdateimagesInput | string[]
-    videoUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    musicUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    youtubeUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    videoUrls?: RoomUpdatevideoUrlsInput | string[]
+    musicUrls?: RoomUpdatemusicUrlsInput | string[]
+    youtubeUrls?: RoomUpdateyoutubeUrlsInput | string[]
     roomConfig?: NullableJsonNullValueInput | InputJsonValue
     authorId?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14536,9 +14447,9 @@ export namespace Prisma {
     isPublic?: boolean
     tags?: RoomCreatetagsInput | string[]
     images?: RoomCreateimagesInput | string[]
-    videoUrl?: string | null
-    musicUrl?: string | null
-    youtubeUrl?: string | null
+    videoUrls?: RoomCreatevideoUrlsInput | string[]
+    musicUrls?: RoomCreatemusicUrlsInput | string[]
+    youtubeUrls?: RoomCreateyoutubeUrlsInput | string[]
     roomConfig?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -14556,9 +14467,9 @@ export namespace Prisma {
     isPublic?: boolean
     tags?: RoomCreatetagsInput | string[]
     images?: RoomCreateimagesInput | string[]
-    videoUrl?: string | null
-    musicUrl?: string | null
-    youtubeUrl?: string | null
+    videoUrls?: RoomCreatevideoUrlsInput | string[]
+    musicUrls?: RoomCreatemusicUrlsInput | string[]
+    youtubeUrls?: RoomCreateyoutubeUrlsInput | string[]
     roomConfig?: NullableJsonNullValueInput | InputJsonValue
     authorId: string
     createdAt?: Date | string
@@ -14625,9 +14536,9 @@ export namespace Prisma {
     isPublic?: BoolFieldUpdateOperationsInput | boolean
     tags?: RoomUpdatetagsInput | string[]
     images?: RoomUpdateimagesInput | string[]
-    videoUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    musicUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    youtubeUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    videoUrls?: RoomUpdatevideoUrlsInput | string[]
+    musicUrls?: RoomUpdatemusicUrlsInput | string[]
+    youtubeUrls?: RoomUpdateyoutubeUrlsInput | string[]
     roomConfig?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14645,9 +14556,9 @@ export namespace Prisma {
     isPublic?: BoolFieldUpdateOperationsInput | boolean
     tags?: RoomUpdatetagsInput | string[]
     images?: RoomUpdateimagesInput | string[]
-    videoUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    musicUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    youtubeUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    videoUrls?: RoomUpdatevideoUrlsInput | string[]
+    musicUrls?: RoomUpdatemusicUrlsInput | string[]
+    youtubeUrls?: RoomUpdateyoutubeUrlsInput | string[]
     roomConfig?: NullableJsonNullValueInput | InputJsonValue
     authorId?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14704,9 +14615,9 @@ export namespace Prisma {
     isPublic?: boolean
     tags?: RoomCreatetagsInput | string[]
     images?: RoomCreateimagesInput | string[]
-    videoUrl?: string | null
-    musicUrl?: string | null
-    youtubeUrl?: string | null
+    videoUrls?: RoomCreatevideoUrlsInput | string[]
+    musicUrls?: RoomCreatemusicUrlsInput | string[]
+    youtubeUrls?: RoomCreateyoutubeUrlsInput | string[]
     roomConfig?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -14724,9 +14635,9 @@ export namespace Prisma {
     isPublic?: boolean
     tags?: RoomCreatetagsInput | string[]
     images?: RoomCreateimagesInput | string[]
-    videoUrl?: string | null
-    musicUrl?: string | null
-    youtubeUrl?: string | null
+    videoUrls?: RoomCreatevideoUrlsInput | string[]
+    musicUrls?: RoomCreatemusicUrlsInput | string[]
+    youtubeUrls?: RoomCreateyoutubeUrlsInput | string[]
     roomConfig?: NullableJsonNullValueInput | InputJsonValue
     authorId: string
     createdAt?: Date | string
@@ -14793,9 +14704,9 @@ export namespace Prisma {
     isPublic?: BoolFieldUpdateOperationsInput | boolean
     tags?: RoomUpdatetagsInput | string[]
     images?: RoomUpdateimagesInput | string[]
-    videoUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    musicUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    youtubeUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    videoUrls?: RoomUpdatevideoUrlsInput | string[]
+    musicUrls?: RoomUpdatemusicUrlsInput | string[]
+    youtubeUrls?: RoomUpdateyoutubeUrlsInput | string[]
     roomConfig?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14813,9 +14724,9 @@ export namespace Prisma {
     isPublic?: BoolFieldUpdateOperationsInput | boolean
     tags?: RoomUpdatetagsInput | string[]
     images?: RoomUpdateimagesInput | string[]
-    videoUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    musicUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    youtubeUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    videoUrls?: RoomUpdatevideoUrlsInput | string[]
+    musicUrls?: RoomUpdatemusicUrlsInput | string[]
+    youtubeUrls?: RoomUpdateyoutubeUrlsInput | string[]
     roomConfig?: NullableJsonNullValueInput | InputJsonValue
     authorId?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14868,10 +14779,9 @@ export namespace Prisma {
     title: string
     content: string
     keywords?: VibeCreatekeywordsInput | string[]
-    activity?: $Enums.ActivityContext
     images?: VibeCreateimagesInput | string[]
-    videoUrl?: string | null
-    musicUrl?: string | null
+    videoUrls?: VibeCreatevideoUrlsInput | string[]
+    musicUrls?: VibeCreatemusicUrlsInput | string[]
     roomConfig?: NullableJsonNullValueInput | InputJsonValue
     inMainFeed?: boolean
     createdAt?: Date | string
@@ -14887,9 +14797,9 @@ export namespace Prisma {
     isPublic?: boolean
     tags?: RoomCreatetagsInput | string[]
     images?: RoomCreateimagesInput | string[]
-    videoUrl?: string | null
-    musicUrl?: string | null
-    youtubeUrl?: string | null
+    videoUrls?: RoomCreatevideoUrlsInput | string[]
+    musicUrls?: RoomCreatemusicUrlsInput | string[]
+    youtubeUrls?: RoomCreateyoutubeUrlsInput | string[]
     roomConfig?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -14928,10 +14838,9 @@ export namespace Prisma {
     title?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     keywords?: VibeUpdatekeywordsInput | string[]
-    activity?: EnumActivityContextFieldUpdateOperationsInput | $Enums.ActivityContext
     images?: VibeUpdateimagesInput | string[]
-    videoUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    musicUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    videoUrls?: VibeUpdatevideoUrlsInput | string[]
+    musicUrls?: VibeUpdatemusicUrlsInput | string[]
     roomConfig?: NullableJsonNullValueInput | InputJsonValue
     inMainFeed?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14944,10 +14853,9 @@ export namespace Prisma {
     title?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     keywords?: VibeUpdatekeywordsInput | string[]
-    activity?: EnumActivityContextFieldUpdateOperationsInput | $Enums.ActivityContext
     images?: VibeUpdateimagesInput | string[]
-    videoUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    musicUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    videoUrls?: VibeUpdatevideoUrlsInput | string[]
+    musicUrls?: VibeUpdatemusicUrlsInput | string[]
     roomConfig?: NullableJsonNullValueInput | InputJsonValue
     inMainFeed?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14960,10 +14868,9 @@ export namespace Prisma {
     title?: StringFieldUpdateOperationsInput | string
     content?: StringFieldUpdateOperationsInput | string
     keywords?: VibeUpdatekeywordsInput | string[]
-    activity?: EnumActivityContextFieldUpdateOperationsInput | $Enums.ActivityContext
     images?: VibeUpdateimagesInput | string[]
-    videoUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    musicUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    videoUrls?: VibeUpdatevideoUrlsInput | string[]
+    musicUrls?: VibeUpdatemusicUrlsInput | string[]
     roomConfig?: NullableJsonNullValueInput | InputJsonValue
     inMainFeed?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14979,9 +14886,9 @@ export namespace Prisma {
     isPublic?: BoolFieldUpdateOperationsInput | boolean
     tags?: RoomUpdatetagsInput | string[]
     images?: RoomUpdateimagesInput | string[]
-    videoUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    musicUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    youtubeUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    videoUrls?: RoomUpdatevideoUrlsInput | string[]
+    musicUrls?: RoomUpdatemusicUrlsInput | string[]
+    youtubeUrls?: RoomUpdateyoutubeUrlsInput | string[]
     roomConfig?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -14999,9 +14906,9 @@ export namespace Prisma {
     isPublic?: BoolFieldUpdateOperationsInput | boolean
     tags?: RoomUpdatetagsInput | string[]
     images?: RoomUpdateimagesInput | string[]
-    videoUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    musicUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    youtubeUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    videoUrls?: RoomUpdatevideoUrlsInput | string[]
+    musicUrls?: RoomUpdatemusicUrlsInput | string[]
+    youtubeUrls?: RoomUpdateyoutubeUrlsInput | string[]
     roomConfig?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -15019,9 +14926,9 @@ export namespace Prisma {
     isPublic?: BoolFieldUpdateOperationsInput | boolean
     tags?: RoomUpdatetagsInput | string[]
     images?: RoomUpdateimagesInput | string[]
-    videoUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    musicUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    youtubeUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    videoUrls?: RoomUpdatevideoUrlsInput | string[]
+    musicUrls?: RoomUpdatemusicUrlsInput | string[]
+    youtubeUrls?: RoomUpdateyoutubeUrlsInput | string[]
     roomConfig?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string

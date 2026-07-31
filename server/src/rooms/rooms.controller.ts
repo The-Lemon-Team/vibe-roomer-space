@@ -43,11 +43,10 @@ export class RoomsController {
   @Get('stream')
   streamRoomData(
     @Query('tag') tag?: string,
-    @Query('activity') activity?: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page?: number,
     @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit?: number,
   ) {
-    return this.roomsService.streamRoomData(tag, activity, page, limit);
+    return this.roomsService.streamRoomData(tag, page, limit);
   }
 
   @Get('id/:id')

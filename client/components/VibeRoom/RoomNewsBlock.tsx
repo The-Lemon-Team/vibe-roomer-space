@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { CreatedRoom, useAtmosphericStore } from '../../store/useAtmosphericStore';
-import { useAuthStore } from '../../store/useAuthStore';
+import type { CreatedRoom } from '../../store/useAtmosphericStore';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { setAuthModalOpen } from '../../store/authSlice';
+import { useAddRoomNewsMutation, useDeleteRoomNewsMutation } from '../../store/api/roomsApi';
 import { checkRoomPostingPermission } from '../../utils/roomPermissions';
 
 interface RoomNewsBlockProps {
@@ -8,8 +10,11 @@ interface RoomNewsBlockProps {
 }
 
 export const RoomNewsBlock: React.FC<RoomNewsBlockProps> = ({ room }) => {
-  const { addRoomNews, deleteRoomNews } = useAtmosphericStore();
-  const { isAuthenticated, user, setAuthModalOpen } = useAuthStore();
+  const dispatch = useAppDispatch();
+  const user = useAppSelector((s) => s.auth.user);
+  const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
+  const [addRoomNews] = useAddRoomNewsMutation();
+  const [deleteRoomNews] = useDeleteRoomNewsMutation();
 
   const [newsTitle, setNewsTitle] = useState('');
   const [newsContent, setNewsContent] = useState('');
@@ -21,16 +26,13 @@ export const RoomNewsBlock: React.FC<RoomNewsBlockProps> = ({ room }) => {
   const handleCreateNews = (e: React.FormEvent) => {
     e.preventDefault();
     if (!isAuthenticated) {
-      setAuthModalOpen(true, 'login');
+      dispatch(setAuthModalOpen({ open: true, mode: 'login' }));
       return;
     }
 
     if (!newsTitle.trim() || !newsContent.trim()) return;
 
-    addRoomNews(room.id, {
-      title: newsTitle.trim(),
-      content: newsContent.trim(),
-    });
+    addRoomNews({ roomId: room.id, title: newsTitle.trim(), content: newsContent.trim() });
 
     setNewsTitle('');
     setNewsContent('');
@@ -152,7 +154,7 @@ export const RoomNewsBlock: React.FC<RoomNewsBlockProps> = ({ room }) => {
 
                 {canDelete && (
                   <button
-                    onClick={() => deleteRoomNews(room.id, item.id)}
+                    onClick={() => deleteRoomNews({ roomId: room.id, newsId: item.id })}
                     className="text-zinc-600 hover:text-red-400 text-xs transition-colors opacity-0 group-hover:opacity-100"
                     title="Delete News Announcement"
                   >

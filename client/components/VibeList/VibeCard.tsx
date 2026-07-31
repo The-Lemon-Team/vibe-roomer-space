@@ -1,5 +1,12 @@
 import React from 'react';
-import { useAtmosphericStore, VibeItem, VibeWidget } from '../../store/useAtmosphericStore';
+import type { VibeItem, VibeWidget } from '../../store/useAtmosphericStore';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import {
+  enterVibePage,
+  setActiveTag,
+  addMyTag,
+  removeMyTag,
+} from '../../store/uiSlice';
 import { CyberAudioPlayer } from '../Player/CyberAudioPlayer';
 
 export interface VibeCardProps {
@@ -45,24 +52,18 @@ export const VibeCard: React.FC<VibeCardProps> = ({
   onEdit,
   onDelete,
 }) => {
+  const dispatch = useAppDispatch();
+  const activeTag = useAppSelector((s) => s.ui.activeTag);
+  const pinnedTags = useAppSelector((s) => s.ui.pinnedTags);
+  const tagMode = useAppSelector((s) => s.ui.tagMode);
+
   const isOwner = currentUserId === authorId;
-  const { 
-    enterVibePage, 
-    setSelectedVibeRoom, 
-    setViewMode, 
-    activeTag, 
-    setActiveTag, 
-    pinnedTags, 
-    pinTag, 
-    unpinTag,
-    tagMode,
-  } = useAtmosphericStore();
 
   // Combine tags and keywords fallback
-  const displayTags = tags.length > 0 
-    ? tags 
+  const displayTags = tags.length > 0
+    ? tags
     : keywords.map((k) => (k.startsWith('#') ? k : `#${k}`));
-  
+
   // The first tag is the primary routing tag
   const firstTag = displayTags[0] || '#general';
 
@@ -73,13 +74,13 @@ export const VibeCard: React.FC<VibeCardProps> = ({
       id: `widget-legacy-yt`,
       type: 'youtube',
       url: videoUrl,
-      title: 'YouTube Stream Link'
+      title: 'YouTube Stream Link',
     });
   }
 
   const handleEnterVibe = () => {
     if (vibeItem) {
-      enterVibePage(vibeItem);
+      dispatch(enterVibePage(vibeItem));
     }
   };
 
@@ -104,7 +105,7 @@ export const VibeCard: React.FC<VibeCardProps> = ({
         {/* Primary Route Tag Header Badge */}
         <div className="flex items-center space-x-2">
           <button
-            onClick={() => setActiveTag(firstTag)}
+            onClick={() => dispatch(setActiveTag(firstTag))}
             title="Route feed by primary tag"
             className={`text-[10px] font-mono px-2.5 py-0.5 rounded uppercase tracking-widest transition-colors flex items-center space-x-1 ${
               isRouteActive
@@ -134,7 +135,7 @@ export const VibeCard: React.FC<VibeCardProps> = ({
             )}
           </h3>
         )}
-        
+
         <p className="text-sm text-zinc-300 leading-relaxed whitespace-pre-line font-sans">
           {content}
         </p>
@@ -144,7 +145,6 @@ export const VibeCard: React.FC<VibeCardProps> = ({
           <div className={`grid gap-2 my-3 ${images.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
             {images.map((url, idx) => {
               const isMain = idx === 0;
-
               return (
                 <div key={idx} className="relative overflow-hidden rounded border border-zinc-800 bg-zinc-950">
                   <img
@@ -190,9 +190,9 @@ export const VibeCard: React.FC<VibeCardProps> = ({
                           <span className="material-symbols-outlined text-red-500">play_circle</span>
                           <span className="text-zinc-300 truncate">{w.url}</span>
                         </div>
-                        <a 
-                          href={w.url} 
-                          target="_blank" 
+                        <a
+                          href={w.url}
+                          target="_blank"
                           rel="noreferrer"
                           className="text-[10px] text-zinc-500 hover:text-cyan-400 underline ml-2 shrink-0"
                         >
@@ -228,9 +228,9 @@ export const VibeCard: React.FC<VibeCardProps> = ({
         {/* Media Block: Cyber Audio Player */}
         {musicUrl && (
           <div className="pt-2">
-            <CyberAudioPlayer 
+            <CyberAudioPlayer
               src={musicUrl}
-              title={title ? `${title} Stream` : 'VIBE_AUDIO_STREAM'} 
+              title={title ? `${title} Stream` : 'VIBE_AUDIO_STREAM'}
               accentColor={firstTag === activeTag ? '#FFB000' : '#00F0FF'}
             />
           </div>
@@ -249,16 +249,16 @@ export const VibeCard: React.FC<VibeCardProps> = ({
                 : 'bg-cyan-950/60 border-cyan-500/80 text-cyan-300 shadow-[0_0_8px_rgba(0,240,255,0.2)]';
 
               return (
-                <div 
-                  key={i} 
+                <div
+                  key={i}
                   className={`group/chip flex items-center rounded border text-xs transition-all ${
-                    isActive 
-                      ? activeStyle 
+                    isActive
+                      ? activeStyle
                       : 'bg-zinc-950/60 border-zinc-800 text-zinc-400 hover:border-cyan-500/50 hover:text-cyan-300'
                   }`}
                 >
                   <button
-                    onClick={() => setActiveTag(formatted)}
+                    onClick={() => dispatch(setActiveTag(formatted))}
                     className="px-2 py-0.5 hover:underline flex items-center space-x-1"
                   >
                     <span>{formatted}</span>
@@ -267,13 +267,13 @@ export const VibeCard: React.FC<VibeCardProps> = ({
                   {/* Pin to Menu Button */}
                   <button
                     onClick={() => {
-                      if (isPinned) unpinTag(formatted);
-                      else pinTag(formatted);
+                      if (isPinned) dispatch(removeMyTag(formatted));
+                      else dispatch(addMyTag(formatted));
                     }}
                     title={isPinned ? 'Unpin tag from menu' : 'Pin tag to top menu & sidebar'}
                     className={`px-1.5 py-0.5 border-l border-zinc-800 text-[10px] transition-colors ${
-                      isPinned 
-                        ? 'text-cyan-400 font-bold hover:text-red-400' 
+                      isPinned
+                        ? 'text-cyan-400 font-bold hover:text-red-400'
                         : 'text-zinc-600 hover:text-cyan-400'
                     }`}
                   >

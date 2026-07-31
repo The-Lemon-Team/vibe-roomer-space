@@ -1,48 +1,56 @@
 import React, { useState } from 'react';
-import { useAtmosphericStore } from '../../store/useAtmosphericStore';
-import { useAuthStore } from '../../store/useAuthStore';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import {
+  setActiveTag,
+  setViewMode,
+  setCreateModalOpen,
+  closeRoomPage,
+  setMobileSidebarOpen,
+  addAdminMenuTag,
+  removeAdminMenuTag,
+  addMyTag,
+  removeMyTag,
+  addRoomsAdminMenuTag,
+  removeRoomsAdminMenuTag,
+  addRoomsMyTag,
+  removeRoomsMyTag,
+} from '../../store/uiSlice';
+import { setAuthModalOpen } from '../../store/authSlice';
+import { useGetVibesQuery } from '../../store/api/vibesApi';
+import { useGetRoomsQuery } from '../../store/api/roomsApi';
 
 export const OperatorSidebar: React.FC = () => {
-  const {
-    activeTag,
-    setActiveTag,
-    adminMenuTags,
-    addAdminMenuTag,
-    removeAdminMenuTag,
-    myTags,
-    addMyTag,
-    removeMyTag,
-    roomsAdminMenuTags,
-    addRoomsAdminMenuTag,
-    removeRoomsAdminMenuTag,
-    roomsMyTags,
-    addRoomsMyTag,
-    removeRoomsMyTag,
-    setCreateModalOpen,
-    viewMode,
-    setViewMode,
-    vibes,
-    createdRooms,
-    tagMode,
-    closeRoomPage,
-    isMobileSidebarOpen,
-    setMobileSidebarOpen,
-  } = useAtmosphericStore();
+  const dispatch = useAppDispatch();
 
-  const { user, isAuthenticated, setAuthModalOpen } = useAuthStore();
+  // ── UI selectors ─────────────────────────────────────────────────────────
+  const activeTag = useAppSelector((s) => s.ui.activeTag);
+  const adminMenuTags = useAppSelector((s) => s.ui.adminMenuTags);
+  const myTags = useAppSelector((s) => s.ui.myTags);
+  const roomsAdminMenuTags = useAppSelector((s) => s.ui.roomsAdminMenuTags);
+  const roomsMyTags = useAppSelector((s) => s.ui.roomsMyTags);
+  const viewMode = useAppSelector((s) => s.ui.viewMode);
+  const tagMode = useAppSelector((s) => s.ui.tagMode);
+  const isMobileSidebarOpen = useAppSelector((s) => s.ui.isMobileSidebarOpen);
+
+  // ── Auth selectors ────────────────────────────────────────────────────────
+  const user = useAppSelector((s) => s.auth.user);
+  const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
+
+  // ── RTK Query data (for discovered-tag counts) ───────────────────────────
+  const { data: vibes = [] } = useGetVibesQuery(undefined);
+  const { data: createdRooms = [] } = useGetRoomsQuery(undefined);
+
   const [sidebarTagInput, setSidebarTagInput] = useState('');
 
   const handleSelectTag = (tag: string) => {
-    setActiveTag(tag);
-    setMobileSidebarOpen(false);
+    dispatch(setActiveTag(tag));
+    dispatch(setMobileSidebarOpen(false));
   };
 
   const handleSelectViewMode = (mode: 'vibes' | 'rooms') => {
-    if (mode === 'rooms') {
-      closeRoomPage();
-    }
-    setViewMode(mode);
-    setMobileSidebarOpen(false);
+    if (mode === 'rooms') dispatch(closeRoomPage());
+    dispatch(setViewMode(mode));
+    dispatch(setMobileSidebarOpen(false));
   };
 
   const isAdmin = isAuthenticated && user?.role === 'ADMIN';
@@ -76,35 +84,35 @@ export const OperatorSidebar: React.FC = () => {
 
     if (isRoomsMode) {
       if (tagMode === 'admin_config' && isAdmin) {
-        addRoomsAdminMenuTag(formatted);
+        dispatch(addRoomsAdminMenuTag(formatted));
       } else {
-        addRoomsMyTag(formatted);
+        dispatch(addRoomsMyTag(formatted));
       }
     } else {
       if (tagMode === 'admin_config' && isAdmin) {
-        addAdminMenuTag(formatted);
+        dispatch(addAdminMenuTag(formatted));
       } else {
-        addMyTag(formatted);
+        dispatch(addMyTag(formatted));
       }
     }
 
-    setActiveTag(formatted);
+    dispatch(setActiveTag(formatted));
     setSidebarTagInput('');
-    setMobileSidebarOpen(false);
+    dispatch(setMobileSidebarOpen(false));
   };
 
   const handleRemove = (tag: string) => {
     if (isRoomsMode) {
       if (tagMode === 'admin_config' && isAdmin) {
-        removeRoomsAdminMenuTag(tag);
+        dispatch(removeRoomsAdminMenuTag(tag));
       } else {
-        removeRoomsMyTag(tag);
+        dispatch(removeRoomsMyTag(tag));
       }
     } else {
       if (tagMode === 'admin_config' && isAdmin) {
-        removeAdminMenuTag(tag);
+        dispatch(removeAdminMenuTag(tag));
       } else {
-        removeMyTag(tag);
+        dispatch(removeMyTag(tag));
       }
     }
   };
@@ -112,19 +120,19 @@ export const OperatorSidebar: React.FC = () => {
   const handleAddDiscovered = (tag: string) => {
     if (isRoomsMode) {
       if (tagMode === 'admin_config' && isAdmin) {
-        addRoomsAdminMenuTag(tag);
+        dispatch(addRoomsAdminMenuTag(tag));
       } else {
-        addRoomsMyTag(tag);
+        dispatch(addRoomsMyTag(tag));
       }
     } else {
       if (tagMode === 'admin_config' && isAdmin) {
-        addAdminMenuTag(tag);
+        dispatch(addAdminMenuTag(tag));
       } else {
-        addMyTag(tag);
+        dispatch(addMyTag(tag));
       }
     }
-    setActiveTag(tag);
-    setMobileSidebarOpen(false);
+    dispatch(setActiveTag(tag));
+    dispatch(setMobileSidebarOpen(false));
   };
 
   return (
@@ -133,7 +141,7 @@ export const OperatorSidebar: React.FC = () => {
       {isMobileSidebarOpen && (
         <div
           className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-xs z-45 transition-opacity duration-300"
-          onClick={() => setMobileSidebarOpen(false)}
+          onClick={() => dispatch(setMobileSidebarOpen(false))}
         />
       )}
 
@@ -162,7 +170,7 @@ export const OperatorSidebar: React.FC = () => {
             </div>
           </div>
           <button
-            onClick={() => setMobileSidebarOpen(false)}
+            onClick={() => dispatch(setMobileSidebarOpen(false))}
             className="lg:hidden p-1 text-zinc-500 hover:text-red-400 focus:outline-none transition-colors"
             title="Close Sidebar"
           >
@@ -228,7 +236,6 @@ export const OperatorSidebar: React.FC = () => {
                       v.tags?.some((t) => t.toLowerCase() === tag.toLowerCase()),
                     ).length;
 
-                // Determine active color style based on viewMode and tagMode
                 let activeStyle = 'bg-zinc-900 border-l-amber-400 text-amber-400 shadow-[0_0_8px_rgba(255,176,0,0.15)]';
                 if (!isRoomsMode) {
                   if (tagMode === 'live') {
@@ -318,8 +325,8 @@ export const OperatorSidebar: React.FC = () => {
           {isAuthenticated ? (
             <button
               onClick={() => {
-                setCreateModalOpen(true);
-                setMobileSidebarOpen(false);
+                dispatch(setCreateModalOpen(true));
+                dispatch(setMobileSidebarOpen(false));
               }}
               className="w-full bg-cyan-400 text-black py-2.5 px-3 font-bold text-xs uppercase tracking-wider rounded hover:bg-cyan-300 shadow-[0_0_12px_rgba(0,240,255,0.4)] transition-all flex items-center justify-center space-x-1.5"
             >
@@ -329,8 +336,8 @@ export const OperatorSidebar: React.FC = () => {
           ) : (
             <button
               onClick={() => {
-                setAuthModalOpen(true, 'login');
-                setMobileSidebarOpen(false);
+                dispatch(setAuthModalOpen({ open: true, mode: 'login' }));
+                dispatch(setMobileSidebarOpen(false));
               }}
               className="w-full bg-amber-500/20 border border-amber-500/60 text-amber-400 py-2.5 px-3 font-bold text-xs uppercase tracking-wider rounded hover:bg-amber-500/30 transition-all flex items-center justify-center space-x-1.5"
             >

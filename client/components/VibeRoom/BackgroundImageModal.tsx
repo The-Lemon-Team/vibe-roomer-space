@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BaseModal } from '../Common/BaseModal';
-import { useAtmosphericStore } from '../../store/useAtmosphericStore';
+import { useGetTopHashtagsQuery } from '../../store/api/vibesApi';
 import { fetchApi } from '../../services/api';
 
 interface BackgroundImageModalProps {
@@ -83,7 +83,8 @@ export const BackgroundImageModal: React.FC<BackgroundImageModalProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<'themes' | 'unsplash'>('themes');
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
-  const { topHashtags } = useAtmosphericStore();
+  const { data: topHashtagsData = [] } = useGetTopHashtagsQuery(10);
+  const topHashtags = topHashtagsData.map((h) => (h.name.startsWith('#') ? h.name : `#${h.name}`));
   
   // Unsplash states
   const [searchQuery, setSearchQuery] = useState('');

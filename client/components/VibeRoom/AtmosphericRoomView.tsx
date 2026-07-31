@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import {
-  useAtmosphericStore,
+import type {
   VibeItem,
   RoomConfig,
   CreatedRoom,
 } from '../../store/useAtmosphericStore';
-import { useAuthStore } from '../../store/useAuthStore';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { setActiveTag, enterVibePage, closeRoomPage } from '../../store/uiSlice';
+import { setAuthModalOpen } from '../../store/authSlice';
+import { useAddStreamItemMutation, useUpdateRoomBackgroundMutation } from '../../store/api/roomsApi';
+import { useGetVibesQuery } from '../../store/api/vibesApi';
 import { CyberAudioPlayer } from '../Player/CyberAudioPlayer';
 import { checkRoomPostingPermission } from '../../utils/roomPermissions';
 import { RoomNewsBlock } from './RoomNewsBlock';
@@ -25,23 +28,18 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
   vibeItem,
   children,
 }) => {
-  const {
-    activeTag,
-    setActiveTag,
-    vibes,
-    fetchRoomData,
-    activeCreatedRoom,
-    enterVibePage,
-    closeRoomPage,
-    addStreamItemToRoom,
-    updateRoomBackground,
-  } = useAtmosphericStore();
+  const dispatch = useAppDispatch();
+  const activeTag = useAppSelector((s) => s.ui.activeTag);
+  const activeCreatedRoom = useAppSelector((s) => s.ui.activeCreatedRoom);
+  const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
+  const user = useAppSelector((s) => s.auth.user);
 
-  const { isAuthenticated, user, setAuthModalOpen } = useAuthStore();
+  const [addStreamItemMutation] = useAddStreamItemMutation();
+  const [updateRoomBackgroundMutation] = useUpdateRoomBackgroundMutation();
+  const { data: vibes = [] } = useGetVibesQuery(activeTag !== '#ALL' ? activeTag : undefined);
 
-  useEffect(() => {
-    fetchRoomData(activeTag);
-  }, [activeTag, fetchRoomData]);
+  // Refresh rooms data whenever activeTag changes (RTK Query handles caching)
+  useEffect(() => { /* RTK Query auto-fetches */ }, [activeTag]);
 
   // Stream item form state
   const [streamInput, setStreamInput] = useState('');
@@ -95,9 +93,9 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
   const [isBgModalOpen, setIsBgModalOpen] = useState(false);
   const [bgInputUrl, setBgInputUrl] = useState(customBgImage);
 
-  const roomImages = targetRoom?.images?.length
+  const roomImages: string[] = targetRoom?.images?.length
     ? targetRoom.images
-    : Array.from(new Set(matchingVibes.flatMap((v) => v.images || []).filter(Boolean)));
+    : Array.from(new Set(matchingVibes.flatMap((v: typeof vibes[0]) => v.images || []).filter((x): x is string => typeof x === 'string')));
 
   const videoUrl = targetRoom?.videoUrl || targetRoom?.youtubeUrl || currentRoomVibe?.videoUrl;
   const musicUrl = targetRoom?.musicUrl || currentRoomVibe?.musicUrl;
@@ -129,7 +127,7 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
   const handlePostStreamContent = (e: React.FormEvent) => {
     e.preventDefault();
     if (!isAuthenticated) {
-      setAuthModalOpen(true, 'login');
+      dispatch(setAuthModalOpen({ open: true, mode: 'login' }));
       return;
     }
 
@@ -139,28 +137,28 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
     if (!streamInput.trim() && !mediaUrlInput.trim()) return;
 
     if (streamType === 'image' && mediaUrlInput.trim()) {
-      addStreamItemToRoom(targetRoom.id, {
+      addStreamItemMutation({ roomId: targetRoom.id, item: {
         type: 'image',
         content: streamInput.trim(),
         mediaUrls: [mediaUrlInput.trim()],
-      });
+      }});
     } else if (streamType === 'youtube' && mediaUrlInput.trim()) {
-      addStreamItemToRoom(targetRoom.id, {
+      addStreamItemMutation({ roomId: targetRoom.id, item: {
         type: 'youtube',
         title: streamInput.trim() || 'Shared YouTube Stream Link',
         url: mediaUrlInput.trim(),
-      });
+      }});
     } else if (streamType === 'music' && mediaUrlInput.trim()) {
-      addStreamItemToRoom(targetRoom.id, {
+      addStreamItemMutation({ roomId: targetRoom.id, item: {
         type: 'music',
         title: streamInput.trim() || 'Shared Audio Track Stream',
         url: mediaUrlInput.trim(),
-      });
+      }});
     } else {
-      addStreamItemToRoom(targetRoom.id, {
+      addStreamItemMutation({ roomId: targetRoom.id, item: {
         type: 'text',
         content: streamInput.trim(),
-      });
+      }});
     }
 
     setStreamInput('');
@@ -208,7 +206,7 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
         <div className="max-w-[1400px] mx-auto w-full px-4 md:px-6 py-3 flex justify-between items-center">
           <div className="flex items-center space-x-3">
             <button
-              onClick={() => closeRoomPage()}
+              onClick={() => dispatch(closeRoomPage())}
               className="text-xs text-zinc-300 hover:text-white px-3 py-1.5 bg-zinc-900 border border-zinc-800 hover:border-cyan-500/50 rounded flex items-center space-x-1 font-bold transition-all"
             >
               <span className="material-symbols-outlined text-sm">arrow_back</span>
@@ -268,7 +266,7 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
             type="button"
             onClick={() => {
               if (!isAuthenticated) {
-                setAuthModalOpen(true, 'login');
+                dispatch(setAuthModalOpen({ open: true, mode: 'login' }));
                 return;
               }
               setBgInputUrl(customBgImage);
@@ -285,10 +283,10 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
               {/* Attached Hashtags Header */}
               <div className="flex flex-wrap items-center gap-2 font-mono text-xs">
                 <span className="text-zinc-400 font-bold">[ATTACHED_HASHTAGS]:</span>
-                {roomTags.map((tag) => (
+                {roomTags.map((tag: string) => (
                   <button
                     key={tag}
-                    onClick={() => setActiveTag(tag)}
+                    onClick={() => dispatch(setActiveTag(tag))}
                     className="px-2.5 py-0.5 bg-amber-950/80 border border-amber-500/80 text-amber-400 font-bold rounded uppercase text-[11px] hover:bg-amber-900 transition-colors"
                   >
                     {tag}
@@ -309,7 +307,7 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
               {currentRoomVibe && (
                 <div className="flex items-center space-x-2 pt-2 font-mono text-xs">
                   <button
-                    onClick={() => enterVibePage(currentRoomVibe)}
+                    onClick={() => dispatch(enterVibePage(currentRoomVibe))}
                     className="px-3 py-1.5 bg-cyan-950 border border-cyan-500/80 text-cyan-300 hover:bg-cyan-900 rounded font-bold transition-colors flex items-center space-x-1.5"
                   >
                     <span>★ ORIGIN VIBE: {currentRoomVibe.title}</span>
@@ -440,7 +438,7 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
                   {!isAuthenticated && (
                     <div className="pt-2 flex justify-end">
                       <button
-                        onClick={() => setAuthModalOpen(true, 'login')}
+                        onClick={() => dispatch(setAuthModalOpen({ open: true, mode: 'login' }))}
                         className="px-3 py-1 bg-zinc-800 hover:bg-zinc-700 text-cyan-300 border border-cyan-500/40 rounded text-xs font-bold transition-all flex items-center space-x-1"
                       >
                         <span className="material-symbols-outlined text-xs">login</span>
@@ -636,7 +634,7 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
                     type="button"
                     onClick={() => {
                       if (!isAuthenticated) {
-                        setAuthModalOpen(true, 'login');
+                        dispatch(setAuthModalOpen({ open: true, mode: 'login' }));
                         return;
                       }
                       setBgInputUrl(customBgImage);
@@ -788,7 +786,7 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
               type="button"
               onClick={() => {
                 if (targetRoom) {
-                  updateRoomBackground(targetRoom.id, '');
+                  updateRoomBackgroundMutation({ roomId: targetRoom.id, bgImageUrl: '' });
                 }
                 setBgInputUrl('');
                 setIsBgModalOpen(false);
@@ -810,7 +808,7 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
                 type="button"
                 onClick={() => {
                   if (targetRoom) {
-                    updateRoomBackground(targetRoom.id, bgInputUrl);
+                    updateRoomBackgroundMutation({ roomId: targetRoom.id, bgImageUrl: bgInputUrl });
                   }
                   setIsBgModalOpen(false);
                 }}

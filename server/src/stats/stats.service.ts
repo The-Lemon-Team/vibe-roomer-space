@@ -18,7 +18,6 @@ export class StatsService {
           audioTracks: 0,
           photos: 0,
         },
-        activityDistribution: {},
       };
     }
 
@@ -27,9 +26,8 @@ export class StatsService {
         select: {
           keywords: true,
           images: true,
-          videoUrl: true,
-          musicUrl: true,
-          activity: true,
+          videoUrls: true,
+          musicUrls: true,
         },
       });
 
@@ -39,7 +37,6 @@ export class StatsService {
       let totalAudioTracks = 0;
       let totalPhotos = 0;
 
-      const activityDistribution: Record<string, number> = {};
 
       for (const vibe of vibes) {
         // 1. Hashtags / Keywords
@@ -49,12 +46,12 @@ export class StatsService {
         }
 
         // 2. Youtube links
-        if (vibe.videoUrl && (vibe.videoUrl.includes('youtube.com') || vibe.videoUrl.includes('youtu.be'))) {
+        if (vibe.videoUrls.some((u) => u.includes('youtube.com') || u.includes('youtu.be'))) {
           totalYoutubeLinks++;
         }
 
         // 3. Audio content
-        if (vibe.musicUrl && vibe.musicUrl.trim().length > 0) {
+        if (vibe.musicUrls.length > 0) {
           totalAudioTracks++;
         }
 
@@ -63,9 +60,6 @@ export class StatsService {
           totalPhotos += vibe.images.length;
         }
 
-        // Activity distribution
-        const act = vibe.activity || 'CUSTOM';
-        activityDistribution[act] = (activityDistribution[act] || 0) + 1;
       }
 
       return {
@@ -80,7 +74,6 @@ export class StatsService {
           audioTracks: totalAudioTracks,
           photos: totalPhotos,
         },
-        activityDistribution,
       };
     } catch (error) {
       this.logger.error('Error fetching content stats', error);
@@ -93,7 +86,6 @@ export class StatsService {
           audioTracks: 0,
           photos: 0,
         },
-        activityDistribution: {},
       };
     }
   }

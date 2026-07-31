@@ -136,10 +136,9 @@ exports.Prisma.VibeScalarFieldEnum = {
   title: 'title',
   content: 'content',
   keywords: 'keywords',
-  activity: 'activity',
   images: 'images',
-  videoUrl: 'videoUrl',
-  musicUrl: 'musicUrl',
+  videoUrls: 'videoUrls',
+  musicUrls: 'musicUrls',
   roomConfig: 'roomConfig',
   inMainFeed: 'inMainFeed',
   authorId: 'authorId',
@@ -172,9 +171,9 @@ exports.Prisma.RoomScalarFieldEnum = {
   isPublic: 'isPublic',
   tags: 'tags',
   images: 'images',
-  videoUrl: 'videoUrl',
-  musicUrl: 'musicUrl',
-  youtubeUrl: 'youtubeUrl',
+  videoUrls: 'videoUrls',
+  musicUrls: 'musicUrls',
+  youtubeUrls: 'youtubeUrls',
   roomConfig: 'roomConfig',
   authorId: 'authorId',
   createdAt: 'createdAt',
@@ -240,15 +239,6 @@ exports.Prisma.NullsOrder = {
 exports.Role = exports.$Enums.Role = {
   USER: 'USER',
   ADMIN: 'ADMIN'
-};
-
-exports.ActivityContext = exports.$Enums.ActivityContext = {
-  WORK: 'WORK',
-  WALK: 'WALK',
-  NIGHT_DRIVE: 'NIGHT_DRIVE',
-  RELAX: 'RELAX',
-  SPORT: 'SPORT',
-  CUSTOM: 'CUSTOM'
 };
 
 exports.Prisma.ModelName = {

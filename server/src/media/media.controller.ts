@@ -7,26 +7,34 @@ import {
   Param,
   UseInterceptors,
   UploadedFile,
-  Res,
   BadRequestException,
   Query,
+  Res,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
-import * as diskFs from 'fs';
-import * as path from 'path';
-import { diskStorage } from 'multer';
+import { memoryStorage } from 'multer';
 import { MediaService } from './media.service';
 
-const uploadsDirectory = process.env.UPLOADS_DIR || path.join(process.cwd(), 'uploads');
-
-if (!diskFs.existsSync(uploadsDirectory)) {
-  diskFs.mkdirSync(uploadsDirectory, { recursive: true });
-}
+/** Multer interceptor using in-memory storage — no files touch disk. */
+const memoryMulter = FileInterceptor('file', {
+  storage: memoryStorage(),
+  limits: { fileSize: 20 * 1024 * 1024 }, // 20 MB cap
+  fileFilter: (_req, file, cb) => {
+    const allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml', 'image/avif'];
+    if (allowed.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new BadRequestException(`Unsupported file type: ${file.mimetype}`), false);
+    }
+  },
+});
 
 @Controller('media')
 export class MediaController {
   constructor(private readonly mediaService: MediaService) {}
+
+  // ── Unsplash proxy ────────────────────────────────────────────────────────
 
   @Get('unsplash/search')
   async searchUnsplash(@Query('query') query: string) {
@@ -46,47 +54,45 @@ export class MediaController {
     }
   }
 
+  // ── List all uploaded files ───────────────────────────────────────────────
+
   @Get()
-  listMedia() {
+  async listMedia() {
     return this.mediaService.listFiles();
   }
 
+  // ── Upload a new file ─────────────────────────────────────────────────────
+
   @Post('upload')
-  @UseInterceptors(
-    FileInterceptor('file', {
-      storage: diskStorage({
-        destination: uploadsDirectory,
-        filename: (req, file, cb) => {
-          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-          const ext = path.extname(file.originalname);
-          cb(null, `${file.fieldname}-${uniqueSuffix}${ext}`);
-        },
-      }),
-    }),
-  )
-  uploadFile(@UploadedFile() file: Express.Multer.File) {
+  @UseInterceptors(memoryMulter)
+  async uploadFile(@UploadedFile() file: Express.Multer.File) {
     if (!file) {
       throw new BadRequestException('No media file provided for upload');
     }
+    const result = await this.mediaService.uploadFile(file);
     return {
       message: 'Media uploaded successfully',
-      filename: file.filename,
+      filename: result.filename,
       originalName: file.originalname,
       mimetype: file.mimetype,
-      size: file.size,
-      url: `/media/${file.filename}`,
+      size: result.size,
+      url: result.url,          // ← full Supabase CDN URL
     };
   }
 
+  // ── Redirect to Supabase CDN URL (for backward-compat with old absolute paths) ──
+
   @Get(':filename')
-  downloadFile(@Param('filename') filename: string, @Res() res: Response) {
-    const meta = this.mediaService.getFileMeta(filename);
-    return res.sendFile(meta.filePath);
+  async downloadFile(@Param('filename') filename: string, @Res() res: Response) {
+    const url = this.mediaService.getPublicUrl(filename);
+    return res.redirect(301, url);
   }
 
+  // ── Update / replace a file ───────────────────────────────────────────────
+
   @Put(':filename')
-  @UseInterceptors(FileInterceptor('file'))
-  updateFile(
+  @UseInterceptors(memoryMulter)
+  async updateFile(
     @Param('filename') filename: string,
     @UploadedFile() file: Express.Multer.File,
   ) {
@@ -96,8 +102,10 @@ export class MediaController {
     return this.mediaService.updateFile(filename, file);
   }
 
+  // ── Delete a file ─────────────────────────────────────────────────────────
+
   @Delete(':filename')
-  deleteFile(@Param('filename') filename: string) {
+  async deleteFile(@Param('filename') filename: string) {
     return this.mediaService.deleteFile(filename);
   }
 }

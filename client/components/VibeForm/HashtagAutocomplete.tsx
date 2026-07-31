@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useAtmosphericStore } from '../../store/useAtmosphericStore';
+import { useAppSelector } from '../../store/hooks';
+import { useGetTopHashtagsQuery } from '../../store/api/vibesApi';
 
 interface HashtagAutocompleteProps {
   selectedTags: string[];
@@ -26,18 +27,20 @@ export const HashtagAutocomplete: React.FC<HashtagAutocompleteProps> = ({
   selectedTags,
   onChange,
 }) => {
-  const { vibes, pinnedTags } = useAtmosphericStore();
+  const pinnedTags = useAppSelector((s) => s.ui.pinnedTags);
+  const { data: topHashtagsData = [] } = useGetTopHashtagsQuery(20);
+  const topHashtags = topHashtagsData.map((h) => h.name.startsWith('#') ? h.name : `#${h.name}`);
   const [inputValue, setInputValue] = useState('');
   const [isOpen, setIsOpen] = useState(false);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Extract all unique tags used across vibes + pinned tags + defaults
+  // Extract all unique tags used across top trending hashtags + pinned tags + defaults
   const allUsedTags = Array.from(
     new Set([
       ...DEFAULT_SUGGESTIONS,
       ...pinnedTags,
-      ...vibes.flatMap((v) => v.tags || [])
+      ...topHashtags,
     ])
   ).map((t) => (t.startsWith('#') ? t.toLowerCase() : `#${t.toLowerCase()}`));
 

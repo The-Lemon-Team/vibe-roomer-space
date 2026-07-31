@@ -1,6 +1,12 @@
 import React, { useState } from 'react';
-import { CreatedRoom, RoomNoteItem, useAtmosphericStore } from '../../store/useAtmosphericStore';
-import { useAuthStore } from '../../store/useAuthStore';
+import type { CreatedRoom, RoomNoteItem } from '../../store/useAtmosphericStore';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { setAuthModalOpen } from '../../store/authSlice';
+import {
+  useAddRoomNoteMutation,
+  useUpdateRoomNoteMutation,
+  useDeleteRoomNoteMutation,
+} from '../../store/api/roomsApi';
 import { checkRoomPostingPermission } from '../../utils/roomPermissions';
 import { MarkdownRenderer } from './MarkdownRenderer';
 
@@ -9,8 +15,13 @@ interface RoomNotesBlockProps {
 }
 
 export const RoomNotesBlock: React.FC<RoomNotesBlockProps> = ({ room }) => {
-  const { addRoomNote, updateRoomNote, deleteRoomNote } = useAtmosphericStore();
-  const { isAuthenticated, user, setAuthModalOpen } = useAuthStore();
+  const dispatch = useAppDispatch();
+  const user = useAppSelector((s) => s.auth.user);
+  const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
+  const [addRoomNote] = useAddRoomNoteMutation();
+  const [updateRoomNote] = useUpdateRoomNoteMutation();
+  const [deleteRoomNote] = useDeleteRoomNoteMutation();
+
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [noteTitle, setNoteTitle] = useState('');
@@ -33,16 +44,13 @@ export const RoomNotesBlock: React.FC<RoomNotesBlockProps> = ({ room }) => {
   const handleCreateNote = (e: React.FormEvent) => {
     e.preventDefault();
     if (!isAuthenticated) {
-      setAuthModalOpen(true, 'login');
+      dispatch(setAuthModalOpen({ open: true, mode: 'login' }));
       return;
     }
 
     if (!noteTitle.trim() || !noteContent.trim()) return;
 
-    addRoomNote(room.id, {
-      title: noteTitle.trim(),
-      content: noteContent.trim(),
-    });
+    addRoomNote({ roomId: room.id, title: noteTitle.trim(), content: noteContent.trim() });
 
     setNoteTitle('');
     setNoteContent('');
@@ -59,10 +67,7 @@ export const RoomNotesBlock: React.FC<RoomNotesBlockProps> = ({ room }) => {
 
   const handleSaveEditNote = (noteId: string) => {
     if (!editTitle.trim() || !editContent.trim()) return;
-    updateRoomNote(room.id, noteId, {
-      title: editTitle.trim(),
-      content: editContent.trim(),
-    });
+    updateRoomNote({ roomId: room.id, noteId, updates: { title: editTitle.trim(), content: editContent.trim() } });
     setEditingNoteId(null);
     setNoteViewModes((prev) => ({ ...prev, [noteId]: 'view' }));
   };
@@ -332,7 +337,7 @@ export const RoomNotesBlock: React.FC<RoomNotesBlockProps> = ({ room }) => {
                             <span className="material-symbols-outlined text-sm">edit</span>
                           </button>
                           <button
-                            onClick={() => deleteRoomNote(room.id, note.id)}
+                            onClick={() => deleteRoomNote({ roomId: room.id, noteId: note.id })}
                             className="text-zinc-600 hover:text-red-400 text-xs p-1"
                             title="Delete Note"
                           >

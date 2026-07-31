@@ -1,31 +1,41 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useAtmosphericStore } from '../../store/useAtmosphericStore';
-import { useAuthStore } from '../../store/useAuthStore';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import {
+  setActiveTag,
+  setTagMode,
+  addAdminMenuTag,
+  removeAdminMenuTag,
+  addMyTag,
+  removeMyTag,
+  addRoomsAdminMenuTag,
+  removeRoomsAdminMenuTag,
+  addRoomsMyTag,
+  removeRoomsMyTag,
+} from '../../store/uiSlice';
+import { useGetTopHashtagsQuery } from '../../store/api/vibesApi';
 
 export const ActivitySwitcher: React.FC = () => {
-  const {
-    activeTag,
-    setActiveTag,
-    viewMode,
-    adminMenuTags,
-    addAdminMenuTag,
-    removeAdminMenuTag,
-    myTags,
-    addMyTag,
-    removeMyTag,
-    roomsAdminMenuTags,
-    addRoomsAdminMenuTag,
-    removeRoomsAdminMenuTag,
-    roomsMyTags,
-    addRoomsMyTag,
-    removeRoomsMyTag,
-    topHashtags,
-    fetchTopHashtags,
-    tagMode,
-    setTagMode,
-  } = useAtmosphericStore();
+  const dispatch = useAppDispatch();
 
-  const { isAuthenticated, user } = useAuthStore();
+  // ── UI selectors ────────────────────────────────────────────────────────
+  const activeTag = useAppSelector((s) => s.ui.activeTag);
+  const viewMode = useAppSelector((s) => s.ui.viewMode);
+  const adminMenuTags = useAppSelector((s) => s.ui.adminMenuTags);
+  const myTags = useAppSelector((s) => s.ui.myTags);
+  const roomsAdminMenuTags = useAppSelector((s) => s.ui.roomsAdminMenuTags);
+  const roomsMyTags = useAppSelector((s) => s.ui.roomsMyTags);
+  const tagMode = useAppSelector((s) => s.ui.tagMode);
+
+  // ── Auth selectors ──────────────────────────────────────────────────────
+  const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
+  const user = useAppSelector((s) => s.auth.user);
+
+  // ── Top hashtags from RTK Query ─────────────────────────────────────────
+  const { data: topHashtagsData = [] } = useGetTopHashtagsQuery(10);
+  const topHashtags = topHashtagsData.map((h) =>
+    h.name.startsWith('#') ? h.name : `#${h.name}`,
+  );
+
   const [newTagInput, setNewTagInput] = useState('');
   const [isAdding, setIsAdding] = useState(false);
 
@@ -33,16 +43,12 @@ export const ActivitySwitcher: React.FC = () => {
 
   useEffect(() => {
     if (isAuthenticated && !prevAuthRef.current) {
-      setTagMode('my_tags');
+      dispatch(setTagMode('my_tags'));
     } else if (!isAuthenticated && prevAuthRef.current) {
-      setTagMode('live');
+      dispatch(setTagMode('live'));
     }
     prevAuthRef.current = isAuthenticated;
-  }, [isAuthenticated, setTagMode]);
-
-  useEffect(() => {
-    fetchTopHashtags();
-  }, [fetchTopHashtags]);
+  }, [isAuthenticated, dispatch]);
 
   const isAdmin = isAuthenticated && user?.role === 'ADMIN';
   const isRoomsMode = viewMode === 'rooms';
@@ -53,7 +59,6 @@ export const ActivitySwitcher: React.FC = () => {
   // Determine tags to render based on user authentication, viewMode & selected tagMode
   let tagsToRender: string[] = [];
   if (!isAuthenticated || tagMode === 'live') {
-    // Live mode / Public user: Combined Admin-configured tags (+ trending for vibes)
     tagsToRender = Array.from(
       new Set([...currentAdminTags, ...(isRoomsMode ? [] : topHashtags)]),
     );
@@ -72,19 +77,19 @@ export const ActivitySwitcher: React.FC = () => {
 
     if (isRoomsMode) {
       if (tagMode === 'admin_config' && isAdmin) {
-        addRoomsAdminMenuTag(formatted);
+        dispatch(addRoomsAdminMenuTag(formatted));
       } else {
-        addRoomsMyTag(formatted);
+        dispatch(addRoomsMyTag(formatted));
       }
     } else {
       if (tagMode === 'admin_config' && isAdmin) {
-        addAdminMenuTag(formatted);
+        dispatch(addAdminMenuTag(formatted));
       } else {
-        addMyTag(formatted);
+        dispatch(addMyTag(formatted));
       }
     }
 
-    setActiveTag(formatted);
+    dispatch(setActiveTag(formatted));
     setNewTagInput('');
     setIsAdding(false);
   };
@@ -93,15 +98,15 @@ export const ActivitySwitcher: React.FC = () => {
     e.stopPropagation();
     if (isRoomsMode) {
       if (tagMode === 'admin_config' && isAdmin) {
-        removeRoomsAdminMenuTag(tag);
+        dispatch(removeRoomsAdminMenuTag(tag));
       } else if (tagMode === 'my_tags') {
-        removeRoomsMyTag(tag);
+        dispatch(removeRoomsMyTag(tag));
       }
     } else {
       if (tagMode === 'admin_config' && isAdmin) {
-        removeAdminMenuTag(tag);
+        dispatch(removeAdminMenuTag(tag));
       } else if (tagMode === 'my_tags') {
-        removeMyTag(tag);
+        dispatch(removeMyTag(tag));
       }
     }
   };
@@ -120,7 +125,7 @@ export const ActivitySwitcher: React.FC = () => {
           {isAuthenticated && (
             <div className="flex items-center bg-zinc-900/90 p-0.5 border border-zinc-800 rounded text-[10px]">
               <button
-                onClick={() => setTagMode('live')}
+                onClick={() => dispatch(setTagMode('live'))}
                 className={`px-2 py-0.5 font-bold rounded transition-colors ${
                   tagMode === 'live'
                     ? isRoomsMode
@@ -134,7 +139,7 @@ export const ActivitySwitcher: React.FC = () => {
               </button>
 
               <button
-                onClick={() => setTagMode('my_tags')}
+                onClick={() => dispatch(setTagMode('my_tags'))}
                 className={`px-2 py-0.5 font-bold rounded transition-colors ${
                   tagMode === 'my_tags'
                     ? isRoomsMode
@@ -149,7 +154,7 @@ export const ActivitySwitcher: React.FC = () => {
 
               {isAdmin && (
                 <button
-                  onClick={() => setTagMode('admin_config')}
+                  onClick={() => dispatch(setTagMode('admin_config'))}
                   className={`px-2 py-0.5 font-bold rounded transition-colors ${
                     tagMode === 'admin_config'
                       ? 'bg-purple-950 text-purple-400 border border-purple-700/50'
@@ -168,7 +173,7 @@ export const ActivitySwitcher: React.FC = () => {
         <div className="flex items-center space-x-2 overflow-x-auto no-scrollbar py-0.5">
           {/* #ALL Filter Button */}
           <button
-            onClick={() => setActiveTag('#ALL')}
+            onClick={() => dispatch(setActiveTag('#ALL'))}
             className={`px-3 py-1 font-bold uppercase transition-all duration-200 rounded border flex items-center space-x-1 shrink-0 ${
               activeTag === '#ALL'
                 ? isRoomsMode
@@ -190,7 +195,6 @@ export const ActivitySwitcher: React.FC = () => {
               isAuthenticated &&
               (tagMode === 'my_tags' || (tagMode === 'admin_config' && isAdmin));
 
-            // Determine active color style based on viewMode and tagMode
             let activeStyle = 'bg-amber-950/80 border-amber-500 text-amber-400 shadow-[0_0_10px_rgba(255,176,0,0.25)]';
             let activeDotStyle = 'text-amber-400';
 
@@ -215,7 +219,7 @@ export const ActivitySwitcher: React.FC = () => {
             return (
               <div key={tag} className="relative group flex items-center shrink-0">
                 <button
-                  onClick={() => setActiveTag(tag)}
+                  onClick={() => dispatch(setActiveTag(tag))}
                   className={`px-3 py-1 font-bold uppercase transition-all duration-200 rounded border flex items-center space-x-1.5 ${
                     isActive
                       ? activeStyle
