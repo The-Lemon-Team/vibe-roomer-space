@@ -16,6 +16,7 @@ import {
 } from '../../store/api/vibesApi';
 import { CyberAudioPlayer } from '../Player/CyberAudioPlayer';
 import { YouTubeWidgetView, YouTubePlayerList, renderVibeWidgets } from '../VibeForm/YouTubeWidgetView';
+import { ImageLightbox } from '../Common/ImageLightbox';
 import { resolveMediaUrl } from '../../utils/resolveMediaUrl';
 import { youtubeUrlsMatch } from '../../utils/youtube';
 import type { VibeWidget } from '../../store/useAtmosphericStore';
@@ -66,6 +67,7 @@ export const VibePage: React.FC = () => {
   // Settings dropdown state
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const settingsRef = useRef<HTMLDivElement>(null);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -199,24 +201,27 @@ export const VibePage: React.FC = () => {
           {vibeImages.map((url, idx) => {
             const isMain = !posterYoutubeWidget && idx === 0;
             return (
-              <div
+              <button
+                type="button"
                 key={`${url}-${idx}`}
-                className="relative aspect-video rounded-lg border border-zinc-800 overflow-hidden bg-black group shadow"
+                onClick={() => setLightboxIndex(idx)}
+                className="relative aspect-video rounded-lg border border-zinc-800 overflow-hidden bg-black group shadow cursor-pointer p-0 text-left"
+                aria-label={t('common.galleryImage', { n: idx + 1 })}
               >
                 <img
                   src={resolveMediaUrl(url)}
                   alt={`${selectedVibePage.title} — photo ${idx + 1}`}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
-                <div className="absolute bottom-1 right-1 bg-black/70 px-1.5 py-0.5 font-mono text-[9px] text-zinc-400 border border-zinc-800">
+                <div className="absolute bottom-1 right-1 pointer-events-none bg-black/70 px-1.5 py-0.5 font-mono text-[9px] text-zinc-400 border border-zinc-800">
                   {isMain ? t('vibePage.mainCover') : `IMG_0${idx + 1}`}
                 </div>
                 {isMain && vibeImages.length > 1 && (
-                  <div className="absolute top-1 left-1 bg-amber-500 text-black font-mono text-[9px] font-bold px-1.5 py-0.5 rounded shadow">
+                  <div className="absolute top-1 left-1 pointer-events-none bg-amber-500 text-black font-mono text-[9px] font-bold px-1.5 py-0.5 rounded shadow">
                     {t('vibePage.cover')}
                   </div>
                 )}
-              </div>
+              </button>
             );
           })}
         </div>
@@ -702,6 +707,14 @@ export const VibePage: React.FC = () => {
           </div>
         )}
       </main>
+
+      <ImageLightbox
+        images={vibeImages}
+        initialIndex={lightboxIndex ?? 0}
+        isOpen={lightboxIndex !== null}
+        onClose={() => setLightboxIndex(null)}
+        altPrefix={selectedVibePage.title}
+      />
     </div>
   );
 };

@@ -12,7 +12,11 @@
     "all": "#ALL",
     "by": "ОТ",
     "error": "[ОШИБКА]",
-    "route": "МАРШРУТ:"
+    "route": "МАРШРУТ:",
+    "galleryLightbox": "Галерея изображений",
+    "galleryImage": "Фото {{n}}",
+    "previousImage": "Предыдущее изображение",
+    "nextImage": "Следующее изображение"
   },
   "lang": {
     "en": "EN",

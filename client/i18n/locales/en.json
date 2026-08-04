@@ -12,7 +12,11 @@
     "all": "#ALL",
     "by": "BY",
     "error": "[ERROR]",
-    "route": "ROUTE:"
+    "route": "ROUTE:",
+    "galleryLightbox": "Image gallery",
+    "galleryImage": "Photo {{n}}",
+    "previousImage": "Previous image",
+    "nextImage": "Next image"
   },
   "lang": {
     "en": "EN",

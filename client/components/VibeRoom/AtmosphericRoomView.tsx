@@ -16,6 +16,7 @@ import { resolveMediaUrl } from '../../utils/resolveMediaUrl';
 import { RoomNewsBlock } from './RoomNewsBlock';
 import { RoomNotesBlock } from './RoomNotesBlock';
 import { BaseModal } from '../Common/BaseModal';
+import { ImageLightbox } from '../Common/ImageLightbox';
 
 interface AtmosphericRoomViewProps {
   vibeTitle?: string;
@@ -97,6 +98,7 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
   // Background edit modal state
   const [isBgModalOpen, setIsBgModalOpen] = useState(false);
   const [bgInputUrl, setBgInputUrl] = useState(customBgImage);
+  const [lightbox, setLightbox] = useState<{ images: string[]; index: number } | null>(null);
 
   const roomImages: string[] = targetRoom?.images?.length
     ? targetRoom.images
@@ -509,16 +511,19 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {roomImages.map((img, idx) => (
-                    <div
+                    <button
+                      type="button"
                       key={idx}
-                      className="aspect-video rounded-lg border border-zinc-800 overflow-hidden bg-black group relative shadow"
+                      onClick={() => setLightbox({ images: roomImages, index: idx })}
+                      className="aspect-video rounded-lg border border-zinc-800 overflow-hidden bg-black group relative shadow cursor-pointer p-0"
+                      aria-label={t('common.galleryImage', { n: idx + 1 })}
                     >
                       <img
                         src={resolveMediaUrl(img)}
                         alt={`Room photo ${idx}`}
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                       />
-                    </div>
+                    </button>
                   ))}
                 </div>
               </div>
@@ -546,9 +551,23 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
                       {item.content && <p className="text-xs text-zinc-200">{item.content}</p>}
 
                       {item.type === 'image' && item.mediaUrls && item.mediaUrls[0] && (
-                        <div className="aspect-video max-h-60 rounded overflow-hidden border border-zinc-800 bg-black mt-2">
-                          <img src={resolveMediaUrl(item.mediaUrls[0])} alt="Stream attachment" className="w-full h-full object-cover" />
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setLightbox({
+                              images: item.mediaUrls!.filter(Boolean),
+                              index: 0,
+                            })
+                          }
+                          className="aspect-video max-h-60 w-full rounded overflow-hidden border border-zinc-800 bg-black mt-2 cursor-pointer p-0"
+                          aria-label={t('common.galleryLightbox')}
+                        >
+                          <img
+                            src={resolveMediaUrl(item.mediaUrls[0])}
+                            alt="Stream attachment"
+                            className="w-full h-full object-cover"
+                          />
+                        </button>
                       )}
 
                       {item.type === 'youtube' && item.url && (
@@ -830,6 +849,14 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
           </div>
         </div>
       </BaseModal>
+
+      <ImageLightbox
+        images={lightbox?.images ?? []}
+        initialIndex={lightbox?.index ?? 0}
+        isOpen={lightbox !== null}
+        onClose={() => setLightbox(null)}
+        altPrefix={roomTitle}
+      />
     </div>
   );
 };

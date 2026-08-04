@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type {
   GalleryLayout,
@@ -14,6 +14,7 @@ import {
 } from "../../store/uiSlice";
 import { CyberAudioPlayer } from "../Player/CyberAudioPlayer";
 import { YouTubeWidgetView, YouTubePlayerList, renderVibeWidgets } from "../VibeForm/YouTubeWidgetView";
+import { ImageLightbox } from "../Common/ImageLightbox";
 import { resolveMediaUrl } from "../../utils/resolveMediaUrl";
 import { youtubeUrlsMatch } from "../../utils/youtube";
 
@@ -34,6 +35,7 @@ function VibeGallery({
   posterYoutube?: VibeWidget | null;
 }) {
   const { t } = useTranslation();
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const galleryImages = images.filter(Boolean);
   const hasYoutubePoster = Boolean(posterYoutube);
   if (galleryImages.length === 0 && !hasYoutubePoster) return null;
@@ -53,6 +55,11 @@ function VibeGallery({
       ? "h-48 sm:h-64"
       : "h-40 sm:h-52";
 
+  const openAt = (index: number) => {
+    if (galleryImages.length === 0) return;
+    setLightboxIndex(index);
+  };
+
   return (
     <div
       className={`flex flex-col gap-[6px] overflow-hidden bg-zinc-950 ${
@@ -65,19 +72,26 @@ function VibeGallery({
         {posterYoutube ? (
           <YouTubeWidgetView widget={posterYoutube} className="w-full" />
         ) : (
-          <img
-            src={resolveMediaUrl(galleryImages[0])}
-            alt={coverAlt}
-            className={`w-full object-cover group-hover:scale-105 transition-transform duration-500 ${coverHeight}`}
-          />
+          <button
+            type="button"
+            onClick={() => openAt(0)}
+            className="block w-full cursor-pointer p-0 border-0 bg-transparent"
+            aria-label={t("common.galleryLightbox")}
+          >
+            <img
+              src={resolveMediaUrl(galleryImages[0])}
+              alt={coverAlt}
+              className={`w-full object-cover group-hover:scale-105 transition-transform duration-500 ${coverHeight}`}
+            />
+          </button>
         )}
         {!isMainOnly && !posterYoutube && (
-          <div className="absolute bottom-1 right-1 bg-black/70 px-1.5 py-0.5 font-mono text-[9px] text-zinc-400 border border-zinc-800">
+          <div className="absolute bottom-1 right-1 pointer-events-none bg-black/70 px-1.5 py-0.5 font-mono text-[9px] text-zinc-400 border border-zinc-800">
             {t("vibeCard.mainCover")}
           </div>
         )}
         {(showExtras || posterYoutube) && (
-          <div className="absolute top-1 left-1 z-[1] bg-amber-500 text-black font-mono text-[9px] font-bold px-1.5 py-0.5 rounded shadow">
+          <div className="absolute top-1 left-1 z-[1] pointer-events-none bg-amber-500 text-black font-mono text-[9px] font-bold px-1.5 py-0.5 rounded shadow">
             {t("vibeCard.cover")}
           </div>
         )}
@@ -85,18 +99,24 @@ function VibeGallery({
 
       {showExtras && isMainFocus && (
         <div className="flex flex-wrap gap-[6px]">
-          {extras.map((url, idx) => (
-            <div
-              key={`${url}-${idx}`}
-              className="relative w-14 h-14 sm:w-16 sm:h-16 shrink-0 overflow-hidden rounded border border-zinc-800 bg-zinc-950"
-            >
-              <img
-                src={resolveMediaUrl(url)}
-                alt={`${coverAlt} — ${idx + (hasYoutubePoster ? 1 : 2)}`}
-                className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-              />
-            </div>
-          ))}
+          {extras.map((url, idx) => {
+            const galleryIndex = hasYoutubePoster ? idx : idx + 1;
+            return (
+              <button
+                type="button"
+                key={`${url}-${idx}`}
+                onClick={() => openAt(galleryIndex)}
+                className="relative w-14 h-14 sm:w-16 sm:h-16 shrink-0 overflow-hidden rounded border border-zinc-800 bg-zinc-950 cursor-pointer p-0"
+                aria-label={t("common.galleryImage", { n: galleryIndex + 1 })}
+              >
+                <img
+                  src={resolveMediaUrl(url)}
+                  alt={`${coverAlt} — ${galleryIndex + 1}`}
+                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                />
+              </button>
+            );
+          })}
         </div>
       )}
 
@@ -110,23 +130,37 @@ function VibeGallery({
                 : "grid-cols-2 sm:grid-cols-3"
           }`}
         >
-          {extras.map((url, idx) => (
-            <div
-              key={`${url}-${idx}`}
-              className="relative h-24 sm:h-28 overflow-hidden rounded bg-zinc-950"
-            >
-              <img
-                src={resolveMediaUrl(url)}
-                alt={`${coverAlt} — ${idx + (hasYoutubePoster ? 1 : 2)}`}
-                className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-              />
-              <div className="absolute bottom-1 right-1 bg-black/70 px-1.5 py-0.5 font-mono text-[9px] text-zinc-400 border border-zinc-800">
-                IMG_0{idx + (hasYoutubePoster ? 1 : 2)}
-              </div>
-            </div>
-          ))}
+          {extras.map((url, idx) => {
+            const galleryIndex = hasYoutubePoster ? idx : idx + 1;
+            return (
+              <button
+                type="button"
+                key={`${url}-${idx}`}
+                onClick={() => openAt(galleryIndex)}
+                className="relative h-24 sm:h-28 overflow-hidden rounded bg-zinc-950 cursor-pointer p-0 border-0"
+                aria-label={t("common.galleryImage", { n: galleryIndex + 1 })}
+              >
+                <img
+                  src={resolveMediaUrl(url)}
+                  alt={`${coverAlt} — ${galleryIndex + 1}`}
+                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                />
+                <div className="absolute bottom-1 right-1 pointer-events-none bg-black/70 px-1.5 py-0.5 font-mono text-[9px] text-zinc-400 border border-zinc-800">
+                  IMG_0{galleryIndex + 1}
+                </div>
+              </button>
+            );
+          })}
         </div>
       )}
+
+      <ImageLightbox
+        images={galleryImages}
+        initialIndex={lightboxIndex ?? 0}
+        isOpen={lightboxIndex !== null}
+        onClose={() => setLightboxIndex(null)}
+        altPrefix={coverAlt}
+      />
     </div>
   );
 }
