@@ -2,159 +2,167 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
+
+const {
+  mockUploadMedia,
+  mockSearchUnsplash,
+  emptyMedia,
+  mockVibes,
+  mockRooms,
+  mockHashtags,
+} = vi.hoisted(() => ({
+  mockUploadMedia: vi.fn(),
+  mockSearchUnsplash: vi.fn(),
+  emptyMedia: [] as unknown[],
+  mockVibes: [
+    {
+      id: 'vibe-1',
+      title: 'Cyber Coffee Vibe',
+      images: ['https://example.com/vibe-1.jpg'],
+    },
+  ],
+  mockRooms: [
+    {
+      id: 'room-1',
+      title: 'Neon Chill Zone',
+      poster: 'https://example.com/room-1.jpg',
+    },
+  ],
+  mockHashtags: [
+    { name: 'ambient', useCount: 3 },
+    { name: 'cyberpunk', useCount: 2 },
+  ],
+}));
+
+vi.mock('../../../store/api/mediaApi', () => ({
+  useUploadMediaMutation: () => [mockUploadMedia, { isLoading: false }],
+  useListMediaQuery: () => ({ data: emptyMedia, isFetching: false }),
+  useLazySearchUnsplashQuery: () => [mockSearchUnsplash, { isFetching: false }],
+}));
+
+vi.mock('../../../store/api/vibesApi', () => ({
+  useGetVibesQuery: () => ({ data: mockVibes }),
+  useGetTopHashtagsQuery: () => ({ data: mockHashtags }),
+}));
+
+vi.mock('../../../store/api/roomsApi', () => ({
+  useGetRoomsQuery: () => ({ data: mockRooms }),
+}));
+
 import { ImageManager } from '../ImageManager';
-import { useAtmosphericStore } from '../../../store/useAtmosphericStore';
-import { fetchApi } from '../../../services/api';
 
-// Mock the Zustand stores
-vi.mock('../../../store/useAtmosphericStore', () => ({
-  useAtmosphericStore: vi.fn(),
-}));
-
-// Mock the api service fetchApi helper
-vi.mock('../../../services/api', () => ({
-  fetchApi: vi.fn(),
-}));
-
-describe('ImageManager & AddImageModal Component', () => {
+describe('ImageManager & AddImageModal', () => {
   const mockOnChange = vi.fn();
-  let atmosphericStoreState: any;
 
   beforeEach(() => {
     vi.clearAllMocks();
-
-    atmosphericStoreState = {
-      vibes: [
-        {
-          id: 'vibe-1',
-          title: 'Cyber Coffee Vibe',
-          images: ['https://example.com/vibe-1.jpg'],
-        },
-      ],
-      rooms: [
-        {
-          id: 'room-1',
-          title: 'Neon Chill Zone',
-          poster: 'https://example.com/room-1.jpg',
-        },
-      ],
-      topHashtags: ['#ambient', '#cyberpunk'],
-    };
-
-    (useAtmosphericStore as any).mockImplementation(() => atmosphericStoreState);
+    mockUploadMedia.mockReturnValue({
+      unwrap: () =>
+        Promise.resolve({
+          url: 'https://cdn.example.com/uploaded.jpg',
+          filename: 'uploaded.jpg',
+          message: 'ok',
+        }),
+    });
+    mockSearchUnsplash.mockReturnValue({
+      unwrap: () =>
+        Promise.resolve({
+          results: [
+            {
+              id: 'photo-123',
+              urls: {
+                regular: 'https://images.unsplash.com/photo-123-regular.jpg',
+                thumb: 'https://images.unsplash.com/photo-123-thumb.jpg',
+              },
+              alt_description: 'cool neon light',
+              user: { name: 'Vibe Photographer' },
+            },
+          ],
+        }),
+    });
   });
 
-  it('renders correctly and opens the modal when + Add Image is clicked', async () => {
+  it('renders picture-card gallery and opens the modal from + Upload', async () => {
     const user = userEvent.setup();
     render(<ImageManager images={[]} onChange={mockOnChange} />);
 
-    // Click "+ Add Image" button
-    const addButton = screen.getByRole('button', { name: /\+ Add Image/i });
-    await user.click(addButton);
+    expect(screen.getByText(/MEDIA_IMAGE_CONTROLLER/i)).toBeInTheDocument();
 
-    // Verify modal title is displayed
+    await user.click(screen.getByRole('button', { name: /Add image/i }));
     expect(screen.getByText('[ ADD IMAGE SOURCE ]')).toBeInTheDocument();
+    expect(screen.getByText(/Choose image file/i)).toBeInTheDocument();
+  });
+
+  it('shows main badge and allows set-as-main / remove', async () => {
+    const user = userEvent.setup();
+    render(
+      <ImageManager
+        images={['https://example.com/a.jpg', 'https://example.com/b.jpg']}
+        onChange={mockOnChange}
+      />,
+    );
+
+    expect(screen.getByText('★ MAIN')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /Set as main/i }));
+    expect(mockOnChange).toHaveBeenCalledWith([
+      'https://example.com/b.jpg',
+      'https://example.com/a.jpg',
+    ]);
+
+    mockOnChange.mockClear();
+    await user.click(screen.getAllByRole('button', { name: /Remove image/i })[0]);
+    expect(mockOnChange).toHaveBeenCalledWith(['https://example.com/b.jpg']);
   });
 
   it('allows adding an image by pasting a direct URL in the modal', async () => {
     const user = userEvent.setup();
     render(<ImageManager images={[]} onChange={mockOnChange} />);
 
-    // Open modal
-    await user.click(screen.getByRole('button', { name: /\+ Add Image/i }));
+    await user.click(screen.getByRole('button', { name: /Add image/i }));
+    await user.click(screen.getByRole('button', { name: /URL tab/i }));
 
-    // Input URL
-    const urlInput = screen.getByPlaceholderText('https://images.unsplash.com/photo-...');
-
+    const urlInput = screen.getByPlaceholderText('https://…');
     await user.type(urlInput, 'https://example.com/new-image.jpg');
+    await user.click(screen.getByRole('button', { name: /Add URL/i }));
 
-    // Click Add URL
-    const submitBtn = screen.getByRole('button', { name: /Add URL/i });
-    await user.click(submitBtn);
-
-    // Verify onChange callback was triggered
     expect(mockOnChange).toHaveBeenCalledWith(['https://example.com/new-image.jpg']);
   });
 
   it('allows searching Unsplash and selecting an image', async () => {
     const user = userEvent.setup();
-
-    // Mock Unsplash API Response
-    (fetchApi as any).mockResolvedValue({
-      results: [
-        {
-          id: 'photo-123',
-          urls: {
-            regular: 'https://images.unsplash.com/photo-123-regular.jpg',
-            thumb: 'https://images.unsplash.com/photo-123-thumb.jpg',
-          },
-          alt_description: 'cool neon light',
-          user: { name: 'Vibe Photographer' },
-        },
-      ],
-    });
-
     render(<ImageManager images={[]} onChange={mockOnChange} />);
 
-    // Open modal
-    await user.click(screen.getByRole('button', { name: /\+ Add Image/i }));
+    await user.click(screen.getByRole('button', { name: /Add image/i }));
+    await user.click(screen.getByRole('button', { name: /Unsplash tab/i }));
 
-    // Go to Unsplash tab
-    await user.click(screen.getByRole('button', { name: /Unsplash/i }));
-
-    // Search query
-    const searchInput = screen.getByPlaceholderText(/Search aesthetic wallpaper.../i);
+    const searchInput = screen.getByPlaceholderText(/Search Unsplash/i);
     await user.type(searchInput, 'neon');
+    await user.click(screen.getByRole('button', { name: /Search/i }));
 
-    const searchBtn = screen.getByRole('button', { name: /Search/i });
-    await user.click(searchBtn);
+    expect(mockSearchUnsplash).toHaveBeenCalledWith('neon');
 
-    // Verify API call was made
-    expect(fetchApi).toHaveBeenCalledWith(expect.stringContaining('/media/unsplash/search?query=neon'));
-
-    // Select the retrieved image
     const resultImg = await screen.findByAltText('cool neon light');
     await user.click(resultImg);
 
-    // Verify image was added
-    expect(mockOnChange).toHaveBeenCalledWith(['https://images.unsplash.com/photo-123-regular.jpg']);
+    expect(mockOnChange).toHaveBeenCalledWith([
+      'https://images.unsplash.com/photo-123-regular.jpg',
+    ]);
   });
 
-  it.skip('allows browsing and selecting images from site data (vibes, rooms, and uploads)', async () => {
+  it('allows browsing and selecting images from the library tab', async () => {
     const user = userEvent.setup();
-
-    // Mock API response for uploaded files
-    (fetchApi as any).mockResolvedValue([
-      {
-        filename: 'my-uploaded-file.jpg',
-        url: '/media/my-uploaded-file.jpg',
-        size: 12345,
-        updatedAt: '2026-07-30T12:00:00Z',
-      },
-    ]);
-
     render(<ImageManager images={[]} onChange={mockOnChange} />);
 
-    // Open modal
-    await user.click(screen.getByRole('button', { name: /\+ Add Image/i }));
+    await user.click(screen.getByRole('button', { name: /Add image/i }));
+    await user.click(screen.getByRole('button', { name: /Library tab/i }));
 
-    // Go to Site Data tab
-    await user.click(screen.getByRole('button', { name: /Site Data/i }));
-
-    // Verify vibes and rooms images are rendered in the site library grid
-    const siteImages = await screen.findAllByRole('button');
-    // Site Data tab contains search input, plus selectable grid image items
-    expect(fetchApi).toHaveBeenCalledWith('/media');
-
-    // Filter site data
-    const filterInput = screen.getByPlaceholderText(/Search images from vibes, rooms, uploads.../i);
+    const filterInput = screen.getByPlaceholderText(/Search library/i);
     await user.type(filterInput, 'Neon');
 
-    // Click the Neon Room poster image (it matches 'Neon Chill Zone')
-    const neonRoomImage = screen.getByAltText('Neon Chill Zone');
+    const neonRoomImage = await screen.findByAltText('Neon Chill Zone');
     await user.click(neonRoomImage);
 
-    // Verify image is selected
     expect(mockOnChange).toHaveBeenCalledWith(['https://example.com/room-1.jpg']);
   });
 });

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import type { CreatedRoom } from '../../store/useAtmosphericStore';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import {
@@ -8,8 +9,10 @@ import {
 } from '../../store/uiSlice';
 import { setAuthModalOpen } from '../../store/authSlice';
 import { useGetRoomsQuery } from '../../store/api/roomsApi';
+import { resolveMediaUrl } from '../../utils/resolveMediaUrl';
 
 export const RoomListView: React.FC = () => {
+  const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const activeTag = useAppSelector((s) => s.ui.activeTag);
   const tagMode = useAppSelector((s) => s.ui.tagMode);
@@ -46,17 +49,24 @@ export const RoomListView: React.FC = () => {
           <div>
             <div className="text-cyan-400 font-bold text-sm tracking-wider uppercase flex items-center gap-2">
               <span className="material-symbols-outlined text-base">sensors</span>
-              <span>STREAM ROOMS DIRECTORY</span>
+              <span>{t('rooms.directory')}</span>
             </div>
             <div className="text-zinc-400 mt-1.5 flex items-center space-x-2">
-              <span>[ACTIVE_TAG_FILTER:</span>
-              <span className={`font-bold px-2 py-0.5 rounded border ${headerFilterStyle}`}>
-                {activeTag}
-              </span>
-              <span>]</span>
+              <span>{t('rooms.activeFilter', { tag: activeTag })}</span>
+              {activeTag !== '#ALL' && (
+                <button
+                  type="button"
+                  onClick={() => dispatch(setActiveTag('#ALL'))}
+                  className="opacity-60 hover:opacity-100 ml-0.5 text-[11px] leading-none"
+                  title={t('rooms.clearFilter')}
+                  aria-label={t('rooms.clearFilter')}
+                >
+                  ✕
+                </button>
+              )}
             </div>
             <div className="text-zinc-400 mt-2 flex items-center space-x-2">
-              <span>[VISIBILITY:</span>
+              <span>{t('rooms.visibility')}</span>
               <button
                 onClick={() => setPrivacyFilter('public')}
                 className={`px-1.5 py-0.5 rounded border transition-colors ${
@@ -65,7 +75,7 @@ export const RoomListView: React.FC = () => {
                     : 'bg-zinc-950/60 border-zinc-800 text-zinc-500 hover:text-zinc-300'
                 }`}
               >
-                PUBLIC ROOMS
+                {t('rooms.publicRooms')}
               </button>
               <span className="text-zinc-600">/</span>
               <button
@@ -76,15 +86,14 @@ export const RoomListView: React.FC = () => {
                     : 'bg-zinc-950/60 border-zinc-800 text-zinc-500 hover:text-zinc-300'
                 }`}
               >
-                MY ROOMS
+                {t('rooms.myRooms')}
               </button>
-              <span>]</span>
             </div>
           </div>
 
           <div className="flex items-center space-x-3">
             <span className="text-zinc-400 bg-zinc-950 px-3 py-1.5 rounded border border-zinc-800">
-              {filteredRooms.length} {privacyFilter === 'public' ? 'PUBLIC' : 'MY'} ROOM{filteredRooms.length !== 1 ? 'S' : ''} ONLINE
+              {privacyFilter === 'public' ? t('rooms.countPublic', { count: filteredRooms.length }) : t('rooms.countMy', { count: filteredRooms.length })}
             </span>
 
             <button
@@ -98,7 +107,7 @@ export const RoomListView: React.FC = () => {
               className="px-4 py-2 bg-amber-400 text-black font-bold rounded hover:bg-amber-300 transition-all shadow-[0_0_12px_rgba(245,158,11,0.3)] flex items-center space-x-1.5 uppercase"
             >
               <span className="material-symbols-outlined text-sm">add_box</span>
-              <span>+ CREATE ROOM</span>
+              <span>{t('rooms.createRoom')}</span>
             </button>
           </div>
         </div>
@@ -107,11 +116,9 @@ export const RoomListView: React.FC = () => {
         {filteredRooms.length === 0 ? (
           <div className="text-center py-16 border border-dashed border-zinc-800 rounded-lg bg-zinc-900/40 p-8 font-mono text-xs text-zinc-500 space-y-4 max-w-xl mx-auto">
             <span className="material-symbols-outlined text-4xl text-zinc-600">sensors_off</span>
-            <div>NO ACTIVE {privacyFilter === 'public' ? 'PUBLIC' : 'MY (PRIVATE)'} STREAM ROOMS FOUND FOR HASHTAG [{activeTag}].</div>
+            <div>{privacyFilter === 'public' ? t('rooms.emptyPublic') : t('rooms.emptyMy')}</div>
             <p className="text-zinc-400">
-              {privacyFilter === 'public'
-                ? 'Create a new public stream room to share photos, videos, music, and YouTube links with the network.'
-                : 'Create a new private stream room for restricted access or select participants.'}
+              {t('rooms.emptyHint')}
             </p>
             <button
               onClick={() => {
@@ -123,7 +130,7 @@ export const RoomListView: React.FC = () => {
               }}
               className="px-5 py-2.5 bg-cyan-500/20 border border-cyan-500/60 text-cyan-400 font-bold rounded hover:bg-cyan-500/30 transition-colors uppercase"
             >
-              + TRANSMIT NEW ROOM FOR {activeTag}
+              {t('rooms.createRoom')}
             </button>
           </div>
         ) : (
@@ -131,7 +138,9 @@ export const RoomListView: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredRooms.map((room) => {
               const themeColor = room.roomConfig?.themeColor || '#00F0FF';
-              const posterImage = (room.poster || room.roomConfig?.bgImageUrl || '').trim();
+              const posterImage = resolveMediaUrl(
+                (room.poster || room.roomConfig?.bgImageUrl || '').trim(),
+              );
               const hasPoster = !!posterImage;
 
               const attachedImagesCount = room.images?.length || 0;
@@ -165,7 +174,7 @@ export const RoomListView: React.FC = () => {
                         }}
                       >
                         <span className="text-[10px] font-mono text-zinc-400 bg-zinc-950/80 px-2.5 py-1 rounded border border-zinc-800 backdrop-blur-md">
-                          [STANDART BLACK CELLS]
+                          {t('rooms.blackCells')}
                         </span>
                       </div>
                     )}
@@ -181,7 +190,7 @@ export const RoomListView: React.FC = () => {
                     <div className="absolute top-3 left-3 flex items-center space-x-2 font-mono text-[10px]">
                       <span className="px-2.5 py-1 rounded bg-zinc-950/80 border border-zinc-700 text-emerald-400 font-bold backdrop-blur-md flex items-center space-x-1">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                        <span>{room.isPublic ? 'PUBLIC STREAM' : 'PRIVATE ROOM'}</span>
+                        <span>{room.isPublic ? t('rooms.publicStream') : t('rooms.privateRoom')}</span>
                       </span>
                     </div>
 
@@ -196,13 +205,13 @@ export const RoomListView: React.FC = () => {
                       {hasVideo && (
                         <span className="px-2 py-0.5 bg-zinc-950/80 border border-zinc-700 text-red-400 rounded flex items-center space-x-1 backdrop-blur-md" title="Video Content Stream">
                           <span className="material-symbols-outlined text-xs">videocam</span>
-                          <span>VIDEO</span>
+                          <span>{t('rooms.video')}</span>
                         </span>
                       )}
                       {hasMusic && (
                         <span className="px-2 py-0.5 bg-zinc-950/80 border border-zinc-700 text-amber-400 rounded flex items-center space-x-1 backdrop-blur-md" title="Audio Stream Active">
                           <span className="material-symbols-outlined text-xs">graphic_eq</span>
-                          <span>AUDIO</span>
+                          <span>{t('rooms.audio')}</span>
                         </span>
                       )}
                     </div>
@@ -246,9 +255,9 @@ export const RoomListView: React.FC = () => {
                     {/* Footer Info & Action */}
                     <div className="pt-3 border-t border-zinc-800/80 flex items-center justify-between font-mono text-xs">
                       <div className="text-[11px] text-zinc-500">
-                        BY <span className="text-cyan-400 font-bold">{room.authorName}</span>
+                        {t('common.by')} <span className="text-cyan-400 font-bold">{room.authorName}</span>
                         {streamItemsCount > 0 && (
-                          <span className="ml-2 text-zinc-400">• {streamItemsCount} STREAM ITEMS</span>
+                          <span className="ml-2 text-zinc-400">• {streamItemsCount} {t('rooms.streamItems')}</span>
                         )}
                       </div>
 
@@ -256,7 +265,7 @@ export const RoomListView: React.FC = () => {
                         onClick={() => dispatch(openRoomPage(room))}
                         className="px-4 py-1.5 bg-zinc-800 hover:bg-amber-500 hover:text-black border border-zinc-700 hover:border-amber-400 text-amber-500 font-bold rounded transition-all flex items-center space-x-1 uppercase text-xs shadow-md"
                       >
-                        <span>ENTER ROOM</span>
+                        <span>{t('rooms.enterRoom')}</span>
                         <span className="material-symbols-outlined text-sm">login</span>
                       </button>
                     </div>

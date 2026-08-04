@@ -3,19 +3,77 @@ import { fetchApi } from '../services/api';
 import { useAuthStore } from './useAuthStore';
 import { checkRoomPostingPermission } from '../utils/roomPermissions';
 
-export type TagMode = 'live' | 'my_tags' | 'admin_config';
+/** Feed scopes chosen above the vibes feed (Admin stays in the header tabs). */
+export type TagMode = 'live' | 'all_vibes' | 'my_tags' | 'my_vibes' | 'admin_config';
 
-export interface RoomConfig {
-  ambientLoopUrl?: string;
-  themeColor?: string;
-  bgImageUrl?: string;
-}
+/**
+ * Feed filter select (hidden on the main [Все вайбы] page):
+ *  • all_vibes  — main page, every vibe
+ *  • live       — [Мои вайбы], vibes authored by me
+ *  • my_tags    — personal tag shortcuts
+ * [Приватные] / my_vibes is reached via sidebar CTA, not this select.
+ */
+export type FeedScope = 'live' | 'all_vibes' | 'my_tags';
+
+export const FEED_SCOPE_OPTIONS: {
+  mode: FeedScope;
+  labelKey: string;
+  titleKey: string;
+  locked?: boolean;
+}[] = [
+  {
+    mode: 'all_vibes',
+    labelKey: 'feed.scopes.all',
+    titleKey: 'feed.scopes.allTitle',
+  },
+  {
+    mode: 'live',
+    labelKey: 'feed.scopes.live',
+    titleKey: 'feed.scopes.liveTitle',
+  },
+  {
+    mode: 'my_tags',
+    labelKey: 'feed.scopes.myTags',
+    titleKey: 'feed.scopes.myTagsTitle',
+  },
+];
+
+export const isFeedScope = (mode: TagMode): mode is FeedScope =>
+  mode === 'live' || mode === 'all_vibes' || mode === 'my_tags';
+
+/** LIVE header tab covers the public browse scopes (main + my vibes), not My Tags / Private. */
+export const isLiveFeedGroup = (mode: TagMode): boolean =>
+  mode === 'live' || mode === 'all_vibes' || mode === 'my_vibes';
+
+export type YoutubeWidgetLayout = 'full' | 'player';
+
+/** How vibe photos appear on the main feed card */
+export type GalleryLayout = 'gallery' | 'main_focus' | 'main_only';
 
 export interface VibeWidget {
   id: string;
   type: 'youtube' | 'link';
   url: string;
   title?: string;
+  /** @deprecated Use RoomConfig.youtubeLayout — vibe-level setting applies to all YouTube links */
+  layout?: YoutubeWidgetLayout;
+}
+
+export interface RoomConfig {
+  ambientLoopUrl?: string;
+  themeColor?: string;
+  bgImageUrl?: string;
+  /** Persisted vibe widgets (YouTube / link) — stored in JSON roomConfig */
+  widgets?: VibeWidget[];
+  /** Display mode for all YouTube links on this vibe */
+  youtubeLayout?: YoutubeWidgetLayout;
+  /** How photos render on the main feed vibe card */
+  galleryLayout?: GalleryLayout;
+  /**
+   * When set, the main poster slot shows this YouTube video (expanded embed)
+   * instead of the image cover. Mutually exclusive with image-as-main star.
+   */
+  posterYoutubeUrl?: string;
 }
 
 export interface VibeUpdate {
@@ -40,6 +98,8 @@ export interface VibeItem {
   createdAt: string;
   roomConfig?: RoomConfig | null;
   updates?: VibeUpdate[];
+  /** Whether this vibe appears on the public Live / main feed */
+  inMainFeed?: boolean;
 }
 
 export interface RoomNewsItem {
@@ -99,26 +159,46 @@ export type ViewMode = 'vibes' | 'vibe' | 'rooms';
 
 export const parseHashRoute = (): {
   viewMode: ViewMode;
+  tagMode: TagMode;
   tag: string;
   vibeId?: string;
   roomId?: string;
   authModalMode?: 'login' | 'register';
 } => {
-  if (typeof window === 'undefined') return { viewMode: 'vibes', tag: '#ALL' };
+  if (typeof window === 'undefined') {
+    return { viewMode: 'vibes', tagMode: 'all_vibes', tag: '#ALL' };
+  }
   const hash = window.location.hash.replace(/^#\/?/, '');
   const [modePart, queryPart] = hash.split('?');
   let viewMode: ViewMode = 'vibes';
+  let tagMode: TagMode = 'all_vibes';
   let authModalMode: 'login' | 'register' | undefined = undefined;
 
   if (modePart === 'vibe') viewMode = 'vibe';
   else if (modePart === 'rooms' || modePart === 'room') viewMode = 'rooms';
-  else if (modePart === 'login') {
+  else if (modePart === 'my-tags') {
+    viewMode = 'vibes';
+    tagMode = 'my_tags';
+  } else if (modePart === 'all-vibes') {
+    viewMode = 'vibes';
+    tagMode = 'all_vibes';
+  } else if (modePart === 'live') {
+    viewMode = 'vibes';
+    tagMode = 'live';
+  } else if (modePart === 'my-vibes') {
+    viewMode = 'vibes';
+    tagMode = 'my_vibes';
+  } else if (modePart === 'admin') {
+    viewMode = 'vibes';
+    tagMode = 'admin_config';
+  } else if (modePart === 'login') {
     viewMode = 'vibes';
     authModalMode = 'login';
   } else if (modePart === 'register') {
     viewMode = 'vibes';
     authModalMode = 'register';
   }
+  // Main = [Все вайбы]: `#/`, `#/vibes`, `#/all-vibes`, or empty hash
 
   const params = new URLSearchParams(queryPart || '');
   const tagParam = params.get('tag');
@@ -130,7 +210,16 @@ export const parseHashRoute = (): {
       ? tagParam
       : `#${tagParam}`
     : '#ALL';
-  return { viewMode, tag: activeTag, vibeId, roomId, authModalMode };
+  return { viewMode, tagMode, tag: activeTag, vibeId, roomId, authModalMode };
+};
+
+/** Path segment for vibes feed modes. [Все вайбы] stays unrouted (`/` / `/vibes`). */
+export const tagModeToPath = (tagMode: TagMode): string => {
+  if (tagMode === 'my_tags') return 'my-tags';
+  if (tagMode === 'live') return 'live';
+  if (tagMode === 'my_vibes') return 'my-vibes';
+  if (tagMode === 'admin_config') return 'admin';
+  return 'vibes'; // all_vibes (main)
 };
 
 export const updateHashRoute = (
@@ -138,6 +227,7 @@ export const updateHashRoute = (
   tag: string,
   vibeId?: string,
   roomId?: string,
+  tagMode: TagMode = 'all_vibes',
 ) => {
   if (typeof window === 'undefined') return;
   const cleanTag = tag === '#ALL' ? '' : tag.replace(/^#/, '');
@@ -147,6 +237,16 @@ export const updateHashRoute = (
     hash = `/vibe?id=${encodeURIComponent(vibeId)}`;
   } else if (mode === 'rooms' && roomId) {
     hash = `/room?id=${encodeURIComponent(roomId)}`;
+  } else if (mode === 'rooms') {
+    hash = cleanTag ? `/rooms?tag=${encodeURIComponent(cleanTag)}` : '/rooms';
+  } else if (mode === 'vibes') {
+    const base = tagModeToPath(tagMode);
+    // [Все вайбы] stays without a mode segment when no tag filter is active
+    if (tagMode === 'all_vibes' && !cleanTag) {
+      hash = '/';
+    } else {
+      hash = cleanTag ? `/${base}?tag=${encodeURIComponent(cleanTag)}` : `/${base}`;
+    }
   } else if (cleanTag) {
     hash = `/${mode}?tag=${encodeURIComponent(cleanTag)}`;
   }
@@ -186,7 +286,7 @@ interface AtmosphericState {
   addRoomsMyTag: (tag: string) => void;
   removeRoomsMyTag: (tag: string) => void;
 
-  // Tag View Mode: 'live' (Public tags + trending) | 'my_tags' | 'admin_config'
+  // Tag View Mode: 'live' | 'all_vibes' | 'my_tags' | 'my_vibes' | 'admin_config'
   tagMode: TagMode;
   setTagMode: (mode: TagMode) => void;
 
@@ -293,18 +393,10 @@ interface AtmosphericState {
 
 
 
-const DEFAULT_ADMIN_VIBE_TAGS = [
-  '#deepwork',
-  '#chill',
-];
-
-const DEFAULT_ADMIN_ROOM_TAGS = [
-  '#stream',
-  '#ambient',
-];
-
-const DEFAULT_MY_VIBE_TAGS = ['#deepwork', '#chill'];
-const DEFAULT_MY_ROOM_TAGS = ['#stream', '#ambient'];
+const DEFAULT_ADMIN_VIBE_TAGS: string[] = [];
+const DEFAULT_ADMIN_ROOM_TAGS: string[] = [];
+const DEFAULT_MY_VIBE_TAGS: string[] = [];
+const DEFAULT_MY_ROOM_TAGS: string[] = [];
 
 const getStoredTags = (key: string, defaultTags: string[]): string[] => {
   try {
@@ -467,7 +559,7 @@ export const useAtmosphericStore = create<AtmosphericState>((set, get) => ({
     });
   },
 
-  tagMode: localStorage.getItem('vibe_access_token') ? 'my_tags' : 'live',
+  tagMode: localStorage.getItem('vibe_access_token') ? 'my_tags' : 'all_vibes',
   setTagMode: (mode) => set({ tagMode: mode }),
 
   pinnedTags: getStoredTags('vibe_admin_menu_tags', DEFAULT_ADMIN_VIBE_TAGS),

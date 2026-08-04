@@ -3,14 +3,18 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 enum Role {
   USER
   ADMIN
+}
+
+enum MenuTagScope {
+  VIBES
+  ROOMS
 }
 
 
@@ -70,6 +74,19 @@ model Hashtag {
   createdAt   DateTime @default(now())
 }
 
+/// Admin-configured tags shown on the public (LIVE) menu for all users.
+model MenuTag {
+  id        String       @id @default(uuid())
+  name      String
+  scope     MenuTagScope
+  sortOrder Int          @default(0)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@unique([name, scope])
+  @@index([scope, sortOrder])
+}
+
 model Room {
   id              String           @id @default(uuid())
   title           String
@@ -127,4 +144,19 @@ model RoomNote {
   author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+/// Registered image in the site media library (blob lives in local disk / Supabase).
+model MediaAsset {
+  id           String   @id @default(uuid())
+  filename     String   @unique
+  originalName String
+  mimeType     String
+  size         Int
+  url          String
+  provider     String // 'local' | 'supabase'
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([createdAt])
 }

@@ -3,7 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { HashtagsService } from '../hashtags/hashtags.service';
 import { CreateVibeDto } from './dto/create-vibe.dto';
 import { UpdateVibeDto } from './dto/update-vibe.dto';
-import { Role } from '../generated/client';
+import { Role } from '../auth/role.enum';
 
 @Injectable()
 export class VibesService {
@@ -13,14 +13,16 @@ export class VibesService {
   ) {}
 
   async createVibe(userId: string, dto: CreateVibeDto) {
-    const keywords = dto.keywords || [];
+    const keywords = (dto.keywords || []).map((k) =>
+      k.replace(/^#/, '').toLowerCase().trim(),
+    );
 
     // Extract any #hashtag in title or content
     const textToScan = `${dto.title || ''} ${dto.content || ''}`;
     const hashtagMatches = textToScan.match(/#[\w\u0400-\u04FF]+/g) || [];
-    const parsedTags = hashtagMatches.map((t) => t.replace('#', ''));
+    const parsedTags = hashtagMatches.map((t) => t.replace('#', '').toLowerCase());
 
-    const allTags = Array.from(new Set([...keywords, ...parsedTags]));
+    const allTags = Array.from(new Set([...keywords, ...parsedTags].filter(Boolean)));
 
     const vibe = await this.prisma.vibe.create({
       data: {
@@ -65,9 +67,17 @@ export class VibesService {
     const where: any = {};
 
     if (params.tag) {
-      where.keywords = { has: params.tag.toLowerCase().trim() };
+      const cleanTag = params.tag.replace(/^#/, '').toLowerCase().trim();
+      // Match normalized keyword or legacy values that still include '#'
+      where.AND = [
+        {
+          OR: [
+            { keywords: { has: cleanTag } },
+            { keywords: { has: `#${cleanTag}` } },
+          ],
+        },
+      ];
     }
-
 
     if (params.authorId) {
       where.authorId = params.authorId;
@@ -78,10 +88,13 @@ export class VibesService {
     }
 
     if (params.search) {
-      where.OR = [
-        { title: { contains: params.search, mode: 'insensitive' } },
-        { content: { contains: params.search, mode: 'insensitive' } },
-      ];
+      const searchClause = {
+        OR: [
+          { title: { contains: params.search, mode: 'insensitive' } },
+          { content: { contains: params.search, mode: 'insensitive' } },
+        ],
+      };
+      where.AND = [...(where.AND || []), searchClause];
     }
 
     const [data, total] = await Promise.all([
@@ -131,11 +144,13 @@ export class VibesService {
       throw new ForbiddenException('You do not have permission to update this vibe');
     }
 
-    const keywords = dto.keywords !== undefined ? dto.keywords : existing.keywords;
+    const keywords = (dto.keywords !== undefined ? dto.keywords : existing.keywords).map((k) =>
+      k.replace(/^#/, '').toLowerCase().trim(),
+    );
     const textToScan = `${dto.title || existing.title} ${dto.content || existing.content}`;
     const hashtagMatches = textToScan.match(/#[\w\u0400-\u04FF]+/g) || [];
-    const parsedTags = hashtagMatches.map((t) => t.replace('#', ''));
-    const allTags = Array.from(new Set([...keywords, ...parsedTags]));
+    const parsedTags = hashtagMatches.map((t) => t.replace('#', '').toLowerCase());
+    const allTags = Array.from(new Set([...keywords, ...parsedTags].filter(Boolean)));
 
     const updated = await this.prisma.vibe.update({
       where: { id },

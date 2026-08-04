@@ -1,14 +1,50 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
-import { setViewMode, setActiveTag, setCreateRoomModalOpen } from '../../store/uiSlice';
-import { useAddVibeUpdateMutation, useAddTagToVibeMutation, useRemoveTagFromVibeMutation } from '../../store/api/vibesApi';
+import {
+  setViewMode,
+  setActiveTag,
+  openEditVibeModal,
+  setSelectedVibePage,
+} from '../../store/uiSlice';
+import { parseHashRoute } from '../../store/useAtmosphericStore';
+import {
+  useGetVibeByIdQuery,
+  useAddVibeUpdateMutation,
+  useAddTagToVibeMutation,
+  useRemoveTagFromVibeMutation,
+} from '../../store/api/vibesApi';
 import { CyberAudioPlayer } from '../Player/CyberAudioPlayer';
+import { YouTubeWidgetView, YouTubePlayerList, renderVibeWidgets } from '../VibeForm/YouTubeWidgetView';
+import { resolveMediaUrl } from '../../utils/resolveMediaUrl';
+import { youtubeUrlsMatch } from '../../utils/youtube';
+import type { VibeWidget } from '../../store/useAtmosphericStore';
 
 export const VibePage: React.FC = () => {
+  const { t } = useTranslation();
   const dispatch = useAppDispatch();
-  const selectedVibePage = useAppSelector((s) => s.ui.selectedVibePage);
+  const storedVibePage = useAppSelector((s) => s.ui.selectedVibePage);
   const user = useAppSelector((s) => s.auth.user);
   const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
+
+  // Deep links (`#/vibe?id=…`) only set viewMode; hydrate the vibe via GET /vibes/:id
+  const routeVibeId = parseHashRoute().vibeId;
+  const vibeId = routeVibeId || storedVibePage?.id;
+  const {
+    data: fetchedVibe,
+    isLoading: isLoadingVibe,
+    isError: isVibeError,
+  } = useGetVibeByIdQuery(vibeId!, { skip: !vibeId });
+
+  useEffect(() => {
+    if (fetchedVibe) {
+      dispatch(setSelectedVibePage(fetchedVibe));
+    }
+  }, [fetchedVibe, dispatch]);
+
+  const selectedVibePageResolved =
+    fetchedVibe ??
+    (storedVibePage && storedVibePage.id === vibeId ? storedVibePage : null);
 
   const [addVibeUpdateMutation] = useAddVibeUpdateMutation();
   const [addTagToVibeMutation] = useAddTagToVibeMutation();
@@ -41,19 +77,43 @@ export const VibePage: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  if (!selectedVibePage) {
+  if (!vibeId) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-8 bg-zinc-950 text-zinc-400 font-mono">
-        <div className="text-amber-400 font-bold mb-2">[NO_VIBE_SELECTED]</div>
+        <div className="text-amber-400 font-bold mb-2">{t('vibePage.noVibe')}</div>
         <button
           onClick={() => dispatch(setViewMode('vibes'))}
           className="px-4 py-2 bg-zinc-900 border border-zinc-800 rounded hover:border-cyan-500 text-xs"
         >
-          RETURN TO MAIN FEED
+          {t('vibePage.returnFeed')}
         </button>
       </div>
     );
   }
+
+  if (isLoadingVibe && !selectedVibePageResolved) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center p-8 bg-zinc-950 text-zinc-400 font-mono">
+        <div className="text-cyan-400 font-bold mb-2">{t('vibePage.loading')}</div>
+      </div>
+    );
+  }
+
+  if (isVibeError || !selectedVibePageResolved) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center p-8 bg-zinc-950 text-zinc-400 font-mono">
+        <div className="text-amber-400 font-bold mb-2">{t('vibePage.notFound')}</div>
+        <button
+          onClick={() => dispatch(setViewMode('vibes'))}
+          className="px-4 py-2 bg-zinc-900 border border-zinc-800 rounded hover:border-cyan-500 text-xs"
+        >
+          {t('vibePage.returnFeed')}
+        </button>
+      </div>
+    );
+  }
+
+  const selectedVibePage = selectedVibePageResolved;
 
   const isCreator =
     isAuthenticated &&
@@ -81,29 +141,102 @@ export const VibePage: React.FC = () => {
     setIsAddingTag(false);
   };
 
-  const coverImage =
-    selectedVibePage.images?.[0] || selectedVibePage.roomConfig?.bgImageUrl;
+  const vibeImages = selectedVibePage.images?.filter(Boolean) ?? [];
+  const posterYoutubeUrl = selectedVibePage.roomConfig?.posterYoutubeUrl?.trim() || null;
+  const allWidgets: VibeWidget[] = [...(selectedVibePage.widgets || [])];
+  if (allWidgets.length === 0 && selectedVibePage.videoUrl) {
+    allWidgets.push({
+      id: `widget-legacy-yt`,
+      type: 'youtube',
+      url: selectedVibePage.videoUrl,
+      title: t('vibeCard.youtubeLink'),
+    });
+  }
+  const posterYoutubeWidget: VibeWidget | null = posterYoutubeUrl
+    ? allWidgets.find(
+        (w) => w.type === 'youtube' && youtubeUrlsMatch(w.url, posterYoutubeUrl),
+      ) || {
+        id: 'widget-poster-yt',
+        type: 'youtube',
+        url: posterYoutubeUrl,
+        title: t('vibeCard.youtubeLink'),
+      }
+    : null;
+  const streamWidgets = posterYoutubeUrl
+    ? allWidgets.filter(
+        (w) => !(w.type === 'youtube' && youtubeUrlsMatch(w.url, posterYoutubeUrl)),
+      )
+    : allWidgets;
+  const coverImage = resolveMediaUrl(
+    posterYoutubeWidget
+      ? undefined
+      : vibeImages[0] || selectedVibePage.roomConfig?.bgImageUrl,
+  );
 
-  /* Create Room from Vibe Hover Icon Button & Tooltip Helper */
-  const renderCreateRoomButton = () => {
-    if (!isAuthenticated) return null;
+  /* Attached images gallery (all vibe images, URL-resolved for local uploads) */
+  const renderImagesSection = () => {
+    if (vibeImages.length === 0) return null;
+
     return (
-      <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-        <div className="relative group/tooltip inline-block">
-          <button
-            onClick={() => dispatch(setCreateRoomModalOpen({ open: true, vibe: selectedVibePage }))}
-            className="p-1.5 bg-zinc-900/90 hover:bg-cyan-950 border border-zinc-700 hover:border-cyan-400 text-cyan-400 hover:text-cyan-200 rounded transition-all shadow-md flex items-center justify-center cursor-pointer"
-            aria-label="Create Room from vibe"
-          >
-            <span className="material-symbols-outlined text-base font-bold">arrow_forward</span>
-          </button>
-
-          {/* Popup Helper Tooltip */}
-          <div className="absolute right-0 bottom-full mb-2 hidden group-hover/tooltip:flex items-center whitespace-nowrap bg-zinc-950 text-cyan-300 border border-cyan-500/60 px-2.5 py-1 text-[11px] font-mono font-bold rounded shadow-2xl pointer-events-none z-50">
-            <span>Create Room from vibe</span>
-            <div className="absolute top-full right-3 border-4 border-transparent border-t-cyan-500/60" />
-          </div>
+      <div className="space-y-3 font-mono">
+        <div className="flex items-center justify-between text-xs border-b border-zinc-800 pb-1.5">
+          <span className="font-bold uppercase tracking-wider flex items-center space-x-1 text-emerald-400">
+            <span className="material-symbols-outlined text-sm">photo_library</span>
+            <span>{t('vibePage.gallery')}</span>
+          </span>
+          <span className="text-[10px] text-zinc-500">
+            {t('vibePage.photos')}
+          </span>
         </div>
+
+        <div
+          className={`grid gap-3 ${
+            vibeImages.length === 1
+              ? 'grid-cols-1'
+              : 'grid-cols-2 sm:grid-cols-3'
+          }`}
+        >
+          {vibeImages.map((url, idx) => {
+            const isMain = !posterYoutubeWidget && idx === 0;
+            return (
+              <div
+                key={`${url}-${idx}`}
+                className="relative aspect-video rounded-lg border border-zinc-800 overflow-hidden bg-black group shadow"
+              >
+                <img
+                  src={resolveMediaUrl(url)}
+                  alt={`${selectedVibePage.title} — photo ${idx + 1}`}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+                <div className="absolute bottom-1 right-1 bg-black/70 px-1.5 py-0.5 font-mono text-[9px] text-zinc-400 border border-zinc-800">
+                  {isMain ? t('vibePage.mainCover') : `IMG_0${idx + 1}`}
+                </div>
+                {isMain && vibeImages.length > 1 && (
+                  <div className="absolute top-1 left-1 bg-amber-500 text-black font-mono text-[9px] font-bold px-1.5 py-0.5 rounded shadow">
+                    {t('vibePage.cover')}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  /* Creator action buttons */
+  const renderOwnerActions = () => {
+    if (!isAuthenticated || !isCreator) return null;
+    return (
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => dispatch(openEditVibeModal(selectedVibePage))}
+          className="px-2.5 py-1.5 bg-zinc-900/90 hover:bg-amber-950 border border-zinc-700 hover:border-amber-400 text-amber-400 hover:text-amber-200 rounded transition-all shadow-md flex items-center gap-1 cursor-pointer font-mono text-[11px] font-bold uppercase"
+          aria-label={t("vibePage.editVibe")}
+        >
+          <span className="material-symbols-outlined text-base">edit</span>
+          <span>{t('vibePage.edit')}</span>
+        </button>
       </div>
     );
   };
@@ -114,10 +247,10 @@ export const VibePage: React.FC = () => {
       <div className="flex items-center justify-between text-zinc-400 border-b border-zinc-800 pb-1.5">
         <span className="font-bold uppercase tracking-wider flex items-center space-x-1">
           <span className="material-symbols-outlined text-sm text-amber-400">label</span>
-          <span>HASHTAGS & KEYWORDS</span>
+          <span>{t('vibePage.hashtags')}</span>
         </span>
         <span className="text-[10px] text-zinc-500">
-          {selectedVibePage.tags?.length || 0} TAGS
+          {selectedVibePage.tags?.length || 0} {t('vibePage.tags')}
         </span>
       </div>
 
@@ -137,7 +270,7 @@ export const VibePage: React.FC = () => {
             {isAuthenticated && (
               <button
                 onClick={() => removeTagFromVibeMutation({ vibeId: selectedVibePage.id, tag })}
-                title="Remove tag"
+                title={t("vibePage.removeTag")}
                 className="text-zinc-600 hover:text-red-400 text-xs ml-1 font-bold"
               >
                 ✕
@@ -157,7 +290,7 @@ export const VibePage: React.FC = () => {
               type="text"
               value={newTagInput}
               onChange={(e) => setNewTagInput(e.target.value)}
-              placeholder="add_tag..."
+              placeholder={t('vibePage.addTagPlaceholder')}
               className="bg-transparent text-xs text-zinc-200 focus:outline-none w-24 sm:w-28 font-mono"
             />
             <button
@@ -165,7 +298,7 @@ export const VibePage: React.FC = () => {
               disabled={isAddingTag || !newTagInput.trim()}
               className="ml-1 text-[10px] px-2 py-0.5 bg-cyan-950 border border-cyan-700 text-cyan-400 hover:bg-cyan-900 rounded font-bold transition-colors uppercase disabled:opacity-50"
             >
-              + ADD
+              {t('vibePage.add')}
             </button>
           </form>
         )}
@@ -184,11 +317,11 @@ export const VibePage: React.FC = () => {
               className="flex items-center space-x-1.5 px-3 py-1 bg-zinc-900 border border-zinc-800 hover:border-cyan-500/60 rounded text-zinc-300 hover:text-cyan-400 transition-colors"
             >
               <span className="material-symbols-outlined text-sm">arrow_back</span>
-              <span>[ RETURN FEED ]</span>
+              <span>{t('vibePage.returnFeedBtn')}</span>
             </button>
 
-            <span className="text-amber-400 font-bold truncate max-w-[140px]">
-              {selectedVibePage.id}
+            <span className="text-amber-400 font-bold truncate max-w-[220px] sm:max-w-[320px]">
+              {selectedVibePage.title}
             </span>
           </div>
 
@@ -203,7 +336,7 @@ export const VibePage: React.FC = () => {
               }`}
             >
               <span className="material-symbols-outlined text-sm">view_agenda</span>
-              <span>UNIFIED VIEW</span>
+              <span>{t('vibePage.unified')}</span>
             </button>
 
             <button
@@ -215,7 +348,7 @@ export const VibePage: React.FC = () => {
               }`}
             >
               <span className="material-symbols-outlined text-sm">widgets</span>
-              <span>CONSTRUCTOR MODE</span>
+              <span>{t('vibePage.constructor')}</span>
             </button>
           </div>
         </div>
@@ -228,16 +361,25 @@ export const VibePage: React.FC = () => {
             {/* Top Accent Strip */}
             <div className="h-1 w-full bg-gradient-to-r from-amber-500 via-cyan-500 to-purple-500" />
 
-            {/* Unified Container Cover Header */}
-            {coverImage && (
-              <div className="relative h-64 sm:h-80 w-full bg-black overflow-hidden">
-                <img
-                  src={coverImage}
-                  alt={selectedVibePage.title}
-                  className="w-full h-full object-cover opacity-70 mix-blend-screen"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-zinc-900/50 to-transparent" />
+            {/* Unified Container Cover Header — image or YouTube poster slot */}
+            {posterYoutubeWidget ? (
+              <div className="relative w-full bg-black overflow-hidden border-b border-zinc-800">
+                <YouTubeWidgetView widget={posterYoutubeWidget} className="w-full rounded-none border-0" />
+                <div className="absolute top-2 left-2 z-[1] bg-amber-500 text-black font-mono text-[9px] font-bold px-1.5 py-0.5 rounded shadow">
+                  {t('vibePage.cover')}
+                </div>
               </div>
+            ) : (
+              coverImage && (
+                <div className="relative h-64 sm:h-80 w-full bg-black overflow-hidden">
+                  <img
+                    src={coverImage}
+                    alt={selectedVibePage.title}
+                    className="w-full h-full object-cover opacity-70 mix-blend-screen"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-zinc-900/50 to-transparent" />
+                </div>
+              )
             )}
 
             {/* Unified Container Content Body */}
@@ -246,7 +388,7 @@ export const VibePage: React.FC = () => {
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-800/80 pb-4 group">
                 <div className="flex items-center space-x-2 font-mono text-xs">
                   <span className="px-2.5 py-0.5 rounded bg-amber-950/90 border border-amber-500/70 text-amber-400 font-bold">
-                    ★ VIBE POINT
+                    {t('vibePage.vibePoint')}
                   </span>
                   <span className="text-zinc-300 font-semibold">
                     @{selectedVibePage.authorName}
@@ -254,7 +396,7 @@ export const VibePage: React.FC = () => {
                   <span className="text-zinc-600">• {selectedVibePage.createdAt}</span>
                 </div>
 
-                {renderCreateRoomButton()}
+                {renderOwnerActions()}
               </div>
 
               {/* Title & Description Body */}
@@ -267,11 +409,18 @@ export const VibePage: React.FC = () => {
                 </p>
               </div>
 
+              {/* Attached Images Gallery */}
+              {vibeImages.length > 0 && (
+                <div className="pt-2">
+                  {renderImagesSection()}
+                </div>
+              )}
+
               {/* Integrated Cyber Audio Stream */}
               {selectedVibePage.musicUrl && (
                 <div className="pt-2">
                   <div className="text-xs font-mono text-cyan-400 font-bold mb-2 uppercase">
-                    [INTEGRATED_AUDIO_PLAYER]
+                    {t('vibePage.audioBlock')}
                   </div>
                   <CyberAudioPlayer
                     src={selectedVibePage.musicUrl}
@@ -281,40 +430,29 @@ export const VibePage: React.FC = () => {
                 </div>
               )}
 
-              {/* Integrated Widgets (YouTube Embeds) */}
-              {selectedVibePage.widgets && selectedVibePage.widgets.length > 0 && (
-                <div className="pt-2 space-y-3">
-                  <div className="text-xs font-mono text-zinc-400 font-bold uppercase">
-                    [ATTACHED_STREAM_CANVAS]
+              {/* Integrated Widgets (YouTube Embeds) — poster YT excluded (shown in cover) */}
+              {streamWidgets.length > 0 && (() => {
+                const youtubeLayout =
+                  selectedVibePage.roomConfig?.youtubeLayout === 'player' ? 'player' : 'full';
+                const { fullYoutube, playerYoutube } = renderVibeWidgets(
+                  streamWidgets,
+                  youtubeLayout,
+                );
+                if (fullYoutube.length === 0 && playerYoutube.length === 0) return null;
+                return (
+                  <div className="pt-2 space-y-3 w-full">
+                    <div className="text-xs font-mono text-zinc-400 font-bold uppercase">
+                      {t('vibePage.streamBlock')}
+                    </div>
+                    {fullYoutube.map((widget) => (
+                      <YouTubeWidgetView key={widget.id} widget={widget} className="w-full" />
+                    ))}
+                    {playerYoutube.length > 0 && (
+                      <YouTubePlayerList widgets={playerYoutube} className="w-full" />
+                    )}
                   </div>
-                  {selectedVibePage.widgets.map((widget) => {
-                    if (widget.type === 'youtube') {
-                      const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-                      const match = widget.url.match(regExp);
-                      const ytId = match && match[2].length === 11 ? match[2] : null;
-
-                      return (
-                        <div
-                          key={widget.id}
-                          className="bg-black border border-zinc-800 rounded overflow-hidden"
-                        >
-                          {ytId && (
-                            <div className="relative pt-[56.25%] w-full">
-                              <iframe
-                                src={`https://www.youtube-nocookie.com/embed/${ytId}`}
-                                title={widget.title || 'YouTube Video'}
-                                className="absolute top-0 left-0 w-full h-full border-0"
-                                allowFullScreen
-                              />
-                            </div>
-                          )}
-                        </div>
-                      );
-                    }
-                    return null;
-                  })}
-                </div>
-              )}
+                );
+              })()}
 
               {/* Unified Container Tags Section with Tag Adding Block */}
               <div className="pt-4 border-t border-zinc-800/80">
@@ -326,11 +464,11 @@ export const VibePage: React.FC = () => {
                 <div className="flex justify-between items-center">
                   <h3 className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center space-x-1.5">
                     <span className="material-symbols-outlined text-sm">history</span>
-                    <span>TIME-BY-TIME LIVE LOGS ({selectedVibePage.updates?.length || 0})</span>
+                    <span>{t('vibePage.logsBlock')} ({selectedVibePage.updates?.length || 0})</span>
                   </h3>
                   {isCreator && (
                     <span className="text-[10px] text-emerald-400 bg-emerald-950/60 border border-emerald-800 px-2 py-0.5 rounded">
-                      ● CREATOR MODERATION
+                      {t('vibePage.creatorModeration')}
                     </span>
                   )}
                 </div>
@@ -338,13 +476,13 @@ export const VibePage: React.FC = () => {
                 {isCreator && (
                   <form onSubmit={handlePostUpdate} className="bg-zinc-950 p-4 rounded border border-zinc-800 space-y-3">
                     <div className="text-xs font-bold text-zinc-300 flex items-center justify-between">
-                      <span>+ TRANSMIT VIBE UPDATE</span>
-                      <span className="text-[10px] text-zinc-500">CREATOR LOG</span>
+                      <span>{t('vibePage.transmitUpdate')}</span>
+                      <span className="text-[10px] text-zinc-500">{t('vibePage.creatorLog')}</span>
                     </div>
                     <textarea
                       value={updateContent}
                       onChange={(e) => setUpdateContent(e.target.value)}
-                      placeholder="Log a new update for this vibe point..."
+                      placeholder={t('vibePage.updatePlaceholder')}
                       className="w-full bg-zinc-900 border border-zinc-800 rounded p-2.5 text-xs text-zinc-200 focus:border-amber-500 focus:outline-none min-h-[60px] font-sans"
                     />
                     <div className="flex flex-col sm:flex-row gap-2 items-center justify-between">
@@ -352,7 +490,7 @@ export const VibePage: React.FC = () => {
                         type="url"
                         value={updateMediaUrl}
                         onChange={(e) => setUpdateMediaUrl(e.target.value)}
-                        placeholder="Optional media URL..."
+                        placeholder={t('vibePage.mediaUrlPlaceholder')}
                         className="w-full sm:flex-1 bg-zinc-900 border border-zinc-800 rounded px-2.5 py-1.5 text-xs text-zinc-200 focus:border-amber-500 focus:outline-none font-mono"
                       />
                       <button
@@ -360,7 +498,7 @@ export const VibePage: React.FC = () => {
                         disabled={isPostingUpdate || !updateContent.trim()}
                         className="w-full sm:w-auto px-4 py-1.5 bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-black font-bold text-xs rounded transition-colors uppercase"
                       >
-                        {isPostingUpdate ? 'POSTING...' : 'POST UPDATE'}
+                        {isPostingUpdate ? t('vibePage.posting') : t('vibePage.postUpdate')}
                       </button>
                     </div>
                   </form>
@@ -373,7 +511,7 @@ export const VibePage: React.FC = () => {
                         <div className="absolute -left-[21px] top-1.5 w-2 h-2 rounded-full bg-amber-500 border border-zinc-950" />
                         <div className="bg-zinc-950/90 border border-zinc-800 rounded p-3 space-y-1">
                           <div className="flex justify-between items-center text-[10px] text-zinc-500">
-                            <span className="text-amber-400 font-bold">● VIBE_LOG</span>
+                            <span className="text-amber-400 font-bold">{t('vibePage.vibeLog')}</span>
                             <span>{update.createdAt}</span>
                           </div>
                           <p className="text-xs text-zinc-300 font-sans">{update.content}</p>
@@ -390,28 +528,37 @@ export const VibePage: React.FC = () => {
           <div className="space-y-6">
             {/* Block 1: Banner & Header Block */}
             <div className="relative rounded-lg overflow-hidden border border-zinc-800 bg-zinc-900/90 shadow-2xl">
-              {coverImage && (
-                <div className="relative h-64 md:h-80 w-full overflow-hidden bg-black">
-                  <img
-                    src={coverImage}
-                    alt={selectedVibePage.title}
-                    className="w-full h-full object-cover opacity-60 mix-blend-screen"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent" />
+              {posterYoutubeWidget ? (
+                <div className="relative w-full overflow-hidden bg-black border-b border-zinc-800">
+                  <YouTubeWidgetView widget={posterYoutubeWidget} className="w-full rounded-none border-0" />
+                  <div className="absolute top-2 left-2 z-[1] bg-amber-500 text-black font-mono text-[9px] font-bold px-1.5 py-0.5 rounded shadow">
+                    {t('vibePage.cover')}
+                  </div>
                 </div>
+              ) : (
+                coverImage && (
+                  <div className="relative h-64 md:h-80 w-full overflow-hidden bg-black">
+                    <img
+                      src={coverImage}
+                      alt={selectedVibePage.title}
+                      className="w-full h-full object-cover opacity-60 mix-blend-screen"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent" />
+                  </div>
+                )
               )}
 
               <div className="p-6 relative z-10 space-y-4">
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-800 pb-3 group">
                   <div className="flex items-center space-x-2 font-mono text-xs">
                     <span className="px-2 py-0.5 rounded bg-amber-950/80 border border-amber-500/60 text-amber-400 font-bold">
-                      ★ BLOCK :: CONSTRUCTOR
+                      {t('vibePage.blockConstructor')}
                     </span>
                     <span className="text-zinc-400">@{selectedVibePage.authorName}</span>
                     <span className="text-zinc-600">• {selectedVibePage.createdAt}</span>
                   </div>
 
-                  {renderCreateRoomButton()}
+                  {renderOwnerActions()}
                 </div>
 
                 <h1 className="text-2xl md:text-4xl font-extrabold text-zinc-100 tracking-tight font-sans">
@@ -424,16 +571,23 @@ export const VibePage: React.FC = () => {
               </div>
             </div>
 
-            {/* Block 2: Tags Management Block with Add Tag Input */}
+            {/* Block 2: Attached Photo Gallery */}
+            {vibeImages.length > 0 && (
+              <div className="bg-zinc-900/80 border border-zinc-800 rounded-lg p-5">
+                {renderImagesSection()}
+              </div>
+            )}
+
+            {/* Block 3: Tags Management Block with Add Tag Input */}
             <div className="bg-zinc-900/80 border border-zinc-800 rounded-lg p-5">
               {renderTagsSection()}
             </div>
 
-            {/* Block 3: Audio Stream Player Block */}
+            {/* Block 4: Audio Stream Player Block */}
             {selectedVibePage.musicUrl && (
               <div className="bg-zinc-900/80 border border-zinc-800 rounded-lg p-4 font-mono space-y-2">
                 <div className="text-xs text-cyan-400 font-bold uppercase tracking-wider">
-                  [BLOCK :: AUDIO_PLAYER]
+                  {t('vibePage.audioBlock')}
                 </div>
                 <CyberAudioPlayer
                   src={selectedVibePage.musicUrl}
@@ -443,59 +597,48 @@ export const VibePage: React.FC = () => {
               </div>
             )}
 
-            {/* Block 4: Media Widgets Block */}
-            {selectedVibePage.widgets && selectedVibePage.widgets.length > 0 && (
-              <div className="bg-zinc-900/80 border border-zinc-800 rounded-lg p-5 font-mono space-y-4">
-                <div className="text-xs font-bold text-zinc-400 uppercase tracking-wider">
-                  [BLOCK :: MEDIA_CANVAS_WIDGETS]
+            {/* Block 5: Media Widgets Block — poster YT excluded (shown in cover) */}
+            {streamWidgets.length > 0 && (() => {
+              const youtubeLayout =
+                selectedVibePage.roomConfig?.youtubeLayout === 'player' ? 'player' : 'full';
+              const { fullYoutube, playerYoutube } = renderVibeWidgets(
+                streamWidgets,
+                youtubeLayout,
+              );
+              if (fullYoutube.length === 0 && playerYoutube.length === 0) return null;
+              return (
+                <div className="bg-zinc-900/80 border border-zinc-800 rounded-lg p-5 font-mono space-y-4 w-full">
+                  <div className="text-xs font-bold text-zinc-400 uppercase tracking-wider">
+                    {t('vibePage.streamBlock')}
+                  </div>
+                  <div className="grid grid-cols-1 gap-4 w-full">
+                    {fullYoutube.map((widget) => (
+                      <YouTubeWidgetView key={widget.id} widget={widget} className="w-full" />
+                    ))}
+                    {playerYoutube.length > 0 && (
+                      <YouTubePlayerList widgets={playerYoutube} className="w-full" />
+                    )}
+                  </div>
                 </div>
-                <div className="grid grid-cols-1 gap-4">
-                  {selectedVibePage.widgets.map((widget) => {
-                    if (widget.type === 'youtube') {
-                      const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-                      const match = widget.url.match(regExp);
-                      const ytId = match && match[2].length === 11 ? match[2] : null;
+              );
+            })()}
 
-                      return (
-                        <div
-                          key={widget.id}
-                          className="bg-black border border-zinc-800 rounded overflow-hidden"
-                        >
-                          {ytId && (
-                            <div className="relative pt-[56.25%] w-full">
-                              <iframe
-                                src={`https://www.youtube-nocookie.com/embed/${ytId}`}
-                                title={widget.title || 'YouTube Video'}
-                                className="absolute top-0 left-0 w-full h-full border-0"
-                                allowFullScreen
-                              />
-                            </div>
-                          )}
-                        </div>
-                      );
-                    }
-                    return null;
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Block 5: Time-by-Time Updates Timeline Block */}
+            {/* Block 6: Time-by-Time Updates Timeline Block */}
             <section className="bg-zinc-900/80 border border-zinc-800 rounded-lg p-5 font-mono space-y-6">
               <div className="flex flex-wrap items-center justify-between border-b border-zinc-800 pb-3 gap-2">
                 <div>
                   <h2 className="text-sm font-bold text-amber-400 flex items-center space-x-2">
                     <span className="material-symbols-outlined text-base">history</span>
-                    <span>[BLOCK :: TIME-BY-TIME LIVE LOGS]</span>
+                    <span>{t('vibePage.logsBlock')}</span>
                   </h2>
                   <p className="text-[11px] text-zinc-500 mt-0.5">
-                    Creator live log history for this vibe point
+                    {t('vibePage.logsHelper')}
                   </p>
                 </div>
 
                 {isCreator && (
                   <span className="text-[10px] text-emerald-400 bg-emerald-950/60 border border-emerald-800 px-2 py-0.5 rounded">
-                    ● CREATOR MODERATION ACTIVE
+                    {t('vibePage.creatorModerationActive')}
                   </span>
                 )}
               </div>
@@ -504,13 +647,13 @@ export const VibePage: React.FC = () => {
               {isCreator && (
                 <form onSubmit={handlePostUpdate} className="bg-zinc-950 p-4 rounded border border-zinc-800 space-y-3">
                   <div className="text-xs font-bold text-zinc-300 flex items-center justify-between">
-                    <span>+ TRANSMIT VIBE UPDATE</span>
-                    <span className="text-[10px] text-zinc-500">CREATOR MODE</span>
+                    <span>{t('vibePage.transmitUpdate')}</span>
+                    <span className="text-[10px] text-zinc-500">{t('vibePage.creatorMode')}</span>
                   </div>
                   <textarea
                     value={updateContent}
                     onChange={(e) => setUpdateContent(e.target.value)}
-                    placeholder="Log a new update for this vibe point..."
+                    placeholder={t('vibePage.updatePlaceholder')}
                     className="w-full bg-zinc-900 border border-zinc-800 rounded p-2.5 text-xs text-zinc-200 focus:border-amber-500 focus:outline-none min-h-[70px] font-sans"
                   />
                   <div className="flex flex-col sm:flex-row gap-2 items-center justify-between">
@@ -518,7 +661,7 @@ export const VibePage: React.FC = () => {
                       type="url"
                       value={updateMediaUrl}
                       onChange={(e) => setUpdateMediaUrl(e.target.value)}
-                      placeholder="Optional media URL..."
+                      placeholder={t('vibePage.mediaUrlPlaceholder')}
                       className="w-full sm:flex-1 bg-zinc-900 border border-zinc-800 rounded px-2.5 py-1.5 text-xs text-zinc-200 focus:border-amber-500 focus:outline-none font-mono"
                     />
                     <button
@@ -526,7 +669,7 @@ export const VibePage: React.FC = () => {
                       disabled={isPostingUpdate || !updateContent.trim()}
                       className="w-full sm:w-auto px-4 py-1.5 bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-black font-bold text-xs rounded transition-colors uppercase"
                     >
-                      {isPostingUpdate ? 'POSTING...' : 'POST LIVE UPDATE'}
+                      {isPostingUpdate ? t('vibePage.posting') : t('vibePage.postLive')}
                     </button>
                   </div>
                 </form>
@@ -535,7 +678,7 @@ export const VibePage: React.FC = () => {
               {/* Updates Feed */}
               {!selectedVibePage.updates || selectedVibePage.updates.length === 0 ? (
                 <div className="text-center py-8 border border-dashed border-zinc-800/80 rounded bg-zinc-950/40 text-xs text-zinc-600">
-                  NO TIME-BY-TIME UPDATES RECORDED YET FOR THIS VIBE POINT.
+                  {t('vibePage.noUpdates')}
                 </div>
               ) : (
                 <div className="relative border-l-2 border-amber-500/40 ml-3 pl-4 space-y-4">
@@ -544,7 +687,7 @@ export const VibePage: React.FC = () => {
                       <div className="absolute -left-[23px] top-1.5 w-2.5 h-2.5 rounded-full bg-amber-500 border-2 border-zinc-950" />
                       <div className="bg-zinc-950/80 border border-zinc-800 rounded p-3 space-y-2">
                         <div className="flex justify-between items-center text-[10px] text-zinc-500">
-                          <span className="text-amber-400 font-bold">● VIBE_UPDATE_LOG</span>
+                          <span className="text-amber-400 font-bold">{t('vibePage.updateLog')}</span>
                           <span>{update.createdAt}</span>
                         </div>
                         <p className="text-xs text-zinc-300 whitespace-pre-line font-sans">

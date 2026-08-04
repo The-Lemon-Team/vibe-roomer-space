@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { CreatedRoom, RoomNoteItem } from '../../store/useAtmosphericStore';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { setAuthModalOpen } from '../../store/authSlice';
@@ -15,6 +16,7 @@ interface RoomNotesBlockProps {
 }
 
 export const RoomNotesBlock: React.FC<RoomNotesBlockProps> = ({ room }) => {
+  const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const user = useAppSelector((s) => s.auth.user);
   const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
@@ -90,10 +92,10 @@ export const RoomNotesBlock: React.FC<RoomNotesBlockProps> = ({ room }) => {
         <div className="flex items-center space-x-2">
           <span className="material-symbols-outlined text-cyan-400 text-base">description</span>
           <h3 className="text-xs font-bold text-cyan-400 tracking-wider uppercase">
-            [ATTACHED_ROOM_NOTES]
+            {t('notes.title')}
           </h3>
           <span className="text-[10px] bg-cyan-950/80 text-cyan-300 border border-cyan-500/40 px-2 py-0.5 rounded-full">
-            {notesList.length} NOTES (MARKDOWN)
+            {t('notes.count', { count: notesList.length })}
           </span>
         </div>
 
@@ -105,7 +107,7 @@ export const RoomNotesBlock: React.FC<RoomNotesBlockProps> = ({ room }) => {
             <span className="material-symbols-outlined text-sm">
               {isFormOpen ? 'close' : 'note_add'}
             </span>
-            <span>{isFormOpen ? 'CANCEL' : '+ ADD MARKDOWN NOTE'}</span>
+            <span>{isFormOpen ? t('common.cancel') : t('notes.add')}</span>
           </button>
         )}
       </div>
@@ -134,7 +136,7 @@ export const RoomNotesBlock: React.FC<RoomNotesBlockProps> = ({ room }) => {
                 }`}
               >
                 <span className="material-symbols-outlined text-[12px]">code</span>
-                <span>EDIT MODE</span>
+                <span>{t('notes.sourceMode')}</span>
               </button>
               <button
                 type="button"
@@ -146,7 +148,7 @@ export const RoomNotesBlock: React.FC<RoomNotesBlockProps> = ({ room }) => {
                 }`}
               >
                 <span className="material-symbols-outlined text-[12px]">visibility</span>
-                <span>VIEW MODE PREVIEW</span>
+                <span>{t('notes.viewMode')}</span>
               </button>
             </div>
           </div>
@@ -154,7 +156,7 @@ export const RoomNotesBlock: React.FC<RoomNotesBlockProps> = ({ room }) => {
           <div>
             <input
               type="text"
-              placeholder="Note title..."
+              placeholder={t("notes.titlePlaceholder")}
               value={noteTitle}
               onChange={(e) => setNoteTitle(e.target.value)}
               className="w-full bg-zinc-900 border border-zinc-800 rounded px-2.5 py-1.5 text-xs text-cyan-200 placeholder-zinc-600 outline-none focus:border-cyan-500"
@@ -165,7 +167,7 @@ export const RoomNotesBlock: React.FC<RoomNotesBlockProps> = ({ room }) => {
           {/* Quick Markdown Formatting Helper Toolbar */}
           {formViewMode === 'edit' && (
             <div className="flex flex-wrap items-center gap-1.5 text-[10px] bg-zinc-900/60 p-1.5 rounded border border-zinc-800">
-              <span className="text-zinc-500 font-bold mr-1">[FMT]:</span>
+              <span className="text-zinc-500 font-bold mr-1">{t('notes.fmt')}</span>
               <button
                 type="button"
                 onClick={() => insertMarkdownSnippet('# Header')}
@@ -215,7 +217,7 @@ export const RoomNotesBlock: React.FC<RoomNotesBlockProps> = ({ room }) => {
           {formViewMode === 'edit' ? (
             <textarea
               rows={5}
-              placeholder="Write note content in Markdown format (# Header, **bold**, - list, ``` code)..."
+              placeholder={t("notes.contentPlaceholder")}
               value={noteContent}
               onChange={(e) => setNoteContent(e.target.value)}
               className="w-full bg-zinc-900 border border-zinc-800 rounded p-2.5 text-xs text-zinc-200 placeholder-zinc-600 outline-none focus:border-cyan-500 font-mono leading-relaxed"
@@ -227,7 +229,7 @@ export const RoomNotesBlock: React.FC<RoomNotesBlockProps> = ({ room }) => {
                 <MarkdownRenderer content={noteContent} />
               ) : (
                 <div className="text-zinc-600 text-xs italic">
-                  Markdown preview will render here as you type in edit mode...
+                  {t('notes.previewEmpty')}
                 </div>
               )}
             </div>
@@ -239,14 +241,14 @@ export const RoomNotesBlock: React.FC<RoomNotesBlockProps> = ({ room }) => {
               onClick={() => setIsFormOpen(false)}
               className="px-3 py-1 bg-zinc-900 text-zinc-400 text-xs rounded hover:text-white transition-colors"
             >
-              DISCARD
+              {t('notes.discard')}
             </button>
             <button
               type="submit"
               className="px-4 py-1 bg-cyan-400 text-black font-bold text-xs rounded hover:bg-cyan-300 transition-colors uppercase flex items-center space-x-1"
             >
               <span className="material-symbols-outlined text-sm">save</span>
-              <span>SAVE NOTE</span>
+              <span>{t('notes.save')}</span>
             </button>
           </div>
         </form>
@@ -255,7 +257,7 @@ export const RoomNotesBlock: React.FC<RoomNotesBlockProps> = ({ room }) => {
       {/* Empty State */}
       {!notesList.length && (
         <div className="text-center py-6 bg-zinc-950/60 rounded-lg border border-zinc-800/80 text-xs text-zinc-500">
-          No Markdown notes attached to this room yet.
+          {t('notes.empty')}
         </div>
       )}
 
@@ -281,7 +283,7 @@ export const RoomNotesBlock: React.FC<RoomNotesBlockProps> = ({ room }) => {
                   <div className="flex items-center space-x-2">
                     <span className="material-symbols-outlined text-cyan-400 text-sm">article</span>
                     <h4 className="text-xs font-bold text-cyan-300 uppercase tracking-wider">
-                      {isEditingThis ? 'EDITING NOTE' : note.title}
+                      {isEditingThis ? t('notes.editing') : note.title}
                     </h4>
                   </div>
                   <div className="text-[10px] text-zinc-500 flex items-center space-x-2 pl-6">
@@ -306,7 +308,7 @@ export const RoomNotesBlock: React.FC<RoomNotesBlockProps> = ({ room }) => {
                       <span className="material-symbols-outlined text-[12px]">
                         {currentMode === 'view' ? 'visibility' : 'code'}
                       </span>
-                      <span>{currentMode === 'view' ? 'VIEW MODE' : 'SOURCE MODE'}</span>
+                      <span>{currentMode === 'view' ? t('notes.viewMode') : t('notes.sourceMode')}</span>
                     </button>
                   )}
 
@@ -318,13 +320,13 @@ export const RoomNotesBlock: React.FC<RoomNotesBlockProps> = ({ room }) => {
                             onClick={() => handleSaveEditNote(note.id)}
                             className="text-emerald-400 hover:text-emerald-300 text-xs px-2 py-0.5 bg-emerald-950 border border-emerald-500/50 rounded"
                           >
-                            SAVE
+                            {t('notes.saveBtn')}
                           </button>
                           <button
                             onClick={() => setEditingNoteId(null)}
                             className="text-zinc-400 hover:text-white text-xs px-2 py-0.5 bg-zinc-900 rounded"
                           >
-                            CANCEL
+                            {t('notes.cancelBtn')}
                           </button>
                         </>
                       ) : (
@@ -332,14 +334,14 @@ export const RoomNotesBlock: React.FC<RoomNotesBlockProps> = ({ room }) => {
                           <button
                             onClick={() => handleStartEditNote(note)}
                             className="text-zinc-400 hover:text-cyan-300 text-xs p-1"
-                            title="Edit Note"
+                            title={t("notes.editTitle")}
                           >
                             <span className="material-symbols-outlined text-sm">edit</span>
                           </button>
                           <button
                             onClick={() => deleteRoomNote({ roomId: room.id, noteId: note.id })}
                             className="text-zinc-600 hover:text-red-400 text-xs p-1"
-                            title="Delete Note"
+                            title={t("notes.deleteTitle")}
                           >
                             <span className="material-symbols-outlined text-sm">delete</span>
                           </button>

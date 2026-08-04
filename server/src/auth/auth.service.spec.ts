@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ConflictException, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { Role } from '../generated/client';
+import { Role } from './role.enum';
 import * as bcrypt from 'bcrypt';
 
 vi.mock('bcrypt', () => ({

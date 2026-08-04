@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { BaseModal } from '../Common/BaseModal';
 import { useGetTopHashtagsQuery } from '../../store/api/vibesApi';
 import { fetchApi } from '../../services/api';
@@ -81,6 +82,7 @@ export const BackgroundImageModal: React.FC<BackgroundImageModalProps> = ({
   onSelect,
   currentUrl = '',
 }) => {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<'themes' | 'unsplash'>('themes');
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const { data: topHashtagsData = [] } = useGetTopHashtagsQuery(10);
@@ -92,11 +94,11 @@ export const BackgroundImageModal: React.FC<BackgroundImageModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const categories = ['ALL', ...Array.from(new Set(PRESET_THEMES.map((t) => t.category)))];
+  const categories = ['ALL', ...Array.from(new Set(PRESET_THEMES.map((theme) => theme.category)))];
 
   const filteredThemes = selectedCategory === 'ALL'
     ? PRESET_THEMES
-    : PRESET_THEMES.filter((t) => t.category === selectedCategory);
+    : PRESET_THEMES.filter((theme) => theme.category === selectedCategory);
 
   const performSearch = async (query: string) => {
     if (!query.trim()) return;
@@ -115,7 +117,7 @@ export const BackgroundImageModal: React.FC<BackgroundImageModalProps> = ({
       }
     } catch (err: any) {
       console.error(err);
-      setError('Could not connect to Unsplash search. Please check your connection or try again.');
+      setError(t('background.error'));
     } finally {
       setLoading(false);
     }
@@ -143,7 +145,7 @@ export const BackgroundImageModal: React.FC<BackgroundImageModalProps> = ({
     <BaseModal
       isOpen={isOpen}
       onClose={onClose}
-      title="[ SELECT BACKGROUND THEME ]"
+      title={t('background.title')}
       headerIcon="image"
       maxWidth="max-w-2xl"
       borderColor="border-cyan-500/50"
@@ -160,7 +162,7 @@ export const BackgroundImageModal: React.FC<BackgroundImageModalProps> = ({
               onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
             />
             <div className="flex-1 min-w-0">
-              <div className="text-[10px] text-zinc-500 uppercase">CURRENTLY CONFIGURED BACKGROUND:</div>
+              <div className="text-[10px] text-zinc-500 uppercase">{t('background.current')}</div>
               <div className="text-cyan-400 font-bold truncate text-[11px]">{currentUrl}</div>
             </div>
             <button
@@ -168,7 +170,7 @@ export const BackgroundImageModal: React.FC<BackgroundImageModalProps> = ({
               onClick={() => onSelect('')}
               className="px-2 py-1 bg-zinc-800 hover:bg-red-950 hover:text-red-300 border border-zinc-700 text-zinc-400 rounded transition-colors text-[10px] font-bold uppercase"
             >
-              Clear
+              {t('background.clear')}
             </button>
           </div>
         )}
@@ -185,7 +187,7 @@ export const BackgroundImageModal: React.FC<BackgroundImageModalProps> = ({
             }`}
           >
             <span className="material-symbols-outlined text-sm">palette</span>
-            <span>Default Themes</span>
+            <span>{t('background.defaults')}</span>
           </button>
           <button
             type="button"
@@ -197,7 +199,7 @@ export const BackgroundImageModal: React.FC<BackgroundImageModalProps> = ({
             }`}
           >
             <span className="material-symbols-outlined text-sm">travel_explore</span>
-            <span>Unsplash Search</span>
+            <span>{t('background.unsplash')}</span>
           </button>
         </div>
 
@@ -217,7 +219,7 @@ export const BackgroundImageModal: React.FC<BackgroundImageModalProps> = ({
                       : 'bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-700'
                   }`}
                 >
-                  {cat}
+                  {cat === 'ALL' ? t('background.all') : cat}
                 </button>
               ))}
             </div>
@@ -266,7 +268,7 @@ export const BackgroundImageModal: React.FC<BackgroundImageModalProps> = ({
             <form onSubmit={handleSearch} className="flex gap-2">
               <input
                 type="text"
-                placeholder="Search aesthetic (e.g. lofi, cyberpunk, ambient, dark stream...)"
+                placeholder={t('background.searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="flex-1 bg-zinc-900 border border-zinc-800 focus:border-cyan-500 rounded p-2 text-zinc-100 placeholder-zinc-600 outline-none"
@@ -276,7 +278,7 @@ export const BackgroundImageModal: React.FC<BackgroundImageModalProps> = ({
                 disabled={loading || !searchQuery.trim()}
                 className="px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-black font-bold rounded uppercase shrink-0 transition-all shadow-[0_0_10px_rgba(6,182,212,0.3)] disabled:opacity-40"
               >
-                {loading ? 'Searching...' : 'Search'}
+                {loading ? t('background.searching') : t('background.search')}
               </button>
             </form>
 
@@ -285,7 +287,7 @@ export const BackgroundImageModal: React.FC<BackgroundImageModalProps> = ({
               <div className="space-y-1.5">
                 <div className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider flex items-center gap-1">
                   <span className="material-symbols-outlined text-xs">sell</span>
-                  <span>Search by Top Tag:</span>
+                  <span>{t('background.searchByTag')}</span>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {topHashtags.map((tag) => {
@@ -320,7 +322,7 @@ export const BackgroundImageModal: React.FC<BackgroundImageModalProps> = ({
             {/* Photos Grid */}
             {loading ? (
               <div className="h-44 flex items-center justify-center text-zinc-500 font-bold uppercase">
-                <span className="animate-pulse">Loading Unsplash results...</span>
+                <span className="animate-pulse">{t('background.loading')}</span>
               </div>
             ) : photos.length > 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[300px] overflow-y-auto pr-1">
@@ -345,7 +347,7 @@ export const BackgroundImageModal: React.FC<BackgroundImageModalProps> = ({
                       loading="lazy"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <span className="text-[9px] text-zinc-400 truncate">By {photo.user.name}</span>
+                      <span className="text-[9px] text-zinc-400 truncate">{t('background.by', { name: photo.user.name })}</span>
                     </div>
                     {currentUrl === photo.urls.regular && (
                       <div className="absolute top-1 right-1 bg-cyan-500 text-black rounded-full p-0.5 shadow flex items-center justify-center">
@@ -357,12 +359,12 @@ export const BackgroundImageModal: React.FC<BackgroundImageModalProps> = ({
               </div>
             ) : searchQuery.trim() && !loading ? (
               <div className="h-44 flex items-center justify-center text-zinc-600 font-bold uppercase">
-                No matching results. Try another keyword.
+                {t('background.empty')}
               </div>
             ) : (
               <div className="h-44 flex flex-col items-center justify-center text-zinc-600 space-y-1.5">
                 <span className="material-symbols-outlined text-3xl">cloud_queue</span>
-                <span className="font-bold uppercase text-[10px]">Type a keyword above to explore Unsplash</span>
+                <span className="font-bold uppercase text-[10px]">{t('background.empty')}</span>
               </div>
             )}
           </div>
@@ -375,7 +377,7 @@ export const BackgroundImageModal: React.FC<BackgroundImageModalProps> = ({
             onClick={onClose}
             className="px-4 py-2 text-zinc-400 hover:text-zinc-200 transition-colors uppercase font-bold text-[11px]"
           >
-            [ Close ]
+            {t('background.close')}
           </button>
         </div>
       </div>

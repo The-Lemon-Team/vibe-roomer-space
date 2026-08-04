@@ -9,6 +9,15 @@ import { useAuthStore } from '../../../store/useAuthStore';
 // Mock the Zustand stores
 vi.mock('../../../store/useAtmosphericStore', () => ({
   useAtmosphericStore: vi.fn(),
+  parseHashRoute: vi.fn(() => ({
+    viewMode: 'rooms',
+    tag: '#ALL',
+    tagMode: 'live',
+  })),
+  updateHashRoute: vi.fn(),
+  FEED_SCOPE_OPTIONS: [],
+  isFeedScope: vi.fn(),
+  isLiveFeedGroup: vi.fn(),
 }));
 
 vi.mock('../../../store/useAuthStore', () => ({

@@ -5,7 +5,7 @@
   "main": "dist/main.js",
   "scripts": {
     "dev": "node --watch --require @swc-node/register src/main.ts",
-    "build": "tsc",
+    "build": "tsc && node -e \"const fs=require('fs'); fs.mkdirSync('dist/src/generated', { recursive: true }); fs.cpSync('src/generated', 'dist/src/generated', { recursive: true, force: false, errorOnExist: false });\"",
     "start": "node --require @swc-node/register src/main.ts",
     "start:dev": "node --watch --require @swc-node/register src/main.ts",
     "start:prod": "node dist/main.js",

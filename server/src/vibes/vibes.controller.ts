@@ -32,7 +32,7 @@ export class VibesController {
   getVibes(
     @Query('tag') tag?: string,
     @Query('authorId') authorId?: string,
-    @Query('inMainFeed') inMainFeed?: boolean,
+    @Query('inMainFeed', new ParseBoolPipe({ optional: true })) inMainFeed?: boolean,
     @Query('search') search?: string,
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page?: number,
     @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit?: number,

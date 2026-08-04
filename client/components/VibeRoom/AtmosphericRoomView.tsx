@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type {
   VibeItem,
   RoomConfig,
@@ -11,6 +12,7 @@ import { useAddStreamItemMutation, useUpdateRoomBackgroundMutation } from '../..
 import { useGetVibesQuery } from '../../store/api/vibesApi';
 import { CyberAudioPlayer } from '../Player/CyberAudioPlayer';
 import { checkRoomPostingPermission } from '../../utils/roomPermissions';
+import { resolveMediaUrl } from '../../utils/resolveMediaUrl';
 import { RoomNewsBlock } from './RoomNewsBlock';
 import { RoomNotesBlock } from './RoomNotesBlock';
 import { BaseModal } from '../Common/BaseModal';
@@ -28,6 +30,7 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
   vibeItem,
   children,
 }) => {
+  const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const activeTag = useAppSelector((s) => s.ui.activeTag);
   const activeCreatedRoom = useAppSelector((s) => s.ui.activeCreatedRoom);
@@ -81,12 +84,14 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
     currentRoomVibe?.roomConfig?.themeColor ||
     '#00F0FF';
 
-  const customBgImage = (
-    targetRoom?.poster ||
-    targetRoom?.roomConfig?.bgImageUrl ||
-    roomConfig?.bgImageUrl ||
-    ''
-  ).trim();
+  const customBgImage = resolveMediaUrl(
+    (
+      targetRoom?.poster ||
+      targetRoom?.roomConfig?.bgImageUrl ||
+      roomConfig?.bgImageUrl ||
+      ''
+    ).trim(),
+  );
   const hasCustomBg = !!customBgImage;
 
   // Background edit modal state
@@ -210,7 +215,7 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
               className="text-xs text-zinc-300 hover:text-white px-3 py-1.5 bg-zinc-900 border border-zinc-800 hover:border-cyan-500/50 rounded flex items-center space-x-1 font-bold transition-all"
             >
               <span className="material-symbols-outlined text-sm">arrow_back</span>
-              <span>[ROOMS_DIRECTORY]</span>
+              <span>{t('rooms.roomsDirectory')}</span>
             </button>
 
             <div
@@ -230,7 +235,7 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
                   : 'bg-purple-950 text-purple-300 border-purple-500/60'
               }`}
             >
-              ● {targetRoom?.isPublic !== false ? 'PUBLIC STREAM ROOM' : 'PRIVATE ROOM'}
+              ● {targetRoom?.isPublic !== false ? t('rooms.publicStreamRoom') : t('rooms.privateRoom')}
             </span>
           </div>
         </div>
@@ -275,14 +280,14 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
             className="absolute top-4 right-4 z-20 px-3 py-1.5 bg-zinc-950/80 hover:bg-zinc-900 border border-zinc-700 hover:border-cyan-400 text-cyan-300 hover:text-white rounded font-mono text-xs font-bold transition-all shadow-lg flex items-center space-x-1.5 backdrop-blur-md"
           >
             <span className="material-symbols-outlined text-sm">wallpaper</span>
-            <span>{hasCustomBg ? '[ EDIT ROOM BACKGROUND ]' : '[ EDIT BACKGROUND (BLACK CELLS) ]'}</span>
+            <span>{t('rooms.editBackground')}</span>
           </button>
 
           <div className="absolute bottom-6 left-6 right-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div className="space-y-2">
               {/* Attached Hashtags Header */}
               <div className="flex flex-wrap items-center gap-2 font-mono text-xs">
-                <span className="text-zinc-400 font-bold">[ATTACHED_HASHTAGS]:</span>
+                <span className="text-zinc-400 font-bold">{t('rooms.attachedHashtags')}</span>
                 {roomTags.map((tag: string) => (
                   <button
                     key={tag}
@@ -310,7 +315,7 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
                     onClick={() => dispatch(enterVibePage(currentRoomVibe))}
                     className="px-3 py-1.5 bg-cyan-950 border border-cyan-500/80 text-cyan-300 hover:bg-cyan-900 rounded font-bold transition-colors flex items-center space-x-1.5"
                   >
-                    <span>★ ORIGIN VIBE: {currentRoomVibe.title}</span>
+                    <span>{t('rooms.originVibe')} {currentRoomVibe.title}</span>
                     <span className="material-symbols-outlined text-xs">arrow_forward</span>
                   </button>
                 </div>
@@ -319,19 +324,19 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
 
             <div className="font-mono text-[10px] text-zinc-400 space-y-1 bg-zinc-950/90 p-3 rounded-lg border border-zinc-800 shrink-0 backdrop-blur-md">
               <div>
-                STREAM_OPERATOR: <span className="text-cyan-400 font-bold">{targetRoom?.authorName || 'operator'}</span>
+                {t('rooms.streamOperator')}: <span className="text-cyan-400 font-bold">{targetRoom?.authorName || 'operator'}</span>
               </div>
               <div>
-                MEDIA_PHOTOS: <span className="text-cyan-400">{roomImages.length} ATTACHED</span>
+                {t("rooms.photos")}: <span className="text-cyan-400">{roomImages.length}</span>
               </div>
               <div>
-                STREAM_ITEMS: <span className="text-emerald-400">{streamItems.length} POSTED</span>
+                {t("rooms.items")}: <span className="text-emerald-400">{streamItems.length}</span>
               </div>
               <div>
-                NEWS_ITEMS: <span className="text-amber-400">{targetRoom?.news?.length || 0} ATTACHED</span>
+                {t("rooms.news")}: <span className="text-amber-400">{targetRoom?.news?.length || 0}</span>
               </div>
               <div>
-                ROOM_NOTES: <span className="text-cyan-400">{targetRoom?.notes?.length || 0} ATTACHED</span>
+                {t("rooms.notes")}: <span className="text-cyan-400">{targetRoom?.notes?.length || 0}</span>
               </div>
             </div>
           </div>
@@ -350,25 +355,28 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
                     <div className="flex items-center space-x-2">
                       <span className="text-cyan-400 font-bold flex items-center space-x-1">
                         <span className="material-symbols-outlined text-sm">cell_tower</span>
-                        <span>+ TRANSMIT STREAM CONTENT TO ROOM</span>
+                        <span>{t('rooms.transmitStream')}</span>
                       </span>
                       <span className="px-2 py-0.5 bg-cyan-950/80 border border-cyan-500/60 text-cyan-300 text-[10px] font-bold rounded">
                         [CREATOR MODE: AUTHORIZED]
                       </span>
                     </div>
                     <div className="flex items-center space-x-1 text-[10px]">
-                      {(['text', 'image', 'youtube', 'music'] as const).map((t) => (
+                      {(['text', 'image', 'youtube', 'music'] as const).map((typeKey) => (
                         <button
-                          key={t}
+                          key={typeKey}
                           type="button"
-                          onClick={() => setStreamType(t)}
+                          onClick={() => setStreamType(typeKey)}
                           className={`px-2 py-0.5 rounded font-bold uppercase transition-colors ${
-                            streamType === t
+                            streamType === typeKey
                               ? 'bg-cyan-950 text-cyan-400 border border-cyan-600'
                               : 'bg-zinc-950 text-zinc-500 hover:text-zinc-300'
                           }`}
                         >
-                          {t}
+                          {typeKey === 'text' ? t('rooms.typeText')
+                            : typeKey === 'image' ? t('rooms.typeImage')
+                            : typeKey === 'youtube' ? t('rooms.typeYoutube')
+                            : t('rooms.typeMusic')}
                         </button>
                       ))}
                     </div>
@@ -379,12 +387,12 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
                       rows={2}
                       placeholder={
                         streamType === 'image'
-                          ? 'Image description / caption...'
+                          ? t('rooms.placeholderText')
                           : streamType === 'youtube'
-                          ? 'YouTube title or description...'
+                          ? t('rooms.placeholderText')
                           : streamType === 'music'
-                          ? 'Audio track description...'
-                          : 'Post update transmission to room stream...'
+                          ? t('rooms.placeholderText')
+                          : t('rooms.placeholderText')
                       }
                       value={streamInput}
                       onChange={(e) => setStreamInput(e.target.value)}
@@ -416,7 +424,7 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
                         className="px-4 py-1.5 bg-cyan-400 text-black font-bold text-xs rounded hover:bg-cyan-300 transition-colors uppercase flex items-center space-x-1"
                       >
                         <span className="material-symbols-outlined text-sm">send</span>
-                        <span>POST TO STREAM</span>
+                        <span>{t('rooms.postToStream')}</span>
                       </button>
                     </div>
                   </form>
@@ -426,14 +434,16 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
                   <div className="flex items-center justify-between text-xs border-b border-zinc-800/80 pb-2">
                     <div className="flex items-center space-x-2">
                       <span className="material-symbols-outlined text-amber-400 text-sm">lock</span>
-                      <span className="text-amber-400 font-bold tracking-wider">[CREATOR TRANSMISSION MODE]</span>
+                      <span className="text-amber-400 font-bold tracking-wider">{t('rooms.creatorMode')}</span>
                     </div>
                     <span className="px-2 py-0.5 bg-amber-950/80 border border-amber-500/60 text-amber-300 text-[10px] font-bold rounded uppercase">
-                      CREATOR ONLY
+                      {t('rooms.creatorOnly')}
                     </span>
                   </div>
                   <p className="text-xs text-zinc-300 leading-relaxed pt-1">
-                    {postingPermission.reason}
+                    {postingPermission.reason
+                      ? t(postingPermission.reason, { author: targetRoom?.authorName || 'operator' })
+                      : null}
                   </p>
                   {!isAuthenticated && (
                     <div className="pt-2 flex justify-end">
@@ -442,7 +452,7 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
                         className="px-3 py-1 bg-zinc-800 hover:bg-zinc-700 text-cyan-300 border border-cyan-500/40 rounded text-xs font-bold transition-all flex items-center space-x-1"
                       >
                         <span className="material-symbols-outlined text-xs">login</span>
-                        <span>LOG IN TO VERIFY CREATOR IDENTITY</span>
+                        <span>{t('rooms.loginToPost')}</span>
                       </button>
                     </div>
                   )}
@@ -455,7 +465,7 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
               <div className="space-y-3 font-mono">
                 <div className="text-xs text-cyan-400 font-bold uppercase tracking-wider flex items-center space-x-1">
                   <span className="material-symbols-outlined text-sm">graphic_eq</span>
-                  <span>[ROOM_AUDIO_STREAM]</span>
+                  <span>{t('rooms.audioBlock')}</span>
                 </div>
                 <CyberAudioPlayer
                   src={musicUrl}
@@ -472,9 +482,9 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
                 <div className="flex justify-between items-center text-xs border-b border-zinc-800 pb-2">
                   <span className="text-amber-400 font-bold flex items-center space-x-1">
                     <span className="material-symbols-outlined text-sm">play_circle</span>
-                    <span>[VIDEO_CANVAS_WIDGET]</span>
+                    <span>{t('rooms.videoBlock')}</span>
                   </span>
-                  <span className="text-zinc-500 text-[10px]">LIVE MEDIA FEED</span>
+                  <span className="text-zinc-500 text-[10px]">{t('rooms.liveMediaFeed')}</span>
                 </div>
                 <div className="aspect-video w-full rounded-lg overflow-hidden border border-zinc-800 bg-black">
                   <iframe
@@ -493,7 +503,7 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
                 <div className="flex justify-between items-center text-xs border-b border-zinc-800 pb-2">
                   <span className="text-emerald-400 font-bold flex items-center space-x-1">
                     <span className="material-symbols-outlined text-sm">photo_library</span>
-                    <span>[ATTACHED_PHOTO_GALLERY]</span>
+                    <span>{t('rooms.galleryBlock')}</span>
                   </span>
                   <span className="text-zinc-500 text-[10px]">{roomImages.length} ATTACHED PHOTOS</span>
                 </div>
@@ -504,7 +514,7 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
                       className="aspect-video rounded-lg border border-zinc-800 overflow-hidden bg-black group relative shadow"
                     >
                       <img
-                        src={img}
+                        src={resolveMediaUrl(img)}
                         alt={`Room photo ${idx}`}
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                       />
@@ -520,7 +530,7 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
                 <div className="flex justify-between items-center text-xs text-zinc-400 border-b border-zinc-800 pb-2">
                   <span className="font-bold text-cyan-400 flex items-center space-x-1">
                     <span className="material-symbols-outlined text-sm">stream</span>
-                    <span>ROOM STREAM ACTIVITY TIMELINE</span>
+                    <span>{t('rooms.timelineBlock')}</span>
                   </span>
                   <span>{streamItems.length} ITEMS</span>
                 </div>
@@ -537,7 +547,7 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
 
                       {item.type === 'image' && item.mediaUrls && item.mediaUrls[0] && (
                         <div className="aspect-video max-h-60 rounded overflow-hidden border border-zinc-800 bg-black mt-2">
-                          <img src={item.mediaUrls[0]} alt="Stream attachment" className="w-full h-full object-cover" />
+                          <img src={resolveMediaUrl(item.mediaUrls[0])} alt="Stream attachment" className="w-full h-full object-cover" />
                         </div>
                       )}
 
@@ -568,7 +578,7 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
               <div className="flex justify-between items-center text-xs border-b border-zinc-800 pb-2">
                 <span className="text-cyan-400 font-bold flex items-center space-x-1">
                   <span className="material-symbols-outlined text-sm">schedule</span>
-                  <span>STREAM_CLOCK</span>
+                  <span>{t('rooms.streamClock')}</span>
                 </span>
                 <span className="text-zinc-500 text-[10px]">UTC+03:00</span>
               </div>
@@ -578,7 +588,7 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
                   {timeStr || '04:22'} <span className="text-xl font-bold text-cyan-400">{ampm}</span>
                 </div>
                 <div className="text-xs text-zinc-500 tracking-widest mt-1">
-                  ROOM TRANSMISSION ACTIVE
+                  {t('rooms.transmissionActive')}
                 </div>
               </div>
             </div>
@@ -588,14 +598,14 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
               <div className="flex justify-between items-center text-xs border-b border-zinc-800 pb-2">
                 <span className="text-zinc-300 font-bold flex items-center space-x-1">
                   <span className="material-symbols-outlined text-sm text-cyan-400">tune</span>
-                  <span>ATMOSPHERE_CONTROLS</span>
+                  <span>{t('rooms.atmosphereControls')}</span>
                 </span>
               </div>
 
               <div className="space-y-3 text-xs">
                 <div className="space-y-1 bg-zinc-950 p-3 rounded border border-zinc-800/80">
                   <div className="flex justify-between text-zinc-400">
-                    <span>AMBIENT DAMPENING</span>
+                    <span>{t('atmosphere.dampening')}</span>
                     <span style={{ color: activeColor }}>{noiseLevel}%</span>
                   </div>
                   <input
@@ -610,7 +620,7 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
 
                 <div className="space-y-1 bg-zinc-950 p-3 rounded border border-zinc-800/80">
                   <div className="flex justify-between text-zinc-400">
-                    <span>HAPTIC INTENSITY</span>
+                    <span>{t('atmosphere.haptic')}</span>
                     <span style={{ color: activeColor }}>{hapticLevel}%</span>
                   </div>
                   <input
@@ -625,9 +635,9 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
 
                 <div className="space-y-1 bg-zinc-950 p-3 rounded border border-zinc-800/80">
                   <div className="flex justify-between items-center text-zinc-400 mb-1">
-                    <span>ROOM BACKGROUND ENGINE</span>
+                    <span>{t('atmosphere.bgEngine')}</span>
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded border uppercase ${hasCustomBg ? 'bg-cyan-950 text-cyan-300 border-cyan-500/60' : 'bg-zinc-900 text-zinc-400 border-zinc-700'}`}>
-                      {hasCustomBg ? 'CUSTOM IMAGE' : 'BLACK CELLS GRID'}
+                      {hasCustomBg ? t('rooms.customBg') : t('rooms.blackCellsBg')}
                     </span>
                   </div>
                   <button
@@ -643,7 +653,7 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
                     className="w-full py-1.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 hover:border-cyan-500/60 text-cyan-400 rounded text-center text-xs font-bold transition-all flex items-center justify-center space-x-1 uppercase"
                   >
                     <span className="material-symbols-outlined text-sm">wallpaper</span>
-                    <span>EDIT WHOLE ROOM BACKGROUND</span>
+                    <span>{t('rooms.editBackground')}</span>
                   </button>
                 </div>
               </div>
@@ -662,7 +672,7 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
       <BaseModal
         isOpen={isBgModalOpen}
         onClose={() => setIsBgModalOpen(false)}
-        title="[ EDIT WHOLE ROOM BACKGROUND ]"
+        title={t('background.title')}
         headerIcon="wallpaper"
         maxWidth="max-w-lg"
         containerClassName="rounded-xl"
@@ -670,19 +680,19 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
         <div className="p-6 space-y-5 font-mono text-xs">
           <div className="space-y-1">
             <label className="block text-zinc-300 font-bold uppercase">
-              CURRENT ROOM BACKGROUND STATUS
+              {t('background.status')}
             </label>
             <div className="p-3 bg-zinc-900/90 border border-zinc-800 rounded flex items-center justify-between">
-              <span className="text-zinc-400">BACKGROUND MODE:</span>
+              <span className="text-zinc-400">{t('background.current')}:</span>
               <span className={`font-bold px-2.5 py-1 rounded border text-[10px] uppercase ${hasCustomBg ? 'bg-cyan-950 text-cyan-300 border-cyan-500/60' : 'bg-zinc-950 text-emerald-400 border-emerald-500/50'}`}>
-                {hasCustomBg ? '● CUSTOM IMAGE ACTIVE' : '● STANDART BLACK CELLS GRID (DEFAULT)'}
+                {hasCustomBg ? t('rooms.customBg') : t('rooms.blackCellsBg')}
               </span>
             </div>
           </div>
 
           <div className="space-y-1">
             <label className="block text-zinc-300 font-bold uppercase">
-              CUSTOM BACKGROUND IMAGE URL
+              {t('createRoom.background')}
             </label>
             <input
               type="url"
@@ -713,9 +723,9 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
               >
                 <div className="text-[11px] flex items-center space-x-1 font-bold">
                   <span className="material-symbols-outlined text-xs">grid_4x4</span>
-                  <span>STANDART BLACK CELLS</span>
+                  <span>{t('rooms.blackCells')}</span>
                 </div>
-                <div className="text-[9px] text-zinc-500 font-normal mt-0.5">Empty default dark grid cells</div>
+                <div className="text-[9px] text-zinc-500 font-normal mt-0.5">{t('rooms.emptyBlackCells')}</div>
               </button>
 
               <button
@@ -733,9 +743,9 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
               >
                 <div className="text-[11px] flex items-center space-x-1 font-bold">
                   <span className="material-symbols-outlined text-xs">code</span>
-                  <span>NEON MATRIX</span>
+                  <span>{t('rooms.neonMatrix')}</span>
                 </div>
-                <div className="text-[9px] text-zinc-500 font-normal mt-0.5">Tactical cyber matrix grid</div>
+                <div className="text-[9px] text-zinc-500 font-normal mt-0.5">{t('rooms.neonMatrixDesc')}</div>
               </button>
 
               <button
@@ -753,9 +763,9 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
               >
                 <div className="text-[11px] flex items-center space-x-1 font-bold">
                   <span className="material-symbols-outlined text-xs">directions_car</span>
-                  <span>SYNTHWAVE RUN</span>
+                  <span>{t('rooms.synthwave')}</span>
                 </div>
-                <div className="text-[9px] text-zinc-500 font-normal mt-0.5">Neon highway ambient night</div>
+                <div className="text-[9px] text-zinc-500 font-normal mt-0.5">{t('rooms.synthwaveDesc')}</div>
               </button>
 
               <button
@@ -773,9 +783,9 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
               >
                 <div className="text-[11px] flex items-center space-x-1 font-bold">
                   <span className="material-symbols-outlined text-xs">water_drop</span>
-                  <span>RAINY ALLEY</span>
+                  <span>{t('rooms.rainyAlley')}</span>
                 </div>
-                <div className="text-[9px] text-zinc-500 font-normal mt-0.5">Wet street rain reflections</div>
+                <div className="text-[9px] text-zinc-500 font-normal mt-0.5">{t('rooms.rainyAlleyDesc')}</div>
               </button>
             </div>
           </div>
@@ -793,7 +803,7 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
               }}
               className="px-3 py-1.5 bg-red-950/60 border border-red-800/80 text-red-400 hover:bg-red-900 rounded font-bold transition-colors uppercase text-[11px]"
             >
-              CLEAR TO BLACK CELLS
+              {t('background.clearApply')}
             </button>
 
             <div className="flex items-center space-x-2">
@@ -802,7 +812,7 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
                 onClick={() => setIsBgModalOpen(false)}
                 className="px-4 py-1.5 text-zinc-400 hover:text-zinc-200 transition-colors uppercase text-xs"
               >
-                CANCEL
+                {t('background.cancel')}
               </button>
               <button
                 type="button"
@@ -814,7 +824,7 @@ export const AtmosphericRoomView: React.FC<AtmosphericRoomViewProps> = ({
                 }}
                 className="px-5 py-1.5 bg-cyan-400 text-black font-bold rounded hover:bg-cyan-300 transition-all uppercase text-xs shadow-[0_0_12px_rgba(0,240,255,0.3)]"
               >
-                APPLY BACKGROUND
+                {t('background.apply')}
               </button>
             </div>
           </div>

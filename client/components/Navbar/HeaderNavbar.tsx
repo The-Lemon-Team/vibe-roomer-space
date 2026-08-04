@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import {
   setActiveTag,
@@ -9,8 +10,10 @@ import {
 } from '../../store/uiSlice';
 import { setAuthModalOpen } from '../../store/authSlice';
 import { logout } from '../../store/authSlice';
+import { LanguageSwitcher } from '../Common/LanguageSwitcher';
 
 export const HeaderNavbar: React.FC = () => {
+  const { t } = useTranslation();
   const dispatch = useAppDispatch();
 
   // ── UI selectors ────────────────────────────────────────────────────────
@@ -21,8 +24,14 @@ export const HeaderNavbar: React.FC = () => {
   // ── Auth selectors ──────────────────────────────────────────────────────
   const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
   const user = useAppSelector((s) => s.auth.user);
+  const tagMode = useAppSelector((s) => s.ui.tagMode);
   const isAuthModalOpen = useAppSelector((s) => s.auth.isAuthModalOpen);
   const authModalMode = useAppSelector((s) => s.auth.authModalMode);
+  // Live / All / My Tags are browse-only for vibes; create from Приватные or Admin
+  const canCreate =
+    isAuthenticated &&
+    (tagMode === 'my_vibes' ||
+      (tagMode === 'admin_config' && user?.role === 'ADMIN'));
 
   const [showExit, setShowExit] = React.useState(false);
 
@@ -38,41 +47,45 @@ export const HeaderNavbar: React.FC = () => {
           <button
             onClick={() => dispatch(setMobileSidebarOpen(!isMobileSidebarOpen))}
             className="lg:hidden p-1 mr-1 text-zinc-400 hover:text-cyan-400 focus:outline-none transition-colors"
-            title="Toggle Operator Sidebar"
+            title={t('nav.toggleSidebar')}
           >
             <span className="material-symbols-outlined text-2xl">
               {isMobileSidebarOpen ? 'close' : 'menu'}
             </span>
           </button>
-          <div className="font-sans italic font-black text-xl md:text-2xl tracking-tighter flex items-center space-x-1.5 select-none">
+          {/* Primary mode switch — VIBES / ROOMS live here (not as a trailing ENTER CTA) */}
+          <div className="font-sans italic font-black text-xl md:text-2xl tracking-tighter flex items-center select-none">
             <button
               onClick={() => {
                 dispatch(setActiveTag('#ALL'));
                 dispatch(setViewMode('vibes'));
               }}
-              className={`transition-all duration-200 cursor-pointer focus:outline-none ${isVibesActive
+              className={`px-1 transition-all duration-200 cursor-pointer focus:outline-none ${isVibesActive
                   ? 'text-cyan-400 drop-shadow-[0_0_10px_rgba(0,240,255,0.6)] font-black'
                   : 'text-zinc-500 hover:text-zinc-300 font-bold'
                 }`}
-              title="Navigate to Vibes"
+              title={t('nav.navigateVibes')}
             >
-              VIBES
+              {t('nav.vibes')}
             </button>
+            <span className="text-zinc-700 font-light mx-0.5 select-none" aria-hidden>
+              /
+            </span>
             <button
               onClick={() => dispatch(closeRoomPage())}
-              className={`transition-all duration-200 cursor-pointer focus:outline-none ${isRoomsActive
+              className={`px-1 transition-all duration-200 cursor-pointer focus:outline-none ${isRoomsActive
                   ? 'text-amber-500 drop-shadow-[0_0_10px_rgba(255,176,0,0.6)] font-black'
                   : 'text-zinc-500 hover:text-zinc-300 font-bold'
                 }`}
-              title="Navigate to Rooms List"
+              title={t('nav.navigateRooms')}
             >
-              ROOMS
+              {t('nav.rooms')}
             </button>
           </div>
           <div className="hidden lg:flex items-center space-x-2 border-l border-zinc-800 pl-3">
             {!isAuthenticated && (
               <span className="text-[10px] text-zinc-400 bg-zinc-900 px-2 py-0.5 rounded border border-zinc-800">
-                [SYS: GUEST_MODE]
+                {t('nav.guestMode')}
               </span>
             )}
             <span
@@ -88,14 +101,14 @@ export const HeaderNavbar: React.FC = () => {
         <div className="hidden md:flex items-center space-x-2 text-xs">
           {isVibesActive ? (
             <>
-              <span className="text-cyan-400/80">[ACTIVE_HASHTAG]:</span>
+              <span className="text-cyan-400/80">{t('nav.activeHashtag')}</span>
               <span className="font-bold px-2 py-0.5 rounded bg-cyan-950/60 text-cyan-400 border border-cyan-500/60 uppercase shadow-[0_0_8px_rgba(6,182,212,0.2)]">
                 {activeTag}
               </span>
             </>
           ) : (
             <>
-              <span className="text-amber-500/80">[ACTIVE_HASHTAG]:</span>
+              <span className="text-amber-500/80">{t('nav.activeHashtag')}</span>
               <span className="font-bold px-2 py-0.5 rounded bg-amber-950/60 text-amber-400 border border-amber-500/60 uppercase shadow-[0_0_8px_rgba(255,176,0,0.2)]">
                 {activeTag}
               </span>
@@ -103,21 +116,9 @@ export const HeaderNavbar: React.FC = () => {
           )}
         </div>
 
-        {/* Trailing Actions */}
+        {/* Trailing Actions — auth / create only; mode switch is the brand titles */}
         <div className="flex items-center space-x-2">
-          <button
-            onClick={() => dispatch(setViewMode(viewMode === 'vibes' ? 'rooms' : 'vibes'))}
-            className={`px-3 py-1.5 text-xs font-mono rounded bg-zinc-900 border transition-colors flex items-center space-x-1 ${
-              viewMode === 'vibes'
-                ? 'border-zinc-800 hover:border-amber-500/50 text-amber-500'
-                : 'border-zinc-800 hover:border-cyan-500/50 text-cyan-400'
-            }`}
-          >
-            <span className={`material-symbols-outlined text-sm ${viewMode === 'vibes' ? 'text-amber-500' : 'text-cyan-400'}`}>
-              {viewMode === 'vibes' ? 'sensors' : 'grid_view'}
-            </span>
-            <span>[{viewMode === 'vibes' ? 'ENTER_ROOMS' : 'ENTER_VIBES'}]</span>
-          </button>
+          <LanguageSwitcher />
 
           {/* Auth Action Buttons: Open AuthModal in login or register mode */}
           {!isAuthenticated ? (
@@ -130,7 +131,7 @@ export const HeaderNavbar: React.FC = () => {
                   }`}
               >
                 <span className="material-symbols-outlined text-sm">login</span>
-                <span>[SIGN_IN]</span>
+                <span>{t('nav.signIn')}</span>
               </button>
 
               <button
@@ -141,7 +142,7 @@ export const HeaderNavbar: React.FC = () => {
                   }`}
               >
                 <span className="material-symbols-outlined text-sm">person_add</span>
-                <span>[REGISTER]</span>
+                <span>{t('nav.register')}</span>
               </button>
             </div>
           ) : (
@@ -151,8 +152,8 @@ export const HeaderNavbar: React.FC = () => {
                 className="flex items-center space-x-2 bg-zinc-900/60 border border-zinc-800/80 rounded p-1 cursor-pointer hover:bg-zinc-800/40 select-none transition-colors"
               >
                 <span className="hidden sm:inline-block text-[11px] px-2 py-0.5 text-zinc-300 font-mono">
-                  <span className="text-zinc-500 mr-2">[SYS: AUTH]</span>
-                  OP: <strong className="text-cyan-400">{user?.username}</strong> ({user?.role})
+                  <span className="text-zinc-500 mr-2">{t('nav.sysAuth')}</span>
+                  {t('nav.op')} <strong className="text-cyan-400">{user?.username}</strong> ({user?.role})
                 </span>
 
                 <span className={`material-symbols-outlined text-xs text-zinc-500 transition-transform duration-200 ${showExit ? 'rotate-180 text-cyan-400' : ''}`}>
@@ -173,11 +174,11 @@ export const HeaderNavbar: React.FC = () => {
                         dispatch(logout());
                       }}
                       className="w-full px-2.5 py-1.5 text-xs font-mono rounded bg-red-950/40 border border-red-500/30 text-red-400 hover:bg-red-900/50 hover:border-red-500 transition-all flex items-center justify-between uppercase"
-                      title="Logout Operator Session"
+                      title={t('nav.logoutTitle')}
                     >
                       <span className="flex items-center space-x-1.5">
                         <span className="material-symbols-outlined text-sm">logout</span>
-                        <span>[EXIT]</span>
+                        <span>{t('nav.exit')}</span>
                       </span>
                     </button>
                   </div>
@@ -186,10 +187,11 @@ export const HeaderNavbar: React.FC = () => {
             </div>
           )}
 
-          {isAuthenticated && (
+          {canCreate && (
             <button
               onClick={() => dispatch(setCreateModalOpen(true))}
               className="lg:hidden p-1.5 text-cyan-400 bg-zinc-900 border border-zinc-800 rounded hover:bg-zinc-800"
+              title={tagMode === 'admin_config' ? t('nav.createMainFeed') : t('nav.transmitVibe')}
             >
               <span className="material-symbols-outlined text-lg">add</span>
             </button>

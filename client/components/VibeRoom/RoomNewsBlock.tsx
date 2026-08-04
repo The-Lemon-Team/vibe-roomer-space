@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { CreatedRoom } from '../../store/useAtmosphericStore';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { setAuthModalOpen } from '../../store/authSlice';
@@ -10,6 +11,7 @@ interface RoomNewsBlockProps {
 }
 
 export const RoomNewsBlock: React.FC<RoomNewsBlockProps> = ({ room }) => {
+  const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const user = useAppSelector((s) => s.auth.user);
   const isAuthenticated = useAppSelector((s) => s.auth.isAuthenticated);
@@ -46,10 +48,10 @@ export const RoomNewsBlock: React.FC<RoomNewsBlockProps> = ({ room }) => {
         <div className="flex items-center space-x-2">
           <span className="material-symbols-outlined text-amber-400 text-base">newspaper</span>
           <h3 className="text-xs font-bold text-amber-400 tracking-wider uppercase">
-            [ATTACHED_ROOM_NEWS]
+            {t('news.title')}
           </h3>
           <span className="text-[10px] bg-amber-950/80 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded-full">
-            {newsList.length} ANNOUNCEMENTS
+            {t('news.count', { count: newsList.length })}
           </span>
         </div>
 
@@ -61,7 +63,7 @@ export const RoomNewsBlock: React.FC<RoomNewsBlockProps> = ({ room }) => {
             <span className="material-symbols-outlined text-sm">
               {isFormOpen ? 'close' : 'add'}
             </span>
-            <span>{isFormOpen ? 'CANCEL' : '+ ADD NEWS'}</span>
+            <span>{isFormOpen ? t('news.cancel') : t('news.add')}</span>
           </button>
         )}
       </div>
@@ -73,13 +75,13 @@ export const RoomNewsBlock: React.FC<RoomNewsBlockProps> = ({ room }) => {
           className="bg-zinc-950 border border-amber-500/30 rounded-lg p-3 space-y-3 shadow-inner"
         >
           <div className="text-[10px] text-amber-400 font-bold uppercase tracking-widest border-b border-zinc-800 pb-1">
-            // PUBLISH ROOM ANNOUNCEMENT
+            {t('news.publishHeader')}
           </div>
 
           <div>
             <input
               type="text"
-              placeholder="News headline title..."
+              placeholder={t("news.titlePlaceholder")}
               value={newsTitle}
               onChange={(e) => setNewsTitle(e.target.value)}
               className="w-full bg-zinc-900 border border-zinc-800 rounded px-2.5 py-1.5 text-xs text-amber-200 placeholder-zinc-600 outline-none focus:border-amber-500"
@@ -90,7 +92,7 @@ export const RoomNewsBlock: React.FC<RoomNewsBlockProps> = ({ room }) => {
           <div>
             <textarea
               rows={3}
-              placeholder="News transmission body text..."
+              placeholder={t("news.contentPlaceholder")}
               value={newsContent}
               onChange={(e) => setNewsContent(e.target.value)}
               className="w-full bg-zinc-900 border border-zinc-800 rounded p-2.5 text-xs text-zinc-200 placeholder-zinc-600 outline-none focus:border-amber-500"
@@ -104,14 +106,14 @@ export const RoomNewsBlock: React.FC<RoomNewsBlockProps> = ({ room }) => {
               onClick={() => setIsFormOpen(false)}
               className="px-3 py-1 bg-zinc-900 text-zinc-400 text-xs rounded hover:text-white transition-colors"
             >
-              DISCARD
+              {t('news.discard')}
             </button>
             <button
               type="submit"
               className="px-4 py-1 bg-amber-400 text-black font-bold text-xs rounded hover:bg-amber-300 transition-colors uppercase flex items-center space-x-1"
             >
               <span className="material-symbols-outlined text-sm">campaign</span>
-              <span>PUBLISH NEWS</span>
+              <span>{t('news.publish')}</span>
             </button>
           </div>
         </form>
@@ -120,7 +122,7 @@ export const RoomNewsBlock: React.FC<RoomNewsBlockProps> = ({ room }) => {
       {/* Permission hint if cannot post */}
       {!permission.canPost && !newsList.length && (
         <div className="text-center py-6 bg-zinc-950/60 rounded-lg border border-zinc-800/80 text-xs text-zinc-500">
-          No news published for this room yet.
+          {t('news.empty')}
         </div>
       )}
 
@@ -156,7 +158,7 @@ export const RoomNewsBlock: React.FC<RoomNewsBlockProps> = ({ room }) => {
                   <button
                     onClick={() => deleteRoomNews({ roomId: room.id, newsId: item.id })}
                     className="text-zinc-600 hover:text-red-400 text-xs transition-colors opacity-0 group-hover:opacity-100"
-                    title="Delete News Announcement"
+                    title={t("news.delete")}
                   >
                     <span className="material-symbols-outlined text-sm">delete</span>
                   </button>

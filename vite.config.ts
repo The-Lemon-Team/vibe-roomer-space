@@ -9,4 +9,13 @@ export default defineConfig({
       '@': path.resolve(__dirname, './client'),
     },
   },
+  server: {
+    // Match production nginx: serve local uploads from the API host.
+    proxy: {
+      '/uploads': {
+        target: process.env.VITE_API_URL || 'http://localhost:3001',
+        changeOrigin: true,
+      },
+    },
+  },
 });

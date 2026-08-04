@@ -91,14 +91,6 @@ export interface UpdateRoomBackgroundRequest {
   bgImageUrl: string | null;
 }
 
-export interface CreateRoomFromVibeRequest {
-  vibeId: string;
-  title: string;
-  isPublic: boolean;
-  tags: string[];
-  roomConfig?: RoomConfig;
-}
-
 // ── Slice ──────────────────────────────────────────────────────────────────
 
 export const roomsApi = createApi({
@@ -254,23 +246,6 @@ export const roomsApi = createApi({
         params: tag && tag !== '#ALL' ? { tag } : {},
       }),
     }),
-
-    // ── POST /rooms (from vibe origin) ─────────────────────────────
-    createRoomFromVibe: builder.mutation<CreatedRoom, CreateRoomFromVibeRequest>({
-      query: ({ vibeId, title, isPublic, tags, roomConfig }) => ({
-        url: '/rooms',
-        method: 'POST',
-        body: {
-          title,
-          isPublic,
-          tags,
-          originVibeId: vibeId,
-          originVibeTitle: title,
-          roomConfig,
-        },
-      }),
-      invalidatesTags: [{ type: 'Room', id: 'LIST' }],
-    }),
   }),
 });
 
@@ -278,7 +253,6 @@ export const {
   useGetRoomsQuery,
   useGetRoomByIdQuery,
   useCreateRoomMutation,
-  useCreateRoomFromVibeMutation,
   useUpdateRoomMutation,
   useDeleteRoomMutation,
   useAddStreamItemMutation,

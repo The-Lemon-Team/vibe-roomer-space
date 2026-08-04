@@ -1,27 +1,21 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { BaseModal } from '../Common/BaseModal';
 import type { CreatedRoom } from '../../store/useAtmosphericStore';
-import { useGetVibesQuery } from '../../store/api/vibesApi';
+import { useGetVibesQuery, useGetTopHashtagsQuery } from '../../store/api/vibesApi';
 import { useGetRoomsQuery } from '../../store/api/roomsApi';
-import { useGetTopHashtagsQuery } from '../../store/api/vibesApi';
-import { fetchApi } from '../../services/api';
+import {
+  useListMediaQuery,
+  useUploadMediaMutation,
+  useLazySearchUnsplashQuery,
+  type UnsplashPhoto,
+} from '../../store/api/mediaApi';
+import { resolveMediaUrl } from '../../utils/resolveMediaUrl';
 
 interface AddImageModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSelect: (url: string) => void;
-}
-
-interface UnsplashPhoto {
-  id: string;
-  urls: {
-    regular: string;
-    thumb: string;
-  };
-  alt_description: string;
-  user: {
-    name: string;
-  };
 }
 
 interface SiteImage {
@@ -34,240 +28,204 @@ interface SiteImage {
   size?: number;
 }
 
+type SourceTab = 'upload' | 'url' | 'unsplash' | 'site';
+
+const EMPTY_VIBES: never[] = [];
+const EMPTY_ROOMS: never[] = [];
+const EMPTY_HASHTAGS: never[] = [];
+const EMPTY_MEDIA: never[] = [];
+
 export const AddImageModal: React.FC<AddImageModalProps> = ({
   isOpen,
   onClose,
   onSelect,
 }) => {
-  // Unsplash is the default tab (priority)
-  const [activeTab, setActiveTab] = useState<'unsplash' | 'url' | 'site'>('unsplash');
+  const { t } = useTranslation();
+  // Manual upload is the default — user crops externally, then adds here
+  const [activeTab, setActiveTab] = useState<SourceTab>('upload');
 
-  // URL Tab
   const [imageUrl, setImageUrl] = useState('');
-
-  // File upload (secondary/fallback)
-  const [showUpload, setShowUpload] = useState(false);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
+  const [uploadPreview, setUploadPreview] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
-  // Unsplash Tab
   const [unsplashQuery, setUnsplashQuery] = useState('');
   const [unsplashPhotos, setUnsplashPhotos] = useState<UnsplashPhoto[]>([]);
-  const [isUnsplashLoading, setIsUnsplashLoading] = useState(false);
   const [unsplashError, setUnsplashError] = useState<string | null>(null);
 
-  // Site Data Tab
   const [siteQuery, setSiteQuery] = useState('');
   const [siteImages, setSiteImages] = useState<SiteImage[]>([]);
-  const [isSiteLoading, setIsSiteLoading] = useState(false);
-  const [siteError, setSiteError] = useState<string | null>(null);
 
-  const { data: vibes = [] } = useGetVibesQuery(undefined);
-  const { data: createdRooms = [] } = useGetRoomsQuery(undefined);
-  const { data: topHashtagsData = [] } = useGetTopHashtagsQuery(10);
+  const { data: vibes = EMPTY_VIBES } = useGetVibesQuery(undefined, { skip: !isOpen });
+  const { data: createdRooms = EMPTY_ROOMS } = useGetRoomsQuery(undefined, { skip: !isOpen });
+  const { data: topHashtagsData = EMPTY_HASHTAGS } = useGetTopHashtagsQuery(10, { skip: !isOpen });
+  const { data: mediaLibrary = EMPTY_MEDIA, isFetching: isMediaFetching } = useListMediaQuery(
+    undefined,
+    { skip: !isOpen },
+  );
+  const [uploadMedia, { isLoading: isUploading }] = useUploadMediaMutation();
+  const [searchUnsplash, { isFetching: isUnsplashLoading }] = useLazySearchUnsplashQuery();
+
   const topHashtags = topHashtagsData.map((h) => (h.name.startsWith('#') ? h.name : `#${h.name}`));
 
-  // Load site images (from store + api)
-  const loadSiteData = async () => {
-    setIsSiteLoading(true);
-    setSiteError(null);
-    try {
-      const tempImages: SiteImage[] = [];
+  useEffect(() => {
+    if (!isOpen) return;
 
-      // 1. Extract from store vibes
-      vibes.forEach((v) => {
-        if (v.images) {
-          v.images.forEach((img) => {
-            if (img && !tempImages.some((t) => t.url === img)) {
-              tempImages.push({
-                url: img,
-                source: `Vibe: ${v.title}`,
-                title: v.title,
-                type: 'vibe',
-              });
-            }
-          });
-        }
-        if (v.roomConfig?.bgImageUrl) {
-          const img = v.roomConfig.bgImageUrl;
+    const tempImages: SiteImage[] = [];
+
+    vibes.forEach((v) => {
+      if (v.images) {
+        v.images.forEach((img) => {
           if (img && !tempImages.some((t) => t.url === img)) {
             tempImages.push({
               url: img,
-              source: `Vibe BG: ${v.title}`,
+              source: `${t('addImage.sourceVibe')} ${v.title}`,
               title: v.title,
               type: 'vibe',
             });
           }
-        }
-      });
-
-      // 2. Extract from store rooms
-      createdRooms.forEach((r: CreatedRoom) => {
-        if (r.poster && !tempImages.some((t) => t.url === r.poster)) {
+        });
+      }
+      if (v.roomConfig?.bgImageUrl) {
+        const img = v.roomConfig.bgImageUrl;
+        if (img && !tempImages.some((t) => t.url === img)) {
           tempImages.push({
-            url: r.poster,
-            source: `Room Poster: ${r.title}`,
-            title: r.title,
-            type: 'room',
+            url: img,
+            source: `Vibe BG: ${v.title}`,
+            title: v.title,
+            type: 'vibe',
           });
         }
-        if (r.images) {
-          r.images.forEach((img: string) => {
-            if (img && !tempImages.some((t) => t.url === img)) {
-              tempImages.push({
-                url: img,
-                source: `Room Image: ${r.title}`,
-                title: r.title,
-                type: 'room',
-              });
-            }
-          });
-        }
-        if (r.roomConfig?.bgImageUrl) {
-          const img = r.roomConfig.bgImageUrl;
+      }
+    });
+
+    createdRooms.forEach((r: CreatedRoom) => {
+      if (r.poster && !tempImages.some((t) => t.url === r.poster)) {
+        tempImages.push({
+          url: r.poster,
+          source: `${t('addImage.sourceRoomPoster')} ${r.title}`,
+          title: r.title,
+          type: 'room',
+        });
+      }
+      if (r.images) {
+        r.images.forEach((img: string) => {
           if (img && !tempImages.some((t) => t.url === img)) {
             tempImages.push({
               url: img,
-              source: `Room BG: ${r.title}`,
+              source: `Room Image: ${r.title}`,
               title: r.title,
               type: 'room',
             });
           }
-        }
-      });
-
-      // 3. Fetch from /media endpoint (uploaded files — returns full Supabase CDN URLs)
-      try {
-        const uploadedList = await fetchApi<{ filename: string; url: string; size: number; updatedAt: string }[]>(
-          '/media'
-        );
-        if (Array.isArray(uploadedList)) {
-          uploadedList.forEach((file) => {
-            if (!tempImages.some((t) => t.url === file.url)) {
-              tempImages.push({
-                url: file.url,          // already a full CDN URL
-                source: `Upload: ${file.filename}`,
-                title: file.filename,
-                type: 'upload',
-                filename: file.filename,
-                updatedAt: file.updatedAt,
-                size: file.size,
-              });
-            }
+        });
+      }
+      if (r.roomConfig?.bgImageUrl) {
+        const img = r.roomConfig.bgImageUrl;
+        if (img && !tempImages.some((t) => t.url === img)) {
+          tempImages.push({
+            url: img,
+            source: `${t('addImage.sourceRoomBg')} ${r.title}`,
+            title: r.title,
+            type: 'room',
           });
         }
-      } catch (err) {
-        console.warn('Failed to load uploads list:', err);
       }
+    });
 
-      setSiteImages(tempImages);
-    } catch (err: any) {
-      setSiteError('Failed to load site image library.');
-    } finally {
-      setIsSiteLoading(false);
-    }
-  };
+    mediaLibrary.forEach((file) => {
+      if (!tempImages.some((t) => t.url === file.url)) {
+        tempImages.push({
+          url: file.url,
+          source: `${t('addImage.sourceUpload')} ${file.filename}`,
+          title: file.originalName || file.filename,
+          type: 'upload',
+          filename: file.filename,
+          updatedAt: file.updatedAt,
+          size: file.size,
+        });
+      }
+    });
 
-  useEffect(() => {
-    if (isOpen) {
-      loadSiteData();
-    }
-  }, [isOpen, vibes, createdRooms]);
+    setSiteImages(tempImages);
+  }, [isOpen, vibes, createdRooms, mediaLibrary]);
 
-  // Reset upload section when modal closes
   useEffect(() => {
     if (!isOpen) {
-      setShowUpload(false);
       setUploadFile(null);
       setUploadError(null);
       setImageUrl('');
+      if (uploadPreview) {
+        URL.revokeObjectURL(uploadPreview);
+        setUploadPreview(null);
+      }
     }
   }, [isOpen]);
 
-  // Handle URL Add
+  const selectFile = (file: File | null) => {
+    if (uploadPreview) URL.revokeObjectURL(uploadPreview);
+    setUploadFile(file);
+    setUploadError(null);
+    setUploadPreview(file ? URL.createObjectURL(file) : null);
+  };
+
   const handleUrlSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     if (!imageUrl.trim()) return;
     onSelect(imageUrl.trim());
     setImageUrl('');
     onClose();
   };
 
-  // Handle File Upload (fallback)
   const handleUploadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     if (!uploadFile) return;
 
-    setIsUploading(true);
     setUploadError(null);
-
-    const formData = new FormData();
-    formData.append('file', uploadFile);
-
     try {
-      // Server now returns a full Supabase CDN URL in `url`
-      const response = await fetchApi<{ url: string }>('/media/upload', {
-        method: 'POST',
-        body: formData,
-        headers: {},
-      });
-
+      const response = await uploadMedia(uploadFile).unwrap();
       onSelect(response.url);
-      setUploadFile(null);
-      setShowUpload(false);
+      selectFile(null);
       onClose();
-    } catch (err: any) {
-      setUploadError(err.message || 'File upload failed');
-    } finally {
-      setIsUploading(false);
+    } catch (err: unknown) {
+      const message =
+        err && typeof err === 'object' && 'data' in err
+          ? String((err as { data?: { message?: string } }).data?.message || t('images.uploadFailed'))
+          : err instanceof Error
+            ? err.message
+            : t('images.uploadFailed');
+      setUploadError(message);
     }
   };
 
-  // Handle Unsplash Search
-  const handleUnsplashSearch = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (!unsplashQuery.trim()) return;
-
-    setIsUnsplashLoading(true);
+  const runUnsplashSearch = async (query: string) => {
+    if (!query.trim()) return;
     setUnsplashError(null);
-
     try {
-      const data = await fetchApi<{ results: UnsplashPhoto[] }>(
-        `/media/unsplash/search?query=${encodeURIComponent(unsplashQuery)}`
-      );
-      if (data && data.results) {
-        setUnsplashPhotos(data.results);
-      } else {
-        setUnsplashPhotos([]);
-      }
-    } catch (err: any) {
-      setUnsplashError('Failed to retrieve Unsplash results.');
-    } finally {
-      setIsUnsplashLoading(false);
+      const data = await searchUnsplash(query.trim()).unwrap();
+      setUnsplashPhotos(data?.results ?? []);
+    } catch {
+      setUnsplashError(t('addImage.error'));
+      setUnsplashPhotos([]);
     }
+  };
+
+  const handleUnsplashSearch = async (e?: React.FormEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    await runUnsplashSearch(unsplashQuery);
   };
 
   const handleUnsplashTagClick = (tag: string) => {
     const cleanTag = tag.startsWith('#') ? tag.slice(1) : tag;
     setUnsplashQuery(cleanTag);
-    setIsUnsplashLoading(true);
-    setUnsplashError(null);
-    fetchApi<{ results: UnsplashPhoto[] }>(
-      `/media/unsplash/search?query=${encodeURIComponent(cleanTag)}`
-    )
-      .then((data) => {
-        if (data && data.results) {
-          setUnsplashPhotos(data.results);
-        } else {
-          setUnsplashPhotos([]);
-        }
-      })
-      .catch(() => setUnsplashError('Failed to retrieve Unsplash results.'))
-      .finally(() => setIsUnsplashLoading(false));
+    void runUnsplashSearch(cleanTag);
   };
 
-  // Filter site images based on search
   const filteredSiteImages = siteImages.filter((img) => {
     if (!siteQuery.trim()) return true;
     const q = siteQuery.toLowerCase();
@@ -278,73 +236,177 @@ export const AddImageModal: React.FC<AddImageModalProps> = ({
     );
   });
 
+  const tabClass = (tab: SourceTab) =>
+    `px-3 py-2 border-b-2 font-bold uppercase transition-all flex items-center gap-1.5 ${
+      activeTab === tab
+        ? 'border-cyan-500 text-cyan-400 bg-cyan-950/20'
+        : 'border-transparent text-zinc-400 hover:text-zinc-200'
+    }`;
+
   return (
     <BaseModal
       isOpen={isOpen}
       onClose={onClose}
-      title="[ ADD IMAGE SOURCE ]"
+      title={t('addImage.title')}
       headerIcon="image"
       maxWidth="max-w-2xl"
       borderColor="border-cyan-500/50"
       shadowClass="shadow-[0_0_40px_rgba(6,182,212,0.25)]"
     >
       <div className="p-6 space-y-5 font-mono text-xs">
-        {/* Tab Selection */}
-        <div className="flex border-b border-zinc-800">
-          {/* Tab 1: Unsplash (default/priority) */}
+        <div className="flex border-b border-zinc-800 overflow-x-auto">
           <button
             type="button"
-            onClick={() => setActiveTab('unsplash')}
-            className={`px-4 py-2 border-b-2 font-bold uppercase transition-all flex items-center gap-1.5 ${
-              activeTab === 'unsplash'
-                ? 'border-cyan-500 text-cyan-400 bg-cyan-950/20'
-                : 'border-transparent text-zinc-400 hover:text-zinc-200'
-            }`}
+            onClick={() => setActiveTab('upload')}
+            className={tabClass('upload')}
+            aria-label={t('widgetsUi.uploadTab')}
           >
-            <span className="material-symbols-outlined text-sm">travel_explore</span>
-            <span>Unsplash</span>
+            <span className="material-symbols-outlined text-sm" aria-hidden>
+              upload
+            </span>
+            <span>{t('addImage.upload')}</span>
             <span className="ml-1 text-[8px] px-1 py-0.5 bg-cyan-900/40 text-cyan-500 border border-cyan-800/50 rounded uppercase">
-              Recommended
+              {t('addImage.primary')}
             </span>
           </button>
-
-          {/* Tab 2: URL paste */}
           <button
             type="button"
             onClick={() => setActiveTab('url')}
-            className={`px-4 py-2 border-b-2 font-bold uppercase transition-all flex items-center gap-1.5 ${
-              activeTab === 'url'
-                ? 'border-cyan-500 text-cyan-400 bg-cyan-950/20'
-                : 'border-transparent text-zinc-400 hover:text-zinc-200'
-            }`}
+            className={tabClass('url')}
+            aria-label="URL tab"
           >
-            <span className="material-symbols-outlined text-sm">link</span>
-            <span>URL</span>
+            <span className="material-symbols-outlined text-sm" aria-hidden>
+              link
+            </span>
+            <span>{t('addImage.url')}</span>
           </button>
-
-          {/* Tab 3: Site library */}
           <button
             type="button"
-            onClick={() => { setActiveTab('site'); }}
-            className={`px-4 py-2 border-b-2 font-bold uppercase transition-all flex items-center gap-1.5 ${
-              activeTab === 'site'
-                ? 'border-cyan-500 text-cyan-400 bg-cyan-950/20'
-                : 'border-transparent text-zinc-400 hover:text-zinc-200'
-            }`}
+            onClick={() => setActiveTab('unsplash')}
+            className={tabClass('unsplash')}
+            aria-label="Unsplash tab"
           >
-            <span className="material-symbols-outlined text-sm">database</span>
-            <span>Library</span>
+            <span className="material-symbols-outlined text-sm" aria-hidden>
+              travel_explore
+            </span>
+            <span>{t('addImage.unsplash')}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('site')}
+            className={tabClass('site')}
+            aria-label="Library tab"
+          >
+            <span className="material-symbols-outlined text-sm" aria-hidden>
+              database
+            </span>
+            <span>{t('addImage.library')}</span>
           </button>
         </div>
 
-        {/* ── Tab 1: Unsplash Search (default) ── */}
+        {/* ── Upload (default) — cropped local files via Media API ── */}
+        {activeTab === 'upload' && (
+          <div className="space-y-4">
+            <p className="text-[10px] text-zinc-500">
+              {t('addImage.uploadHelp')}
+            </p>
+
+            <form onSubmit={handleUploadSubmit} className="space-y-3">
+              <label
+                className={`flex flex-col items-center justify-center gap-2 min-h-[140px] rounded border border-dashed cursor-pointer transition-colors ${
+                  uploadPreview
+                    ? 'border-cyan-600/50 bg-zinc-950'
+                    : 'border-zinc-700 hover:border-cyan-500 bg-zinc-900/40 hover:bg-cyan-950/20'
+                }`}
+              >
+                {uploadPreview ? (
+                  <div className="relative w-full max-w-[280px] max-h-[200px] my-3 flex items-center justify-center overflow-hidden rounded border border-zinc-800 bg-zinc-950">
+                    <img
+                      src={uploadPreview}
+                      alt={t('widgetsUi.uploadPreview')}
+                      className="max-w-full max-h-[200px] w-auto h-auto object-contain"
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <span className="material-symbols-outlined text-3xl text-zinc-500">add_photo_alternate</span>
+                    <span className="text-[10px] uppercase font-bold text-zinc-400">
+                      {t('addImage.chooseFile')}
+                    </span>
+                    <span className="text-[9px] text-zinc-600">{t('addImage.formats')}</span>
+                  </>
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => selectFile(e.target.files?.[0] || null)}
+                />
+              </label>
+
+              {uploadFile && (
+                <div className="flex items-center justify-between gap-2 text-[10px] text-zinc-400">
+                  <span className="truncate">{uploadFile.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => selectFile(null)}
+                    className="text-zinc-500 hover:text-red-400 shrink-0"
+                  >
+                    {t('addImage.clear')}
+                  </button>
+                </div>
+              )}
+
+              {uploadError && (
+                <div className="text-red-400 text-[10px] bg-red-950/20 border border-red-900 p-2 rounded">
+                  {uploadError}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={isUploading || !uploadFile}
+                className="w-full px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-black font-bold rounded uppercase transition-all disabled:opacity-40"
+              >
+                {isUploading ? t('addImage.uploading') : t('addImage.uploadAdd')}
+              </button>
+            </form>
+          </div>
+        )}
+
+        {/* ── URL paste ── */}
+        {activeTab === 'url' && (
+          <form onSubmit={handleUrlSubmit} className="space-y-2">
+            <label className="block text-zinc-400 font-bold uppercase text-[10px]">
+              {t('addImage.urlLabel')}
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="url"
+                placeholder={t('addImage.urlPlaceholder')}
+                value={imageUrl}
+                onChange={(e) => setImageUrl(e.target.value)}
+                className="flex-1 bg-zinc-900 border border-zinc-800 focus:border-cyan-500 rounded p-2 text-zinc-100 placeholder-zinc-600 outline-none"
+                autoFocus
+              />
+              <button
+                type="submit"
+                disabled={!imageUrl.trim()}
+                className="px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-black font-bold rounded uppercase shrink-0 transition-all disabled:opacity-40"
+              >
+                {t('addImage.addUrl')}
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* ── Unsplash ── */}
         {activeTab === 'unsplash' && (
           <div className="space-y-4">
             <form onSubmit={handleUnsplashSearch} className="flex gap-2">
               <input
                 type="text"
-                id="unsplash-search-input"
-                placeholder="Search aesthetic wallpaper..."
+                placeholder={t('addImage.searchPlaceholder')}
                 value={unsplashQuery}
                 onChange={(e) => setUnsplashQuery(e.target.value)}
                 className="flex-1 bg-zinc-900 border border-zinc-800 focus:border-cyan-500 rounded p-2 text-zinc-100 placeholder-zinc-600 outline-none"
@@ -355,13 +417,13 @@ export const AddImageModal: React.FC<AddImageModalProps> = ({
                 disabled={isUnsplashLoading || !unsplashQuery.trim()}
                 className="px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-black font-bold rounded uppercase shrink-0 transition-all disabled:opacity-40"
               >
-                {isUnsplashLoading ? 'Searching...' : 'Search'}
+                {isUnsplashLoading ? t('background.searching') : t('background.search')}
               </button>
             </form>
 
-            {topHashtags && topHashtags.length > 0 && (
+            {topHashtags.length > 0 && (
               <div className="flex flex-wrap gap-1 items-center">
-                <span className="text-[10px] text-zinc-500 uppercase mr-1">Trending:</span>
+                <span className="text-[10px] text-zinc-500 uppercase mr-1">{t('addImage.trending')}</span>
                 {topHashtags.map((tag) => (
                   <button
                     key={tag}
@@ -383,7 +445,7 @@ export const AddImageModal: React.FC<AddImageModalProps> = ({
 
             {isUnsplashLoading ? (
               <div className="h-40 flex items-center justify-center text-zinc-500 animate-pulse">
-                RETRIEVING FROM UNSPLASH...
+                {t('addImage.retrieving')}
               </div>
             ) : unsplashPhotos.length > 0 ? (
               <div className="grid grid-cols-3 gap-2 max-h-[220px] overflow-y-auto pr-1">
@@ -404,7 +466,7 @@ export const AddImageModal: React.FC<AddImageModalProps> = ({
                       loading="lazy"
                     />
                     <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-1">
-                      <span className="text-[8px] text-zinc-300 truncate">By {photo.user.name}</span>
+                      <span className="text-[8px] text-zinc-300 truncate">{t('addImage.by', { name: photo.user.name })}</span>
                     </div>
                   </button>
                 ))}
@@ -412,105 +474,21 @@ export const AddImageModal: React.FC<AddImageModalProps> = ({
             ) : (
               <div className="h-40 flex flex-col items-center justify-center text-zinc-600 space-y-1.5">
                 <span className="material-symbols-outlined text-2xl">travel_explore</span>
-                <span className="font-bold uppercase text-[10px]">Search Unsplash for free high-quality images</span>
-                <span className="text-[10px] text-zinc-700">lofi · cyberpunk · nature · aesthetic · night</span>
+                <span className="font-bold uppercase text-[10px]">
+                  {t('addImage.empty')}
+                </span>
               </div>
             )}
           </div>
         )}
 
-        {/* ── Tab 2: URL paste + file upload (fallback) ── */}
-        {activeTab === 'url' && (
-          <div className="space-y-4">
-            {/* URL paste — primary */}
-            <form onSubmit={handleUrlSubmit} className="space-y-2">
-              <label className="block text-zinc-400 font-bold uppercase text-[10px]">
-                Paste Direct Image URL
-              </label>
-              <div className="flex gap-2">
-                <input
-                  id="url-paste-input"
-                  type="url"
-                  placeholder="https://images.unsplash.com/photo-..."
-                  value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
-                  className="flex-1 bg-zinc-900 border border-zinc-800 focus:border-cyan-500 rounded p-2 text-zinc-100 placeholder-zinc-600 outline-none"
-                  autoFocus
-                />
-                <button
-                  type="submit"
-                  disabled={!imageUrl.trim()}
-                  className="px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-black font-bold rounded uppercase shrink-0 transition-all disabled:opacity-40"
-                >
-                  Add URL
-                </button>
-              </div>
-            </form>
-
-            {/* Divider + upload toggle */}
-            <div>
-              <button
-                type="button"
-                onClick={() => setShowUpload((v) => !v)}
-                className="flex items-center gap-1.5 text-[10px] text-zinc-500 hover:text-zinc-300 transition-colors group"
-              >
-                <span
-                  className={`material-symbols-outlined text-sm transition-transform ${showUpload ? 'rotate-90' : ''}`}
-                >
-                  chevron_right
-                </span>
-                <span className="uppercase font-bold">Upload local file</span>
-                <span className="text-zinc-700 normal-case font-normal">— fallback option</span>
-              </button>
-
-              {showUpload && (
-                <div className="mt-3 space-y-2 pl-4 border-l border-zinc-800">
-                  {/* Hint */}
-                  <p className="text-[10px] text-zinc-600 italic">
-                    ⚠ Prefer URLs or Unsplash when possible — local uploads are stored on the server
-                    and may not persist across deployments.
-                  </p>
-
-                  <form onSubmit={handleUploadSubmit} className="space-y-2">
-                    <div className="flex flex-col sm:flex-row gap-2">
-                      <input
-                        id="file-upload-input"
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => {
-                          setUploadFile(e.target.files?.[0] || null);
-                          setUploadError(null);
-                        }}
-                        className="flex-1 bg-zinc-900 border border-zinc-800 focus:border-zinc-600 rounded p-1.5 text-zinc-400 outline-none file:mr-3 file:py-1 file:px-2 file:rounded file:border-0 file:text-[10px] file:font-bold file:bg-zinc-800 file:text-zinc-400 file:cursor-pointer hover:file:bg-zinc-700"
-                      />
-                      <button
-                        type="submit"
-                        disabled={isUploading || !uploadFile}
-                        className="px-4 py-2 bg-zinc-700 hover:bg-zinc-600 text-zinc-300 font-bold rounded uppercase shrink-0 transition-all disabled:opacity-40 flex items-center justify-center gap-1 text-[10px] border border-zinc-600"
-                      >
-                        {isUploading ? 'Uploading...' : 'Upload'}
-                      </button>
-                    </div>
-                    {uploadError && (
-                      <div className="text-red-400 text-[10px] bg-red-950/20 border border-red-900 p-2 rounded">
-                        {uploadError}
-                      </div>
-                    )}
-                  </form>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* ── Tab 3: Site Library ── */}
+        {/* ── Site Library ── */}
         {activeTab === 'site' && (
           <div className="space-y-4">
             <div className="flex gap-2">
               <input
-                id="site-library-search-input"
                 type="text"
-                placeholder="Search images from vibes, rooms, uploads..."
+                placeholder={t('addImage.librarySearch')}
                 value={siteQuery}
                 onChange={(e) => setSiteQuery(e.target.value)}
                 className="flex-1 bg-zinc-900 border border-zinc-800 focus:border-cyan-500 rounded p-2 text-zinc-100 placeholder-zinc-600 outline-none"
@@ -518,21 +496,15 @@ export const AddImageModal: React.FC<AddImageModalProps> = ({
               />
             </div>
 
-            {siteError && (
-              <div className="text-red-400 text-[10px] bg-red-950/20 border border-red-900 p-2 rounded">
-                {siteError}
-              </div>
-            )}
-
-            {isSiteLoading ? (
+            {isMediaFetching && siteImages.length === 0 ? (
               <div className="h-40 flex items-center justify-center text-zinc-500 animate-pulse">
-                SCANNING SITE LIBRARY...
+                {t('addImage.scanning')}
               </div>
             ) : filteredSiteImages.length > 0 ? (
               <div className="grid grid-cols-3 gap-2 max-h-[220px] overflow-y-auto pr-1">
                 {filteredSiteImages.map((img, idx) => (
                   <button
-                    key={idx}
+                    key={`${img.url}-${idx}`}
                     type="button"
                     onClick={() => {
                       onSelect(img.url);
@@ -541,7 +513,7 @@ export const AddImageModal: React.FC<AddImageModalProps> = ({
                     className="group relative aspect-video rounded border border-zinc-800 overflow-hidden bg-zinc-950 hover:border-cyan-500 transition-colors text-left"
                   >
                     <img
-                      src={img.url}
+                      src={resolveMediaUrl(img.url)}
                       alt={img.title}
                       className="w-full h-full object-cover"
                       loading="lazy"
@@ -553,9 +525,7 @@ export const AddImageModal: React.FC<AddImageModalProps> = ({
                       <span className="text-[8px] text-cyan-400 font-bold uppercase truncate">
                         {img.type}
                       </span>
-                      <span className="text-[9px] text-zinc-100 font-bold truncate">
-                        {img.title}
-                      </span>
+                      <span className="text-[9px] text-zinc-100 font-bold truncate">{img.title}</span>
                     </div>
                   </button>
                 ))}
@@ -564,22 +534,20 @@ export const AddImageModal: React.FC<AddImageModalProps> = ({
               <div className="h-40 flex flex-col items-center justify-center text-zinc-600 space-y-1.5">
                 <span className="material-symbols-outlined text-2xl">database</span>
                 <span className="font-bold uppercase text-[10px]">
-                  {siteImages.length === 0 ? 'No saved images yet' : 'No images match your search'}
+                  t('addImage.libraryEmpty')
                 </span>
-                <span className="text-[10px] text-zinc-700">Images from vibes, rooms &amp; uploads appear here</span>
               </div>
             )}
           </div>
         )}
 
-        {/* Footer */}
         <div className="flex justify-end pt-3 border-t border-zinc-800">
           <button
             type="button"
             onClick={onClose}
             className="px-4 py-2 text-zinc-400 hover:text-zinc-200 transition-colors uppercase font-bold text-[11px]"
           >
-            [ Close ]
+            {t('addImage.close')}
           </button>
         </div>
       </div>

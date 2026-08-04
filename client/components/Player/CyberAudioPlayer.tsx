@@ -1,4 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface CyberAudioPlayerProps {
   src: string;
@@ -10,11 +11,13 @@ interface CyberAudioPlayerProps {
 
 export const CyberAudioPlayer: React.FC<CyberAudioPlayerProps> = ({
   src,
-  title = 'ATMOSPHERIC_AUDIO_STREAM',
+  title,
   autoPlay = false,
   accentColor = '#00F0FF',
   className = '',
 }) => {
+  const { t } = useTranslation();
+  const resolvedTitle = title ?? t('audio.defaultTitle');
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -107,7 +110,7 @@ export const CyberAudioPlayer: React.FC<CyberAudioPlayerProps> = ({
             style={{ backgroundColor: isPlaying ? accentColor : '#52525b' }}
           />
           <span className="text-xs font-bold truncate text-zinc-200 uppercase tracking-wide">
-            🎵 {title}
+            🎵 {resolvedTitle}
           </span>
         </div>
 
@@ -175,7 +178,7 @@ export const CyberAudioPlayer: React.FC<CyberAudioPlayerProps> = ({
 
           <div className="flex justify-between items-center text-[10px] text-zinc-500">
             <span>{formatTime(currentTime)}</span>
-            <span>{duration > 0 ? formatTime(duration) : 'LIVE_STREAM'}</span>
+            <span>{duration > 0 ? formatTime(duration) : t('audio.liveStream')}</span>
           </div>
         </div>
 
@@ -203,7 +206,7 @@ export const CyberAudioPlayer: React.FC<CyberAudioPlayerProps> = ({
 
       {hasError && (
         <div className="text-[10px] text-red-400 mt-1">
-          [ERR_AUDIO_STREAM_UNAVAILABLE]
+          {t('audio.unavailable')}
         </div>
       )}
     </div>

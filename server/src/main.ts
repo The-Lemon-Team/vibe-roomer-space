@@ -1,7 +1,9 @@
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import express from 'express';
 import { AppModule } from './app.module';
+import { getMediaProvider, resolveUploadsDir } from './media/media.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -24,6 +26,11 @@ async function bootstrap() {
       forbidNonWhitelisted: false,
     }),
   );
+
+  if (getMediaProvider() === 'local') {
+    // Expose disk-backed uploads directly when the local media provider is active.
+    app.use('/uploads', express.static(resolveUploadsDir()));
+  }
 
   const port = process.env.PORT || 3001;
   await app.listen(port);

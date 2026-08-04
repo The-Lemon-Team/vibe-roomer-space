@@ -1,20 +1,30 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:3001`;
+/** NestJS mounts all routes under the global `/api` prefix (see server main.ts). */
+const API_ROOT = `${API_BASE_URL}/api`;
 
 export async function fetchApi<T>(
   endpoint: string,
   options: RequestInit = {},
 ): Promise<T> {
   let accessToken = localStorage.getItem('vibe_access_token');
+  const isFormData =
+    typeof FormData !== 'undefined' && options.body instanceof FormData;
+
+  // Let the browser set multipart boundary for FormData; JSON otherwise.
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
+    ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
     ...(options.headers as Record<string, string>),
   };
+
+  if (isFormData) {
+    delete headers['Content-Type'];
+  }
 
   if (accessToken) {
     headers['Authorization'] = `Bearer ${accessToken}`;
   }
 
-  let response = await fetch(`${API_BASE_URL}${endpoint}`, {
+  let response = await fetch(`${API_ROOT}${endpoint}`, {
     ...options,
     headers,
   });
@@ -24,7 +34,7 @@ export async function fetchApi<T>(
     const refreshToken = localStorage.getItem('vibe_refresh_token');
     if (refreshToken) {
       try {
-        const refreshRes = await fetch(`${API_BASE_URL}/auth/refresh`, {
+        const refreshRes = await fetch(`${API_ROOT}/auth/refresh`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ refreshToken }),
@@ -39,7 +49,7 @@ export async function fetchApi<T>(
 
           // Retry original request with new token
           headers['Authorization'] = `Bearer ${refreshData.accessToken}`;
-          response = await fetch(`${API_BASE_URL}${endpoint}`, {
+          response = await fetch(`${API_ROOT}${endpoint}`, {
             ...options,
             headers,
           });

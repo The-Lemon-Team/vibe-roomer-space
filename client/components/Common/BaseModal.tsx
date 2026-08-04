@@ -1,4 +1,9 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { useTranslation } from 'react-i18next';
+
+/** Tracks stacked BaseModals so Escape closes only the topmost one. */
+let openModalCount = 0;
 
 export interface BaseModalProps {
   isOpen: boolean;
@@ -31,39 +36,65 @@ export const BaseModal: React.FC<BaseModalProps> = ({
   containerClassName = '',
   children,
 }) => {
+  const { t } = useTranslation();
   const modalRef = useRef<HTMLDivElement>(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+  const [stackDepth, setStackDepth] = useState(0);
 
-  // Handle ESC key press
+  // Register in the modal stack before paint so z-index is correct for nested modals.
+  useLayoutEffect(() => {
+    if (!isOpen) {
+      setStackDepth(0);
+      return;
+    }
+
+    openModalCount += 1;
+    const depth = openModalCount;
+    setStackDepth(depth);
+
+    return () => {
+      openModalCount -= 1;
+    };
+  }, [isOpen]);
+
+  // Only the topmost open modal should handle Escape (stacked create + add-image).
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || stackDepth === 0) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
+      if (e.key === 'Escape' && stackDepth === openModalCount) {
+        onCloseRef.current();
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isOpen, onClose]);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, stackDepth]);
 
   if (!isOpen) return null;
 
-  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (closeOnBackdropClick && modalRef.current && !modalRef.current.contains(e.target as Node)) {
-      onClose();
+  // Close only when the backdrop itself is pressed — not when a bubbled click
+  // from an input lands on the overlay after scroll-into-view shifts layout.
+  const handleBackdropMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (closeOnBackdropClick && e.target === e.currentTarget) {
+      onCloseRef.current();
     }
   };
 
-  return (
+  const zIndex = 60 + stackDepth;
+
+  // Portal to document.body so nested modals are not trapped inside parent <form>s
+  // (invalid nested forms make Search/submit buttons appear to do nothing).
+  return createPortal(
     <div
-      onClick={handleBackdropClick}
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md font-mono select-none overflow-y-auto animate-fadeIn"
+      onMouseDown={handleBackdropMouseDown}
+      style={{ zIndex }}
+      className="fixed inset-0 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md font-mono overflow-y-auto animate-fadeIn"
     >
       <div
         ref={modalRef}
+        onMouseDown={(e) => e.stopPropagation()}
         className={`relative w-full ${maxWidth} bg-zinc-950 border ${borderColor} rounded-lg ${shadowClass} text-zinc-100 my-auto overflow-hidden ${containerClassName}`}
       >
         {/* Close Button */}
@@ -71,7 +102,7 @@ export const BaseModal: React.FC<BaseModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close modal"
+            aria-label={t('common.closeModal')}
             className="absolute top-4 right-4 z-10 text-zinc-400 hover:text-cyan-400 transition-colors p-1 rounded hover:bg-zinc-900"
           >
             <span className="material-symbols-outlined text-xl leading-none">close</span>
@@ -82,7 +113,7 @@ export const BaseModal: React.FC<BaseModalProps> = ({
         {(systemTag || title) && (
           <div className={`p-6 pb-3 border-b border-zinc-800 ${headerClass || ''}`}>
             {systemTag && (
-              <div className="text-[10px] text-cyan-400 font-bold tracking-wider uppercase mb-1">
+              <div className="text-sm text-cyan-400 font-bold tracking-wider uppercase mb-1">
                 {systemTag}
               </div>
             )}
@@ -100,6 +131,7 @@ export const BaseModal: React.FC<BaseModalProps> = ({
         {/* Modal Content */}
         <div>{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 };

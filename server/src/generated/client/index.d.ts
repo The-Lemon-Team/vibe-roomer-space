@@ -34,6 +34,11 @@ export type VibeUpdate = $Result.DefaultSelection<Prisma.$VibeUpdatePayload>
  */
 export type Hashtag = $Result.DefaultSelection<Prisma.$HashtagPayload>
 /**
+ * Model MenuTag
+ * Admin-configured tags shown on the public (LIVE) menu for all users.
+ */
+export type MenuTag = $Result.DefaultSelection<Prisma.$MenuTagPayload>
+/**
  * Model Room
  * 
  */
@@ -53,6 +58,11 @@ export type RoomNews = $Result.DefaultSelection<Prisma.$RoomNewsPayload>
  * 
  */
 export type RoomNote = $Result.DefaultSelection<Prisma.$RoomNotePayload>
+/**
+ * Model MediaAsset
+ * Registered image in the site media library (blob lives in local disk / Supabase).
+ */
+export type MediaAsset = $Result.DefaultSelection<Prisma.$MediaAssetPayload>
 
 /**
  * Enums
@@ -65,11 +75,23 @@ export namespace $Enums {
 
 export type Role = (typeof Role)[keyof typeof Role]
 
+
+export const MenuTagScope: {
+  VIBES: 'VIBES',
+  ROOMS: 'ROOMS'
+};
+
+export type MenuTagScope = (typeof MenuTagScope)[keyof typeof MenuTagScope]
+
 }
 
 export type Role = $Enums.Role
 
 export const Role: typeof $Enums.Role
+
+export type MenuTagScope = $Enums.MenuTagScope
+
+export const MenuTagScope: typeof $Enums.MenuTagScope
 
 /**
  * ##  Prisma Client ʲˢ
@@ -230,6 +252,16 @@ export class PrismaClient<
   get hashtag(): Prisma.HashtagDelegate<ExtArgs, ClientOptions>;
 
   /**
+   * `prisma.menuTag`: Exposes CRUD operations for the **MenuTag** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more MenuTags
+    * const menuTags = await prisma.menuTag.findMany()
+    * ```
+    */
+  get menuTag(): Prisma.MenuTagDelegate<ExtArgs, ClientOptions>;
+
+  /**
    * `prisma.room`: Exposes CRUD operations for the **Room** model.
     * Example usage:
     * ```ts
@@ -268,6 +300,16 @@ export class PrismaClient<
     * ```
     */
   get roomNote(): Prisma.RoomNoteDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.mediaAsset`: Exposes CRUD operations for the **MediaAsset** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more MediaAssets
+    * const mediaAssets = await prisma.mediaAsset.findMany()
+    * ```
+    */
+  get mediaAsset(): Prisma.MediaAssetDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -713,10 +755,12 @@ export namespace Prisma {
     Vibe: 'Vibe',
     VibeUpdate: 'VibeUpdate',
     Hashtag: 'Hashtag',
+    MenuTag: 'MenuTag',
     Room: 'Room',
     RoomStreamItem: 'RoomStreamItem',
     RoomNews: 'RoomNews',
-    RoomNote: 'RoomNote'
+    RoomNote: 'RoomNote',
+    MediaAsset: 'MediaAsset'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -735,7 +779,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "user" | "vibe" | "vibeUpdate" | "hashtag" | "room" | "roomStreamItem" | "roomNews" | "roomNote"
+      modelProps: "user" | "vibe" | "vibeUpdate" | "hashtag" | "menuTag" | "room" | "roomStreamItem" | "roomNews" | "roomNote" | "mediaAsset"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1035,6 +1079,80 @@ export namespace Prisma {
           }
         }
       }
+      MenuTag: {
+        payload: Prisma.$MenuTagPayload<ExtArgs>
+        fields: Prisma.MenuTagFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.MenuTagFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MenuTagPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.MenuTagFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MenuTagPayload>
+          }
+          findFirst: {
+            args: Prisma.MenuTagFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MenuTagPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.MenuTagFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MenuTagPayload>
+          }
+          findMany: {
+            args: Prisma.MenuTagFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MenuTagPayload>[]
+          }
+          create: {
+            args: Prisma.MenuTagCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MenuTagPayload>
+          }
+          createMany: {
+            args: Prisma.MenuTagCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.MenuTagCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MenuTagPayload>[]
+          }
+          delete: {
+            args: Prisma.MenuTagDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MenuTagPayload>
+          }
+          update: {
+            args: Prisma.MenuTagUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MenuTagPayload>
+          }
+          deleteMany: {
+            args: Prisma.MenuTagDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.MenuTagUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.MenuTagUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MenuTagPayload>[]
+          }
+          upsert: {
+            args: Prisma.MenuTagUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MenuTagPayload>
+          }
+          aggregate: {
+            args: Prisma.MenuTagAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateMenuTag>
+          }
+          groupBy: {
+            args: Prisma.MenuTagGroupByArgs<ExtArgs>
+            result: $Utils.Optional<MenuTagGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.MenuTagCountArgs<ExtArgs>
+            result: $Utils.Optional<MenuTagCountAggregateOutputType> | number
+          }
+        }
+      }
       Room: {
         payload: Prisma.$RoomPayload<ExtArgs>
         fields: Prisma.RoomFieldRefs
@@ -1331,6 +1449,80 @@ export namespace Prisma {
           }
         }
       }
+      MediaAsset: {
+        payload: Prisma.$MediaAssetPayload<ExtArgs>
+        fields: Prisma.MediaAssetFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.MediaAssetFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MediaAssetPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.MediaAssetFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MediaAssetPayload>
+          }
+          findFirst: {
+            args: Prisma.MediaAssetFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MediaAssetPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.MediaAssetFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MediaAssetPayload>
+          }
+          findMany: {
+            args: Prisma.MediaAssetFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MediaAssetPayload>[]
+          }
+          create: {
+            args: Prisma.MediaAssetCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MediaAssetPayload>
+          }
+          createMany: {
+            args: Prisma.MediaAssetCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.MediaAssetCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MediaAssetPayload>[]
+          }
+          delete: {
+            args: Prisma.MediaAssetDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MediaAssetPayload>
+          }
+          update: {
+            args: Prisma.MediaAssetUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MediaAssetPayload>
+          }
+          deleteMany: {
+            args: Prisma.MediaAssetDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.MediaAssetUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.MediaAssetUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MediaAssetPayload>[]
+          }
+          upsert: {
+            args: Prisma.MediaAssetUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MediaAssetPayload>
+          }
+          aggregate: {
+            args: Prisma.MediaAssetAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateMediaAsset>
+          }
+          groupBy: {
+            args: Prisma.MediaAssetGroupByArgs<ExtArgs>
+            result: $Utils.Optional<MediaAssetGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.MediaAssetCountArgs<ExtArgs>
+            result: $Utils.Optional<MediaAssetCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -1431,10 +1623,12 @@ export namespace Prisma {
     vibe?: VibeOmit
     vibeUpdate?: VibeUpdateOmit
     hashtag?: HashtagOmit
+    menuTag?: MenuTagOmit
     room?: RoomOmit
     roomStreamItem?: RoomStreamItemOmit
     roomNews?: RoomNewsOmit
     roomNote?: RoomNoteOmit
+    mediaAsset?: MediaAssetOmit
   }
 
   /* Types for Logging */
@@ -6112,6 +6306,1048 @@ export namespace Prisma {
 
 
   /**
+   * Model MenuTag
+   */
+
+  export type AggregateMenuTag = {
+    _count: MenuTagCountAggregateOutputType | null
+    _avg: MenuTagAvgAggregateOutputType | null
+    _sum: MenuTagSumAggregateOutputType | null
+    _min: MenuTagMinAggregateOutputType | null
+    _max: MenuTagMaxAggregateOutputType | null
+  }
+
+  export type MenuTagAvgAggregateOutputType = {
+    sortOrder: number | null
+  }
+
+  export type MenuTagSumAggregateOutputType = {
+    sortOrder: number | null
+  }
+
+  export type MenuTagMinAggregateOutputType = {
+    id: string | null
+    name: string | null
+    scope: $Enums.MenuTagScope | null
+    sortOrder: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type MenuTagMaxAggregateOutputType = {
+    id: string | null
+    name: string | null
+    scope: $Enums.MenuTagScope | null
+    sortOrder: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type MenuTagCountAggregateOutputType = {
+    id: number
+    name: number
+    scope: number
+    sortOrder: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type MenuTagAvgAggregateInputType = {
+    sortOrder?: true
+  }
+
+  export type MenuTagSumAggregateInputType = {
+    sortOrder?: true
+  }
+
+  export type MenuTagMinAggregateInputType = {
+    id?: true
+    name?: true
+    scope?: true
+    sortOrder?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type MenuTagMaxAggregateInputType = {
+    id?: true
+    name?: true
+    scope?: true
+    sortOrder?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type MenuTagCountAggregateInputType = {
+    id?: true
+    name?: true
+    scope?: true
+    sortOrder?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type MenuTagAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which MenuTag to aggregate.
+     */
+    where?: MenuTagWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of MenuTags to fetch.
+     */
+    orderBy?: MenuTagOrderByWithRelationInput | MenuTagOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: MenuTagWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` MenuTags from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` MenuTags.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned MenuTags
+    **/
+    _count?: true | MenuTagCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: MenuTagAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: MenuTagSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: MenuTagMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: MenuTagMaxAggregateInputType
+  }
+
+  export type GetMenuTagAggregateType<T extends MenuTagAggregateArgs> = {
+        [P in keyof T & keyof AggregateMenuTag]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateMenuTag[P]>
+      : GetScalarType<T[P], AggregateMenuTag[P]>
+  }
+
+
+
+
+  export type MenuTagGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: MenuTagWhereInput
+    orderBy?: MenuTagOrderByWithAggregationInput | MenuTagOrderByWithAggregationInput[]
+    by: MenuTagScalarFieldEnum[] | MenuTagScalarFieldEnum
+    having?: MenuTagScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: MenuTagCountAggregateInputType | true
+    _avg?: MenuTagAvgAggregateInputType
+    _sum?: MenuTagSumAggregateInputType
+    _min?: MenuTagMinAggregateInputType
+    _max?: MenuTagMaxAggregateInputType
+  }
+
+  export type MenuTagGroupByOutputType = {
+    id: string
+    name: string
+    scope: $Enums.MenuTagScope
+    sortOrder: number
+    createdAt: Date
+    updatedAt: Date
+    _count: MenuTagCountAggregateOutputType | null
+    _avg: MenuTagAvgAggregateOutputType | null
+    _sum: MenuTagSumAggregateOutputType | null
+    _min: MenuTagMinAggregateOutputType | null
+    _max: MenuTagMaxAggregateOutputType | null
+  }
+
+  type GetMenuTagGroupByPayload<T extends MenuTagGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<MenuTagGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof MenuTagGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], MenuTagGroupByOutputType[P]>
+            : GetScalarType<T[P], MenuTagGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type MenuTagSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    name?: boolean
+    scope?: boolean
+    sortOrder?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["menuTag"]>
+
+  export type MenuTagSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    name?: boolean
+    scope?: boolean
+    sortOrder?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["menuTag"]>
+
+  export type MenuTagSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    name?: boolean
+    scope?: boolean
+    sortOrder?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["menuTag"]>
+
+  export type MenuTagSelectScalar = {
+    id?: boolean
+    name?: boolean
+    scope?: boolean
+    sortOrder?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type MenuTagOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "scope" | "sortOrder" | "createdAt" | "updatedAt", ExtArgs["result"]["menuTag"]>
+
+  export type $MenuTagPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "MenuTag"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      name: string
+      scope: $Enums.MenuTagScope
+      sortOrder: number
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["menuTag"]>
+    composites: {}
+  }
+
+  type MenuTagGetPayload<S extends boolean | null | undefined | MenuTagDefaultArgs> = $Result.GetResult<Prisma.$MenuTagPayload, S>
+
+  type MenuTagCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<MenuTagFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: MenuTagCountAggregateInputType | true
+    }
+
+  export interface MenuTagDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['MenuTag'], meta: { name: 'MenuTag' } }
+    /**
+     * Find zero or one MenuTag that matches the filter.
+     * @param {MenuTagFindUniqueArgs} args - Arguments to find a MenuTag
+     * @example
+     * // Get one MenuTag
+     * const menuTag = await prisma.menuTag.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends MenuTagFindUniqueArgs>(args: SelectSubset<T, MenuTagFindUniqueArgs<ExtArgs>>): Prisma__MenuTagClient<$Result.GetResult<Prisma.$MenuTagPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one MenuTag that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {MenuTagFindUniqueOrThrowArgs} args - Arguments to find a MenuTag
+     * @example
+     * // Get one MenuTag
+     * const menuTag = await prisma.menuTag.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends MenuTagFindUniqueOrThrowArgs>(args: SelectSubset<T, MenuTagFindUniqueOrThrowArgs<ExtArgs>>): Prisma__MenuTagClient<$Result.GetResult<Prisma.$MenuTagPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first MenuTag that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MenuTagFindFirstArgs} args - Arguments to find a MenuTag
+     * @example
+     * // Get one MenuTag
+     * const menuTag = await prisma.menuTag.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends MenuTagFindFirstArgs>(args?: SelectSubset<T, MenuTagFindFirstArgs<ExtArgs>>): Prisma__MenuTagClient<$Result.GetResult<Prisma.$MenuTagPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first MenuTag that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MenuTagFindFirstOrThrowArgs} args - Arguments to find a MenuTag
+     * @example
+     * // Get one MenuTag
+     * const menuTag = await prisma.menuTag.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends MenuTagFindFirstOrThrowArgs>(args?: SelectSubset<T, MenuTagFindFirstOrThrowArgs<ExtArgs>>): Prisma__MenuTagClient<$Result.GetResult<Prisma.$MenuTagPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more MenuTags that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MenuTagFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all MenuTags
+     * const menuTags = await prisma.menuTag.findMany()
+     * 
+     * // Get first 10 MenuTags
+     * const menuTags = await prisma.menuTag.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const menuTagWithIdOnly = await prisma.menuTag.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends MenuTagFindManyArgs>(args?: SelectSubset<T, MenuTagFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MenuTagPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a MenuTag.
+     * @param {MenuTagCreateArgs} args - Arguments to create a MenuTag.
+     * @example
+     * // Create one MenuTag
+     * const MenuTag = await prisma.menuTag.create({
+     *   data: {
+     *     // ... data to create a MenuTag
+     *   }
+     * })
+     * 
+     */
+    create<T extends MenuTagCreateArgs>(args: SelectSubset<T, MenuTagCreateArgs<ExtArgs>>): Prisma__MenuTagClient<$Result.GetResult<Prisma.$MenuTagPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many MenuTags.
+     * @param {MenuTagCreateManyArgs} args - Arguments to create many MenuTags.
+     * @example
+     * // Create many MenuTags
+     * const menuTag = await prisma.menuTag.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends MenuTagCreateManyArgs>(args?: SelectSubset<T, MenuTagCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many MenuTags and returns the data saved in the database.
+     * @param {MenuTagCreateManyAndReturnArgs} args - Arguments to create many MenuTags.
+     * @example
+     * // Create many MenuTags
+     * const menuTag = await prisma.menuTag.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many MenuTags and only return the `id`
+     * const menuTagWithIdOnly = await prisma.menuTag.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends MenuTagCreateManyAndReturnArgs>(args?: SelectSubset<T, MenuTagCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MenuTagPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a MenuTag.
+     * @param {MenuTagDeleteArgs} args - Arguments to delete one MenuTag.
+     * @example
+     * // Delete one MenuTag
+     * const MenuTag = await prisma.menuTag.delete({
+     *   where: {
+     *     // ... filter to delete one MenuTag
+     *   }
+     * })
+     * 
+     */
+    delete<T extends MenuTagDeleteArgs>(args: SelectSubset<T, MenuTagDeleteArgs<ExtArgs>>): Prisma__MenuTagClient<$Result.GetResult<Prisma.$MenuTagPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one MenuTag.
+     * @param {MenuTagUpdateArgs} args - Arguments to update one MenuTag.
+     * @example
+     * // Update one MenuTag
+     * const menuTag = await prisma.menuTag.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends MenuTagUpdateArgs>(args: SelectSubset<T, MenuTagUpdateArgs<ExtArgs>>): Prisma__MenuTagClient<$Result.GetResult<Prisma.$MenuTagPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more MenuTags.
+     * @param {MenuTagDeleteManyArgs} args - Arguments to filter MenuTags to delete.
+     * @example
+     * // Delete a few MenuTags
+     * const { count } = await prisma.menuTag.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends MenuTagDeleteManyArgs>(args?: SelectSubset<T, MenuTagDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more MenuTags.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MenuTagUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many MenuTags
+     * const menuTag = await prisma.menuTag.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends MenuTagUpdateManyArgs>(args: SelectSubset<T, MenuTagUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more MenuTags and returns the data updated in the database.
+     * @param {MenuTagUpdateManyAndReturnArgs} args - Arguments to update many MenuTags.
+     * @example
+     * // Update many MenuTags
+     * const menuTag = await prisma.menuTag.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more MenuTags and only return the `id`
+     * const menuTagWithIdOnly = await prisma.menuTag.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends MenuTagUpdateManyAndReturnArgs>(args: SelectSubset<T, MenuTagUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MenuTagPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one MenuTag.
+     * @param {MenuTagUpsertArgs} args - Arguments to update or create a MenuTag.
+     * @example
+     * // Update or create a MenuTag
+     * const menuTag = await prisma.menuTag.upsert({
+     *   create: {
+     *     // ... data to create a MenuTag
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the MenuTag we want to update
+     *   }
+     * })
+     */
+    upsert<T extends MenuTagUpsertArgs>(args: SelectSubset<T, MenuTagUpsertArgs<ExtArgs>>): Prisma__MenuTagClient<$Result.GetResult<Prisma.$MenuTagPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of MenuTags.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MenuTagCountArgs} args - Arguments to filter MenuTags to count.
+     * @example
+     * // Count the number of MenuTags
+     * const count = await prisma.menuTag.count({
+     *   where: {
+     *     // ... the filter for the MenuTags we want to count
+     *   }
+     * })
+    **/
+    count<T extends MenuTagCountArgs>(
+      args?: Subset<T, MenuTagCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], MenuTagCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a MenuTag.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MenuTagAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends MenuTagAggregateArgs>(args: Subset<T, MenuTagAggregateArgs>): Prisma.PrismaPromise<GetMenuTagAggregateType<T>>
+
+    /**
+     * Group by MenuTag.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MenuTagGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends MenuTagGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: MenuTagGroupByArgs['orderBy'] }
+        : { orderBy?: MenuTagGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, MenuTagGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetMenuTagGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the MenuTag model
+   */
+  readonly fields: MenuTagFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for MenuTag.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__MenuTagClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the MenuTag model
+   */
+  interface MenuTagFieldRefs {
+    readonly id: FieldRef<"MenuTag", 'String'>
+    readonly name: FieldRef<"MenuTag", 'String'>
+    readonly scope: FieldRef<"MenuTag", 'MenuTagScope'>
+    readonly sortOrder: FieldRef<"MenuTag", 'Int'>
+    readonly createdAt: FieldRef<"MenuTag", 'DateTime'>
+    readonly updatedAt: FieldRef<"MenuTag", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * MenuTag findUnique
+   */
+  export type MenuTagFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MenuTag
+     */
+    select?: MenuTagSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the MenuTag
+     */
+    omit?: MenuTagOmit<ExtArgs> | null
+    /**
+     * Filter, which MenuTag to fetch.
+     */
+    where: MenuTagWhereUniqueInput
+  }
+
+  /**
+   * MenuTag findUniqueOrThrow
+   */
+  export type MenuTagFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MenuTag
+     */
+    select?: MenuTagSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the MenuTag
+     */
+    omit?: MenuTagOmit<ExtArgs> | null
+    /**
+     * Filter, which MenuTag to fetch.
+     */
+    where: MenuTagWhereUniqueInput
+  }
+
+  /**
+   * MenuTag findFirst
+   */
+  export type MenuTagFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MenuTag
+     */
+    select?: MenuTagSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the MenuTag
+     */
+    omit?: MenuTagOmit<ExtArgs> | null
+    /**
+     * Filter, which MenuTag to fetch.
+     */
+    where?: MenuTagWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of MenuTags to fetch.
+     */
+    orderBy?: MenuTagOrderByWithRelationInput | MenuTagOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for MenuTags.
+     */
+    cursor?: MenuTagWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` MenuTags from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` MenuTags.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of MenuTags.
+     */
+    distinct?: MenuTagScalarFieldEnum | MenuTagScalarFieldEnum[]
+  }
+
+  /**
+   * MenuTag findFirstOrThrow
+   */
+  export type MenuTagFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MenuTag
+     */
+    select?: MenuTagSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the MenuTag
+     */
+    omit?: MenuTagOmit<ExtArgs> | null
+    /**
+     * Filter, which MenuTag to fetch.
+     */
+    where?: MenuTagWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of MenuTags to fetch.
+     */
+    orderBy?: MenuTagOrderByWithRelationInput | MenuTagOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for MenuTags.
+     */
+    cursor?: MenuTagWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` MenuTags from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` MenuTags.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of MenuTags.
+     */
+    distinct?: MenuTagScalarFieldEnum | MenuTagScalarFieldEnum[]
+  }
+
+  /**
+   * MenuTag findMany
+   */
+  export type MenuTagFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MenuTag
+     */
+    select?: MenuTagSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the MenuTag
+     */
+    omit?: MenuTagOmit<ExtArgs> | null
+    /**
+     * Filter, which MenuTags to fetch.
+     */
+    where?: MenuTagWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of MenuTags to fetch.
+     */
+    orderBy?: MenuTagOrderByWithRelationInput | MenuTagOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing MenuTags.
+     */
+    cursor?: MenuTagWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` MenuTags from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` MenuTags.
+     */
+    skip?: number
+    distinct?: MenuTagScalarFieldEnum | MenuTagScalarFieldEnum[]
+  }
+
+  /**
+   * MenuTag create
+   */
+  export type MenuTagCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MenuTag
+     */
+    select?: MenuTagSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the MenuTag
+     */
+    omit?: MenuTagOmit<ExtArgs> | null
+    /**
+     * The data needed to create a MenuTag.
+     */
+    data: XOR<MenuTagCreateInput, MenuTagUncheckedCreateInput>
+  }
+
+  /**
+   * MenuTag createMany
+   */
+  export type MenuTagCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many MenuTags.
+     */
+    data: MenuTagCreateManyInput | MenuTagCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * MenuTag createManyAndReturn
+   */
+  export type MenuTagCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MenuTag
+     */
+    select?: MenuTagSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the MenuTag
+     */
+    omit?: MenuTagOmit<ExtArgs> | null
+    /**
+     * The data used to create many MenuTags.
+     */
+    data: MenuTagCreateManyInput | MenuTagCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * MenuTag update
+   */
+  export type MenuTagUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MenuTag
+     */
+    select?: MenuTagSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the MenuTag
+     */
+    omit?: MenuTagOmit<ExtArgs> | null
+    /**
+     * The data needed to update a MenuTag.
+     */
+    data: XOR<MenuTagUpdateInput, MenuTagUncheckedUpdateInput>
+    /**
+     * Choose, which MenuTag to update.
+     */
+    where: MenuTagWhereUniqueInput
+  }
+
+  /**
+   * MenuTag updateMany
+   */
+  export type MenuTagUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update MenuTags.
+     */
+    data: XOR<MenuTagUpdateManyMutationInput, MenuTagUncheckedUpdateManyInput>
+    /**
+     * Filter which MenuTags to update
+     */
+    where?: MenuTagWhereInput
+    /**
+     * Limit how many MenuTags to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * MenuTag updateManyAndReturn
+   */
+  export type MenuTagUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MenuTag
+     */
+    select?: MenuTagSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the MenuTag
+     */
+    omit?: MenuTagOmit<ExtArgs> | null
+    /**
+     * The data used to update MenuTags.
+     */
+    data: XOR<MenuTagUpdateManyMutationInput, MenuTagUncheckedUpdateManyInput>
+    /**
+     * Filter which MenuTags to update
+     */
+    where?: MenuTagWhereInput
+    /**
+     * Limit how many MenuTags to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * MenuTag upsert
+   */
+  export type MenuTagUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MenuTag
+     */
+    select?: MenuTagSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the MenuTag
+     */
+    omit?: MenuTagOmit<ExtArgs> | null
+    /**
+     * The filter to search for the MenuTag to update in case it exists.
+     */
+    where: MenuTagWhereUniqueInput
+    /**
+     * In case the MenuTag found by the `where` argument doesn't exist, create a new MenuTag with this data.
+     */
+    create: XOR<MenuTagCreateInput, MenuTagUncheckedCreateInput>
+    /**
+     * In case the MenuTag was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<MenuTagUpdateInput, MenuTagUncheckedUpdateInput>
+  }
+
+  /**
+   * MenuTag delete
+   */
+  export type MenuTagDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MenuTag
+     */
+    select?: MenuTagSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the MenuTag
+     */
+    omit?: MenuTagOmit<ExtArgs> | null
+    /**
+     * Filter which MenuTag to delete.
+     */
+    where: MenuTagWhereUniqueInput
+  }
+
+  /**
+   * MenuTag deleteMany
+   */
+  export type MenuTagDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which MenuTags to delete
+     */
+    where?: MenuTagWhereInput
+    /**
+     * Limit how many MenuTags to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * MenuTag without action
+   */
+  export type MenuTagDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MenuTag
+     */
+    select?: MenuTagSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the MenuTag
+     */
+    omit?: MenuTagOmit<ExtArgs> | null
+  }
+
+
+  /**
    * Model Room
    */
 
@@ -10647,6 +11883,1087 @@ export namespace Prisma {
 
 
   /**
+   * Model MediaAsset
+   */
+
+  export type AggregateMediaAsset = {
+    _count: MediaAssetCountAggregateOutputType | null
+    _avg: MediaAssetAvgAggregateOutputType | null
+    _sum: MediaAssetSumAggregateOutputType | null
+    _min: MediaAssetMinAggregateOutputType | null
+    _max: MediaAssetMaxAggregateOutputType | null
+  }
+
+  export type MediaAssetAvgAggregateOutputType = {
+    size: number | null
+  }
+
+  export type MediaAssetSumAggregateOutputType = {
+    size: number | null
+  }
+
+  export type MediaAssetMinAggregateOutputType = {
+    id: string | null
+    filename: string | null
+    originalName: string | null
+    mimeType: string | null
+    size: number | null
+    url: string | null
+    provider: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type MediaAssetMaxAggregateOutputType = {
+    id: string | null
+    filename: string | null
+    originalName: string | null
+    mimeType: string | null
+    size: number | null
+    url: string | null
+    provider: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type MediaAssetCountAggregateOutputType = {
+    id: number
+    filename: number
+    originalName: number
+    mimeType: number
+    size: number
+    url: number
+    provider: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type MediaAssetAvgAggregateInputType = {
+    size?: true
+  }
+
+  export type MediaAssetSumAggregateInputType = {
+    size?: true
+  }
+
+  export type MediaAssetMinAggregateInputType = {
+    id?: true
+    filename?: true
+    originalName?: true
+    mimeType?: true
+    size?: true
+    url?: true
+    provider?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type MediaAssetMaxAggregateInputType = {
+    id?: true
+    filename?: true
+    originalName?: true
+    mimeType?: true
+    size?: true
+    url?: true
+    provider?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type MediaAssetCountAggregateInputType = {
+    id?: true
+    filename?: true
+    originalName?: true
+    mimeType?: true
+    size?: true
+    url?: true
+    provider?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type MediaAssetAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which MediaAsset to aggregate.
+     */
+    where?: MediaAssetWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of MediaAssets to fetch.
+     */
+    orderBy?: MediaAssetOrderByWithRelationInput | MediaAssetOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: MediaAssetWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` MediaAssets from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` MediaAssets.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned MediaAssets
+    **/
+    _count?: true | MediaAssetCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: MediaAssetAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: MediaAssetSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: MediaAssetMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: MediaAssetMaxAggregateInputType
+  }
+
+  export type GetMediaAssetAggregateType<T extends MediaAssetAggregateArgs> = {
+        [P in keyof T & keyof AggregateMediaAsset]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateMediaAsset[P]>
+      : GetScalarType<T[P], AggregateMediaAsset[P]>
+  }
+
+
+
+
+  export type MediaAssetGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: MediaAssetWhereInput
+    orderBy?: MediaAssetOrderByWithAggregationInput | MediaAssetOrderByWithAggregationInput[]
+    by: MediaAssetScalarFieldEnum[] | MediaAssetScalarFieldEnum
+    having?: MediaAssetScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: MediaAssetCountAggregateInputType | true
+    _avg?: MediaAssetAvgAggregateInputType
+    _sum?: MediaAssetSumAggregateInputType
+    _min?: MediaAssetMinAggregateInputType
+    _max?: MediaAssetMaxAggregateInputType
+  }
+
+  export type MediaAssetGroupByOutputType = {
+    id: string
+    filename: string
+    originalName: string
+    mimeType: string
+    size: number
+    url: string
+    provider: string
+    createdAt: Date
+    updatedAt: Date
+    _count: MediaAssetCountAggregateOutputType | null
+    _avg: MediaAssetAvgAggregateOutputType | null
+    _sum: MediaAssetSumAggregateOutputType | null
+    _min: MediaAssetMinAggregateOutputType | null
+    _max: MediaAssetMaxAggregateOutputType | null
+  }
+
+  type GetMediaAssetGroupByPayload<T extends MediaAssetGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<MediaAssetGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof MediaAssetGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], MediaAssetGroupByOutputType[P]>
+            : GetScalarType<T[P], MediaAssetGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type MediaAssetSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    filename?: boolean
+    originalName?: boolean
+    mimeType?: boolean
+    size?: boolean
+    url?: boolean
+    provider?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["mediaAsset"]>
+
+  export type MediaAssetSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    filename?: boolean
+    originalName?: boolean
+    mimeType?: boolean
+    size?: boolean
+    url?: boolean
+    provider?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["mediaAsset"]>
+
+  export type MediaAssetSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    filename?: boolean
+    originalName?: boolean
+    mimeType?: boolean
+    size?: boolean
+    url?: boolean
+    provider?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["mediaAsset"]>
+
+  export type MediaAssetSelectScalar = {
+    id?: boolean
+    filename?: boolean
+    originalName?: boolean
+    mimeType?: boolean
+    size?: boolean
+    url?: boolean
+    provider?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type MediaAssetOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "filename" | "originalName" | "mimeType" | "size" | "url" | "provider" | "createdAt" | "updatedAt", ExtArgs["result"]["mediaAsset"]>
+
+  export type $MediaAssetPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "MediaAsset"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      filename: string
+      originalName: string
+      mimeType: string
+      size: number
+      url: string
+      provider: string
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["mediaAsset"]>
+    composites: {}
+  }
+
+  type MediaAssetGetPayload<S extends boolean | null | undefined | MediaAssetDefaultArgs> = $Result.GetResult<Prisma.$MediaAssetPayload, S>
+
+  type MediaAssetCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<MediaAssetFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: MediaAssetCountAggregateInputType | true
+    }
+
+  export interface MediaAssetDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['MediaAsset'], meta: { name: 'MediaAsset' } }
+    /**
+     * Find zero or one MediaAsset that matches the filter.
+     * @param {MediaAssetFindUniqueArgs} args - Arguments to find a MediaAsset
+     * @example
+     * // Get one MediaAsset
+     * const mediaAsset = await prisma.mediaAsset.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends MediaAssetFindUniqueArgs>(args: SelectSubset<T, MediaAssetFindUniqueArgs<ExtArgs>>): Prisma__MediaAssetClient<$Result.GetResult<Prisma.$MediaAssetPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one MediaAsset that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {MediaAssetFindUniqueOrThrowArgs} args - Arguments to find a MediaAsset
+     * @example
+     * // Get one MediaAsset
+     * const mediaAsset = await prisma.mediaAsset.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends MediaAssetFindUniqueOrThrowArgs>(args: SelectSubset<T, MediaAssetFindUniqueOrThrowArgs<ExtArgs>>): Prisma__MediaAssetClient<$Result.GetResult<Prisma.$MediaAssetPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first MediaAsset that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MediaAssetFindFirstArgs} args - Arguments to find a MediaAsset
+     * @example
+     * // Get one MediaAsset
+     * const mediaAsset = await prisma.mediaAsset.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends MediaAssetFindFirstArgs>(args?: SelectSubset<T, MediaAssetFindFirstArgs<ExtArgs>>): Prisma__MediaAssetClient<$Result.GetResult<Prisma.$MediaAssetPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first MediaAsset that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MediaAssetFindFirstOrThrowArgs} args - Arguments to find a MediaAsset
+     * @example
+     * // Get one MediaAsset
+     * const mediaAsset = await prisma.mediaAsset.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends MediaAssetFindFirstOrThrowArgs>(args?: SelectSubset<T, MediaAssetFindFirstOrThrowArgs<ExtArgs>>): Prisma__MediaAssetClient<$Result.GetResult<Prisma.$MediaAssetPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more MediaAssets that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MediaAssetFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all MediaAssets
+     * const mediaAssets = await prisma.mediaAsset.findMany()
+     * 
+     * // Get first 10 MediaAssets
+     * const mediaAssets = await prisma.mediaAsset.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const mediaAssetWithIdOnly = await prisma.mediaAsset.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends MediaAssetFindManyArgs>(args?: SelectSubset<T, MediaAssetFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MediaAssetPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a MediaAsset.
+     * @param {MediaAssetCreateArgs} args - Arguments to create a MediaAsset.
+     * @example
+     * // Create one MediaAsset
+     * const MediaAsset = await prisma.mediaAsset.create({
+     *   data: {
+     *     // ... data to create a MediaAsset
+     *   }
+     * })
+     * 
+     */
+    create<T extends MediaAssetCreateArgs>(args: SelectSubset<T, MediaAssetCreateArgs<ExtArgs>>): Prisma__MediaAssetClient<$Result.GetResult<Prisma.$MediaAssetPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many MediaAssets.
+     * @param {MediaAssetCreateManyArgs} args - Arguments to create many MediaAssets.
+     * @example
+     * // Create many MediaAssets
+     * const mediaAsset = await prisma.mediaAsset.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends MediaAssetCreateManyArgs>(args?: SelectSubset<T, MediaAssetCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many MediaAssets and returns the data saved in the database.
+     * @param {MediaAssetCreateManyAndReturnArgs} args - Arguments to create many MediaAssets.
+     * @example
+     * // Create many MediaAssets
+     * const mediaAsset = await prisma.mediaAsset.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many MediaAssets and only return the `id`
+     * const mediaAssetWithIdOnly = await prisma.mediaAsset.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends MediaAssetCreateManyAndReturnArgs>(args?: SelectSubset<T, MediaAssetCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MediaAssetPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a MediaAsset.
+     * @param {MediaAssetDeleteArgs} args - Arguments to delete one MediaAsset.
+     * @example
+     * // Delete one MediaAsset
+     * const MediaAsset = await prisma.mediaAsset.delete({
+     *   where: {
+     *     // ... filter to delete one MediaAsset
+     *   }
+     * })
+     * 
+     */
+    delete<T extends MediaAssetDeleteArgs>(args: SelectSubset<T, MediaAssetDeleteArgs<ExtArgs>>): Prisma__MediaAssetClient<$Result.GetResult<Prisma.$MediaAssetPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one MediaAsset.
+     * @param {MediaAssetUpdateArgs} args - Arguments to update one MediaAsset.
+     * @example
+     * // Update one MediaAsset
+     * const mediaAsset = await prisma.mediaAsset.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends MediaAssetUpdateArgs>(args: SelectSubset<T, MediaAssetUpdateArgs<ExtArgs>>): Prisma__MediaAssetClient<$Result.GetResult<Prisma.$MediaAssetPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more MediaAssets.
+     * @param {MediaAssetDeleteManyArgs} args - Arguments to filter MediaAssets to delete.
+     * @example
+     * // Delete a few MediaAssets
+     * const { count } = await prisma.mediaAsset.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends MediaAssetDeleteManyArgs>(args?: SelectSubset<T, MediaAssetDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more MediaAssets.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MediaAssetUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many MediaAssets
+     * const mediaAsset = await prisma.mediaAsset.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends MediaAssetUpdateManyArgs>(args: SelectSubset<T, MediaAssetUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more MediaAssets and returns the data updated in the database.
+     * @param {MediaAssetUpdateManyAndReturnArgs} args - Arguments to update many MediaAssets.
+     * @example
+     * // Update many MediaAssets
+     * const mediaAsset = await prisma.mediaAsset.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more MediaAssets and only return the `id`
+     * const mediaAssetWithIdOnly = await prisma.mediaAsset.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends MediaAssetUpdateManyAndReturnArgs>(args: SelectSubset<T, MediaAssetUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MediaAssetPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one MediaAsset.
+     * @param {MediaAssetUpsertArgs} args - Arguments to update or create a MediaAsset.
+     * @example
+     * // Update or create a MediaAsset
+     * const mediaAsset = await prisma.mediaAsset.upsert({
+     *   create: {
+     *     // ... data to create a MediaAsset
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the MediaAsset we want to update
+     *   }
+     * })
+     */
+    upsert<T extends MediaAssetUpsertArgs>(args: SelectSubset<T, MediaAssetUpsertArgs<ExtArgs>>): Prisma__MediaAssetClient<$Result.GetResult<Prisma.$MediaAssetPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of MediaAssets.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MediaAssetCountArgs} args - Arguments to filter MediaAssets to count.
+     * @example
+     * // Count the number of MediaAssets
+     * const count = await prisma.mediaAsset.count({
+     *   where: {
+     *     // ... the filter for the MediaAssets we want to count
+     *   }
+     * })
+    **/
+    count<T extends MediaAssetCountArgs>(
+      args?: Subset<T, MediaAssetCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], MediaAssetCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a MediaAsset.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MediaAssetAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends MediaAssetAggregateArgs>(args: Subset<T, MediaAssetAggregateArgs>): Prisma.PrismaPromise<GetMediaAssetAggregateType<T>>
+
+    /**
+     * Group by MediaAsset.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MediaAssetGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends MediaAssetGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: MediaAssetGroupByArgs['orderBy'] }
+        : { orderBy?: MediaAssetGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, MediaAssetGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetMediaAssetGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the MediaAsset model
+   */
+  readonly fields: MediaAssetFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for MediaAsset.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__MediaAssetClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the MediaAsset model
+   */
+  interface MediaAssetFieldRefs {
+    readonly id: FieldRef<"MediaAsset", 'String'>
+    readonly filename: FieldRef<"MediaAsset", 'String'>
+    readonly originalName: FieldRef<"MediaAsset", 'String'>
+    readonly mimeType: FieldRef<"MediaAsset", 'String'>
+    readonly size: FieldRef<"MediaAsset", 'Int'>
+    readonly url: FieldRef<"MediaAsset", 'String'>
+    readonly provider: FieldRef<"MediaAsset", 'String'>
+    readonly createdAt: FieldRef<"MediaAsset", 'DateTime'>
+    readonly updatedAt: FieldRef<"MediaAsset", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * MediaAsset findUnique
+   */
+  export type MediaAssetFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MediaAsset
+     */
+    select?: MediaAssetSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the MediaAsset
+     */
+    omit?: MediaAssetOmit<ExtArgs> | null
+    /**
+     * Filter, which MediaAsset to fetch.
+     */
+    where: MediaAssetWhereUniqueInput
+  }
+
+  /**
+   * MediaAsset findUniqueOrThrow
+   */
+  export type MediaAssetFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MediaAsset
+     */
+    select?: MediaAssetSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the MediaAsset
+     */
+    omit?: MediaAssetOmit<ExtArgs> | null
+    /**
+     * Filter, which MediaAsset to fetch.
+     */
+    where: MediaAssetWhereUniqueInput
+  }
+
+  /**
+   * MediaAsset findFirst
+   */
+  export type MediaAssetFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MediaAsset
+     */
+    select?: MediaAssetSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the MediaAsset
+     */
+    omit?: MediaAssetOmit<ExtArgs> | null
+    /**
+     * Filter, which MediaAsset to fetch.
+     */
+    where?: MediaAssetWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of MediaAssets to fetch.
+     */
+    orderBy?: MediaAssetOrderByWithRelationInput | MediaAssetOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for MediaAssets.
+     */
+    cursor?: MediaAssetWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` MediaAssets from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` MediaAssets.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of MediaAssets.
+     */
+    distinct?: MediaAssetScalarFieldEnum | MediaAssetScalarFieldEnum[]
+  }
+
+  /**
+   * MediaAsset findFirstOrThrow
+   */
+  export type MediaAssetFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MediaAsset
+     */
+    select?: MediaAssetSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the MediaAsset
+     */
+    omit?: MediaAssetOmit<ExtArgs> | null
+    /**
+     * Filter, which MediaAsset to fetch.
+     */
+    where?: MediaAssetWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of MediaAssets to fetch.
+     */
+    orderBy?: MediaAssetOrderByWithRelationInput | MediaAssetOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for MediaAssets.
+     */
+    cursor?: MediaAssetWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` MediaAssets from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` MediaAssets.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of MediaAssets.
+     */
+    distinct?: MediaAssetScalarFieldEnum | MediaAssetScalarFieldEnum[]
+  }
+
+  /**
+   * MediaAsset findMany
+   */
+  export type MediaAssetFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MediaAsset
+     */
+    select?: MediaAssetSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the MediaAsset
+     */
+    omit?: MediaAssetOmit<ExtArgs> | null
+    /**
+     * Filter, which MediaAssets to fetch.
+     */
+    where?: MediaAssetWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of MediaAssets to fetch.
+     */
+    orderBy?: MediaAssetOrderByWithRelationInput | MediaAssetOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing MediaAssets.
+     */
+    cursor?: MediaAssetWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` MediaAssets from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` MediaAssets.
+     */
+    skip?: number
+    distinct?: MediaAssetScalarFieldEnum | MediaAssetScalarFieldEnum[]
+  }
+
+  /**
+   * MediaAsset create
+   */
+  export type MediaAssetCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MediaAsset
+     */
+    select?: MediaAssetSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the MediaAsset
+     */
+    omit?: MediaAssetOmit<ExtArgs> | null
+    /**
+     * The data needed to create a MediaAsset.
+     */
+    data: XOR<MediaAssetCreateInput, MediaAssetUncheckedCreateInput>
+  }
+
+  /**
+   * MediaAsset createMany
+   */
+  export type MediaAssetCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many MediaAssets.
+     */
+    data: MediaAssetCreateManyInput | MediaAssetCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * MediaAsset createManyAndReturn
+   */
+  export type MediaAssetCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MediaAsset
+     */
+    select?: MediaAssetSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the MediaAsset
+     */
+    omit?: MediaAssetOmit<ExtArgs> | null
+    /**
+     * The data used to create many MediaAssets.
+     */
+    data: MediaAssetCreateManyInput | MediaAssetCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * MediaAsset update
+   */
+  export type MediaAssetUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MediaAsset
+     */
+    select?: MediaAssetSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the MediaAsset
+     */
+    omit?: MediaAssetOmit<ExtArgs> | null
+    /**
+     * The data needed to update a MediaAsset.
+     */
+    data: XOR<MediaAssetUpdateInput, MediaAssetUncheckedUpdateInput>
+    /**
+     * Choose, which MediaAsset to update.
+     */
+    where: MediaAssetWhereUniqueInput
+  }
+
+  /**
+   * MediaAsset updateMany
+   */
+  export type MediaAssetUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update MediaAssets.
+     */
+    data: XOR<MediaAssetUpdateManyMutationInput, MediaAssetUncheckedUpdateManyInput>
+    /**
+     * Filter which MediaAssets to update
+     */
+    where?: MediaAssetWhereInput
+    /**
+     * Limit how many MediaAssets to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * MediaAsset updateManyAndReturn
+   */
+  export type MediaAssetUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MediaAsset
+     */
+    select?: MediaAssetSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the MediaAsset
+     */
+    omit?: MediaAssetOmit<ExtArgs> | null
+    /**
+     * The data used to update MediaAssets.
+     */
+    data: XOR<MediaAssetUpdateManyMutationInput, MediaAssetUncheckedUpdateManyInput>
+    /**
+     * Filter which MediaAssets to update
+     */
+    where?: MediaAssetWhereInput
+    /**
+     * Limit how many MediaAssets to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * MediaAsset upsert
+   */
+  export type MediaAssetUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MediaAsset
+     */
+    select?: MediaAssetSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the MediaAsset
+     */
+    omit?: MediaAssetOmit<ExtArgs> | null
+    /**
+     * The filter to search for the MediaAsset to update in case it exists.
+     */
+    where: MediaAssetWhereUniqueInput
+    /**
+     * In case the MediaAsset found by the `where` argument doesn't exist, create a new MediaAsset with this data.
+     */
+    create: XOR<MediaAssetCreateInput, MediaAssetUncheckedCreateInput>
+    /**
+     * In case the MediaAsset was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<MediaAssetUpdateInput, MediaAssetUncheckedUpdateInput>
+  }
+
+  /**
+   * MediaAsset delete
+   */
+  export type MediaAssetDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MediaAsset
+     */
+    select?: MediaAssetSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the MediaAsset
+     */
+    omit?: MediaAssetOmit<ExtArgs> | null
+    /**
+     * Filter which MediaAsset to delete.
+     */
+    where: MediaAssetWhereUniqueInput
+  }
+
+  /**
+   * MediaAsset deleteMany
+   */
+  export type MediaAssetDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which MediaAssets to delete
+     */
+    where?: MediaAssetWhereInput
+    /**
+     * Limit how many MediaAssets to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * MediaAsset without action
+   */
+  export type MediaAssetDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MediaAsset
+     */
+    select?: MediaAssetSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the MediaAsset
+     */
+    omit?: MediaAssetOmit<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -10713,6 +13030,18 @@ export namespace Prisma {
   export type HashtagScalarFieldEnum = (typeof HashtagScalarFieldEnum)[keyof typeof HashtagScalarFieldEnum]
 
 
+  export const MenuTagScalarFieldEnum: {
+    id: 'id',
+    name: 'name',
+    scope: 'scope',
+    sortOrder: 'sortOrder',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type MenuTagScalarFieldEnum = (typeof MenuTagScalarFieldEnum)[keyof typeof MenuTagScalarFieldEnum]
+
+
   export const RoomScalarFieldEnum: {
     id: 'id',
     title: 'title',
@@ -10772,6 +13101,21 @@ export namespace Prisma {
   };
 
   export type RoomNoteScalarFieldEnum = (typeof RoomNoteScalarFieldEnum)[keyof typeof RoomNoteScalarFieldEnum]
+
+
+  export const MediaAssetScalarFieldEnum: {
+    id: 'id',
+    filename: 'filename',
+    originalName: 'originalName',
+    mimeType: 'mimeType',
+    size: 'size',
+    url: 'url',
+    provider: 'provider',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type MediaAssetScalarFieldEnum = (typeof MediaAssetScalarFieldEnum)[keyof typeof MediaAssetScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -10894,6 +13238,20 @@ export namespace Prisma {
    * Reference to a field of type 'Int[]'
    */
   export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'MenuTagScope'
+   */
+  export type EnumMenuTagScopeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'MenuTagScope'>
+    
+
+
+  /**
+   * Reference to a field of type 'MenuTagScope[]'
+   */
+  export type ListEnumMenuTagScopeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'MenuTagScope[]'>
     
 
 
@@ -11191,6 +13549,66 @@ export namespace Prisma {
     useCount?: IntWithAggregatesFilter<"Hashtag"> | number
     lastUsedAt?: DateTimeWithAggregatesFilter<"Hashtag"> | Date | string
     createdAt?: DateTimeWithAggregatesFilter<"Hashtag"> | Date | string
+  }
+
+  export type MenuTagWhereInput = {
+    AND?: MenuTagWhereInput | MenuTagWhereInput[]
+    OR?: MenuTagWhereInput[]
+    NOT?: MenuTagWhereInput | MenuTagWhereInput[]
+    id?: StringFilter<"MenuTag"> | string
+    name?: StringFilter<"MenuTag"> | string
+    scope?: EnumMenuTagScopeFilter<"MenuTag"> | $Enums.MenuTagScope
+    sortOrder?: IntFilter<"MenuTag"> | number
+    createdAt?: DateTimeFilter<"MenuTag"> | Date | string
+    updatedAt?: DateTimeFilter<"MenuTag"> | Date | string
+  }
+
+  export type MenuTagOrderByWithRelationInput = {
+    id?: SortOrder
+    name?: SortOrder
+    scope?: SortOrder
+    sortOrder?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type MenuTagWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    name_scope?: MenuTagNameScopeCompoundUniqueInput
+    AND?: MenuTagWhereInput | MenuTagWhereInput[]
+    OR?: MenuTagWhereInput[]
+    NOT?: MenuTagWhereInput | MenuTagWhereInput[]
+    name?: StringFilter<"MenuTag"> | string
+    scope?: EnumMenuTagScopeFilter<"MenuTag"> | $Enums.MenuTagScope
+    sortOrder?: IntFilter<"MenuTag"> | number
+    createdAt?: DateTimeFilter<"MenuTag"> | Date | string
+    updatedAt?: DateTimeFilter<"MenuTag"> | Date | string
+  }, "id" | "name_scope">
+
+  export type MenuTagOrderByWithAggregationInput = {
+    id?: SortOrder
+    name?: SortOrder
+    scope?: SortOrder
+    sortOrder?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: MenuTagCountOrderByAggregateInput
+    _avg?: MenuTagAvgOrderByAggregateInput
+    _max?: MenuTagMaxOrderByAggregateInput
+    _min?: MenuTagMinOrderByAggregateInput
+    _sum?: MenuTagSumOrderByAggregateInput
+  }
+
+  export type MenuTagScalarWhereWithAggregatesInput = {
+    AND?: MenuTagScalarWhereWithAggregatesInput | MenuTagScalarWhereWithAggregatesInput[]
+    OR?: MenuTagScalarWhereWithAggregatesInput[]
+    NOT?: MenuTagScalarWhereWithAggregatesInput | MenuTagScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"MenuTag"> | string
+    name?: StringWithAggregatesFilter<"MenuTag"> | string
+    scope?: EnumMenuTagScopeWithAggregatesFilter<"MenuTag"> | $Enums.MenuTagScope
+    sortOrder?: IntWithAggregatesFilter<"MenuTag"> | number
+    createdAt?: DateTimeWithAggregatesFilter<"MenuTag"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"MenuTag"> | Date | string
   }
 
   export type RoomWhereInput = {
@@ -11516,6 +13934,80 @@ export namespace Prisma {
     updatedAt?: DateTimeWithAggregatesFilter<"RoomNote"> | Date | string
   }
 
+  export type MediaAssetWhereInput = {
+    AND?: MediaAssetWhereInput | MediaAssetWhereInput[]
+    OR?: MediaAssetWhereInput[]
+    NOT?: MediaAssetWhereInput | MediaAssetWhereInput[]
+    id?: StringFilter<"MediaAsset"> | string
+    filename?: StringFilter<"MediaAsset"> | string
+    originalName?: StringFilter<"MediaAsset"> | string
+    mimeType?: StringFilter<"MediaAsset"> | string
+    size?: IntFilter<"MediaAsset"> | number
+    url?: StringFilter<"MediaAsset"> | string
+    provider?: StringFilter<"MediaAsset"> | string
+    createdAt?: DateTimeFilter<"MediaAsset"> | Date | string
+    updatedAt?: DateTimeFilter<"MediaAsset"> | Date | string
+  }
+
+  export type MediaAssetOrderByWithRelationInput = {
+    id?: SortOrder
+    filename?: SortOrder
+    originalName?: SortOrder
+    mimeType?: SortOrder
+    size?: SortOrder
+    url?: SortOrder
+    provider?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type MediaAssetWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    filename?: string
+    AND?: MediaAssetWhereInput | MediaAssetWhereInput[]
+    OR?: MediaAssetWhereInput[]
+    NOT?: MediaAssetWhereInput | MediaAssetWhereInput[]
+    originalName?: StringFilter<"MediaAsset"> | string
+    mimeType?: StringFilter<"MediaAsset"> | string
+    size?: IntFilter<"MediaAsset"> | number
+    url?: StringFilter<"MediaAsset"> | string
+    provider?: StringFilter<"MediaAsset"> | string
+    createdAt?: DateTimeFilter<"MediaAsset"> | Date | string
+    updatedAt?: DateTimeFilter<"MediaAsset"> | Date | string
+  }, "id" | "filename">
+
+  export type MediaAssetOrderByWithAggregationInput = {
+    id?: SortOrder
+    filename?: SortOrder
+    originalName?: SortOrder
+    mimeType?: SortOrder
+    size?: SortOrder
+    url?: SortOrder
+    provider?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: MediaAssetCountOrderByAggregateInput
+    _avg?: MediaAssetAvgOrderByAggregateInput
+    _max?: MediaAssetMaxOrderByAggregateInput
+    _min?: MediaAssetMinOrderByAggregateInput
+    _sum?: MediaAssetSumOrderByAggregateInput
+  }
+
+  export type MediaAssetScalarWhereWithAggregatesInput = {
+    AND?: MediaAssetScalarWhereWithAggregatesInput | MediaAssetScalarWhereWithAggregatesInput[]
+    OR?: MediaAssetScalarWhereWithAggregatesInput[]
+    NOT?: MediaAssetScalarWhereWithAggregatesInput | MediaAssetScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"MediaAsset"> | string
+    filename?: StringWithAggregatesFilter<"MediaAsset"> | string
+    originalName?: StringWithAggregatesFilter<"MediaAsset"> | string
+    mimeType?: StringWithAggregatesFilter<"MediaAsset"> | string
+    size?: IntWithAggregatesFilter<"MediaAsset"> | number
+    url?: StringWithAggregatesFilter<"MediaAsset"> | string
+    provider?: StringWithAggregatesFilter<"MediaAsset"> | string
+    createdAt?: DateTimeWithAggregatesFilter<"MediaAsset"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"MediaAsset"> | Date | string
+  }
+
   export type UserCreateInput = {
     id?: string
     email: string
@@ -11823,6 +14315,69 @@ export namespace Prisma {
     useCount?: IntFieldUpdateOperationsInput | number
     lastUsedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type MenuTagCreateInput = {
+    id?: string
+    name: string
+    scope: $Enums.MenuTagScope
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type MenuTagUncheckedCreateInput = {
+    id?: string
+    name: string
+    scope: $Enums.MenuTagScope
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type MenuTagUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    scope?: EnumMenuTagScopeFieldUpdateOperationsInput | $Enums.MenuTagScope
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type MenuTagUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    scope?: EnumMenuTagScopeFieldUpdateOperationsInput | $Enums.MenuTagScope
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type MenuTagCreateManyInput = {
+    id?: string
+    name: string
+    scope: $Enums.MenuTagScope
+    sortOrder?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type MenuTagUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    scope?: EnumMenuTagScopeFieldUpdateOperationsInput | $Enums.MenuTagScope
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type MenuTagUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    scope?: EnumMenuTagScopeFieldUpdateOperationsInput | $Enums.MenuTagScope
+    sortOrder?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type RoomCreateInput = {
@@ -12169,6 +14724,90 @@ export namespace Prisma {
     content?: StringFieldUpdateOperationsInput | string
     roomId?: StringFieldUpdateOperationsInput | string
     authorId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type MediaAssetCreateInput = {
+    id?: string
+    filename: string
+    originalName: string
+    mimeType: string
+    size: number
+    url: string
+    provider: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type MediaAssetUncheckedCreateInput = {
+    id?: string
+    filename: string
+    originalName: string
+    mimeType: string
+    size: number
+    url: string
+    provider: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type MediaAssetUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    filename?: StringFieldUpdateOperationsInput | string
+    originalName?: StringFieldUpdateOperationsInput | string
+    mimeType?: StringFieldUpdateOperationsInput | string
+    size?: IntFieldUpdateOperationsInput | number
+    url?: StringFieldUpdateOperationsInput | string
+    provider?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type MediaAssetUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    filename?: StringFieldUpdateOperationsInput | string
+    originalName?: StringFieldUpdateOperationsInput | string
+    mimeType?: StringFieldUpdateOperationsInput | string
+    size?: IntFieldUpdateOperationsInput | number
+    url?: StringFieldUpdateOperationsInput | string
+    provider?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type MediaAssetCreateManyInput = {
+    id?: string
+    filename: string
+    originalName: string
+    mimeType: string
+    size: number
+    url: string
+    provider: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type MediaAssetUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    filename?: StringFieldUpdateOperationsInput | string
+    originalName?: StringFieldUpdateOperationsInput | string
+    mimeType?: StringFieldUpdateOperationsInput | string
+    size?: IntFieldUpdateOperationsInput | number
+    url?: StringFieldUpdateOperationsInput | string
+    provider?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type MediaAssetUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    filename?: StringFieldUpdateOperationsInput | string
+    originalName?: StringFieldUpdateOperationsInput | string
+    mimeType?: StringFieldUpdateOperationsInput | string
+    size?: IntFieldUpdateOperationsInput | number
+    url?: StringFieldUpdateOperationsInput | string
+    provider?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -12539,6 +15178,63 @@ export namespace Prisma {
     _max?: NestedIntFilter<$PrismaModel>
   }
 
+  export type EnumMenuTagScopeFilter<$PrismaModel = never> = {
+    equals?: $Enums.MenuTagScope | EnumMenuTagScopeFieldRefInput<$PrismaModel>
+    in?: $Enums.MenuTagScope[] | ListEnumMenuTagScopeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.MenuTagScope[] | ListEnumMenuTagScopeFieldRefInput<$PrismaModel>
+    not?: NestedEnumMenuTagScopeFilter<$PrismaModel> | $Enums.MenuTagScope
+  }
+
+  export type MenuTagNameScopeCompoundUniqueInput = {
+    name: string
+    scope: $Enums.MenuTagScope
+  }
+
+  export type MenuTagCountOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    scope?: SortOrder
+    sortOrder?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type MenuTagAvgOrderByAggregateInput = {
+    sortOrder?: SortOrder
+  }
+
+  export type MenuTagMaxOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    scope?: SortOrder
+    sortOrder?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type MenuTagMinOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    scope?: SortOrder
+    sortOrder?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type MenuTagSumOrderByAggregateInput = {
+    sortOrder?: SortOrder
+  }
+
+  export type EnumMenuTagScopeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.MenuTagScope | EnumMenuTagScopeFieldRefInput<$PrismaModel>
+    in?: $Enums.MenuTagScope[] | ListEnumMenuTagScopeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.MenuTagScope[] | ListEnumMenuTagScopeFieldRefInput<$PrismaModel>
+    not?: NestedEnumMenuTagScopeWithAggregatesFilter<$PrismaModel> | $Enums.MenuTagScope
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumMenuTagScopeFilter<$PrismaModel>
+    _max?: NestedEnumMenuTagScopeFilter<$PrismaModel>
+  }
+
   export type StringNullableFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel> | null
     in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
@@ -12708,6 +15404,50 @@ export namespace Prisma {
     authorId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+  }
+
+  export type MediaAssetCountOrderByAggregateInput = {
+    id?: SortOrder
+    filename?: SortOrder
+    originalName?: SortOrder
+    mimeType?: SortOrder
+    size?: SortOrder
+    url?: SortOrder
+    provider?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type MediaAssetAvgOrderByAggregateInput = {
+    size?: SortOrder
+  }
+
+  export type MediaAssetMaxOrderByAggregateInput = {
+    id?: SortOrder
+    filename?: SortOrder
+    originalName?: SortOrder
+    mimeType?: SortOrder
+    size?: SortOrder
+    url?: SortOrder
+    provider?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type MediaAssetMinOrderByAggregateInput = {
+    id?: SortOrder
+    filename?: SortOrder
+    originalName?: SortOrder
+    mimeType?: SortOrder
+    size?: SortOrder
+    url?: SortOrder
+    provider?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type MediaAssetSumOrderByAggregateInput = {
+    size?: SortOrder
   }
 
   export type VibeCreateNestedManyWithoutAuthorInput = {
@@ -13057,6 +15797,10 @@ export namespace Prisma {
     decrement?: number
     multiply?: number
     divide?: number
+  }
+
+  export type EnumMenuTagScopeFieldUpdateOperationsInput = {
+    set?: $Enums.MenuTagScope
   }
 
   export type RoomCreatetagsInput = {
@@ -13497,6 +16241,23 @@ export namespace Prisma {
     gt?: number | FloatFieldRefInput<$PrismaModel>
     gte?: number | FloatFieldRefInput<$PrismaModel>
     not?: NestedFloatFilter<$PrismaModel> | number
+  }
+
+  export type NestedEnumMenuTagScopeFilter<$PrismaModel = never> = {
+    equals?: $Enums.MenuTagScope | EnumMenuTagScopeFieldRefInput<$PrismaModel>
+    in?: $Enums.MenuTagScope[] | ListEnumMenuTagScopeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.MenuTagScope[] | ListEnumMenuTagScopeFieldRefInput<$PrismaModel>
+    not?: NestedEnumMenuTagScopeFilter<$PrismaModel> | $Enums.MenuTagScope
+  }
+
+  export type NestedEnumMenuTagScopeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.MenuTagScope | EnumMenuTagScopeFieldRefInput<$PrismaModel>
+    in?: $Enums.MenuTagScope[] | ListEnumMenuTagScopeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.MenuTagScope[] | ListEnumMenuTagScopeFieldRefInput<$PrismaModel>
+    not?: NestedEnumMenuTagScopeWithAggregatesFilter<$PrismaModel> | $Enums.MenuTagScope
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumMenuTagScopeFilter<$PrismaModel>
+    _max?: NestedEnumMenuTagScopeFilter<$PrismaModel>
   }
 
   export type NestedStringNullableFilter<$PrismaModel = never> = {

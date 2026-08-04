@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { CyberAudioPlayer } from '../Player/CyberAudioPlayer';
 
 interface AudioStreamControllerProps {
@@ -18,6 +19,7 @@ export const AudioStreamController: React.FC<AudioStreamControllerProps> = ({
   musicUrl,
   onChange,
 }) => {
+  const { t } = useTranslation();
   const [isPreviewActive, setIsPreviewActive] = useState(false);
 
   const handleSelectPreset = (url: string) => {
@@ -29,7 +31,7 @@ export const AudioStreamController: React.FC<AudioStreamControllerProps> = ({
     <div className="space-y-2 font-mono">
       <div className="flex justify-between items-center">
         <label className="block text-zinc-400 font-bold uppercase text-xs">
-          [AUDIO_MUSIC_CONTROLLER]
+          {t('audio.controller')}
         </label>
         {musicUrl && (
           <button
@@ -40,7 +42,7 @@ export const AudioStreamController: React.FC<AudioStreamControllerProps> = ({
             }}
             className="text-[10px] text-zinc-500 hover:text-red-400 underline"
           >
-            [ Clear Audio ]
+            {t('audio.clear')}
           </button>
         )}
       </div>
@@ -48,7 +50,7 @@ export const AudioStreamController: React.FC<AudioStreamControllerProps> = ({
       <div className="flex gap-2">
         <input
           type="url"
-          placeholder="https://.../audio.mp3 or select preset"
+          placeholder={t('audio.placeholder')}
           value={musicUrl}
           onChange={(e) => onChange(e.target.value)}
           className="flex-1 bg-zinc-900 border border-zinc-800 focus:border-cyan-500 rounded p-2 text-xs text-zinc-100 placeholder-zinc-600 outline-none"
@@ -63,14 +65,14 @@ export const AudioStreamController: React.FC<AudioStreamControllerProps> = ({
                 : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border-zinc-700'
             }`}
           >
-            {isPreviewActive ? 'Hide Preview' : 'Test Audio'}
+            {isPreviewActive ? t('audio.hidePreview') : t('audio.testAudio')}
           </button>
         )}
       </div>
 
       {/* Preset Pickers */}
       <div className="flex flex-wrap gap-1 items-center pt-0.5">
-        <span className="text-[10px] text-zinc-500 uppercase mr-1">Presets:</span>
+        <span className="text-[10px] text-zinc-500 uppercase mr-1">{t('audio.presets')}</span>
         {AUDIO_PRESETS.map((preset, idx) => (
           <button
             key={idx}
@@ -91,11 +93,11 @@ export const AudioStreamController: React.FC<AudioStreamControllerProps> = ({
       {musicUrl && isPreviewActive && (
         <div className="p-2 bg-zinc-950 border border-cyan-800/80 rounded animate-fadeIn">
           <div className="text-[10px] text-cyan-400 font-bold mb-1 uppercase">
-            [ FORM_AUDIO_PREVIEW ]
+            {t('audio.formPreview')}
           </div>
           <CyberAudioPlayer
             src={musicUrl}
-            title="Form Audio Stream Test"
+            title={t('audio.formPreviewTitle')}
             accentColor="#00F0FF"
           />
         </div>

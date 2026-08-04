@@ -114,7 +114,7 @@ export const authSlice = createSlice({
       })
       .addMatcher(authApi.endpoints.login.matchRejected, (state, action) => {
         state.isLoading = false;
-        state.error = (action.payload as any)?.data?.message || 'Login failed';
+        state.error = (action.payload as any)?.data?.message || 'auth.loginFailed';
       });
 
     // ── register ───────────────────────────────────────────────────
@@ -135,7 +135,7 @@ export const authSlice = createSlice({
       })
       .addMatcher(authApi.endpoints.register.matchRejected, (state, action) => {
         state.isLoading = false;
-        state.error = (action.payload as any)?.data?.message || 'Registration failed';
+        state.error = (action.payload as any)?.data?.message || 'auth.registrationFailed';
       });
 
     // ── me (validate session on app load) ─────────────────────────

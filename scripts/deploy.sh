@@ -2,39 +2,78 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # scripts/deploy.sh
 #
-# Deploy vibe-roomer to production using docker-compose.prod.yml.
-# Database is hosted on Supabase — no local postgres startup needed.
-# Prisma migrations run against Supabase via DIRECT_URL at container startup.
+# Deploy vibe-roomer to production using an explicit database variant.
+# Supported variants:
+#   - supabase: external hosted Postgres via Supabase
+#   - internal: local Postgres container inside the compose stack
 #
 # Prerequisites:
 #   - Docker & Docker Compose installed on the target host
 #   - A .env file in the repo root with all production secrets
-#     (copy from .env.prod.example and fill in values)
+#     (copy from the matching .env.prod.*.example and fill in values)
 #
 # Usage:
-#   ./scripts/deploy.sh              # deploy (build if needed)
-#   ./scripts/deploy.sh --no-build   # use pre-built images (skip docker build)
+#   ./scripts/deploy.sh supabase              # deploy Supabase-backed stack
+#   ./scripts/deploy.sh internal              # deploy internal-Postgres stack
+#   ./scripts/deploy.sh supabase --no-build   # use pre-built images
 # ─────────────────────────────────────────────────────────────────────────────
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
 
-COMPOSE_FILE="docker-compose.prod.yml"
-NO_BUILD="${1:-}"
+VARIANT="supabase"
+NO_BUILD=""
+
+for arg in "$@"; do
+  case "$arg" in
+    supabase|internal)
+      VARIANT="$arg"
+      ;;
+    --no-build)
+      NO_BUILD="--no-build"
+      ;;
+    *)
+      echo "❌ Unknown argument: $arg"
+      echo "   Use: ./scripts/deploy.sh [supabase|internal] [--no-build]"
+      exit 1
+      ;;
+  esac
+done
+
+case "$VARIANT" in
+  supabase)
+    COMPOSE_FILE="docker-compose.prod.supabase.yml"
+    ENV_EXAMPLE=".env.prod.supabase.example"
+    DB_LABEL="Supabase (external)"
+    REQUIRED_VARS=(DATABASE_URL DIRECT_URL JWT_SECRET SUPABASE_URL SUPABASE_SERVICE_ROLE_KEY)
+    ;;
+  internal)
+    COMPOSE_FILE="docker-compose.prod.internal.yml"
+    ENV_EXAMPLE=".env.prod.internal.example"
+    DB_LABEL="Internal Postgres container"
+    REQUIRED_VARS=(POSTGRES_PASSWORD JWT_SECRET)
+    ;;
+  *)
+    echo "❌ Unknown variant: $VARIANT"
+    echo "   Use one of: supabase, internal"
+    exit 1
+    ;;
+esac
 
 echo "╔══════════════════════════════════════════╗"
 echo "║     Vibe Roomer — Production Deploy      ║"
 echo "╚══════════════════════════════════════════╝"
 echo "  Repo root   : $REPO_ROOT"
+echo "  Variant     : $VARIANT"
 echo "  Compose file: $COMPOSE_FILE"
-echo "  Database     : Supabase (external)"
+echo "  Database     : $DB_LABEL"
 echo ""
 
 # ── Pre-flight checks ─────────────────────────────────────────────────────────
 if [[ ! -f ".env" ]]; then
   echo "❌ .env file not found."
-  echo "   Copy .env.prod.example → .env and fill in your Supabase URLs and secrets."
+  echo "   Copy $ENV_EXAMPLE → .env and fill in the required secrets."
   exit 1
 fi
 
@@ -48,11 +87,11 @@ if ! docker compose version &>/dev/null; then
   exit 1
 fi
 
-# Validate that critical Supabase env vars are present in .env
-for var in DATABASE_URL DIRECT_URL JWT_SECRET; do
+# Validate that critical env vars are present in .env
+for var in "${REQUIRED_VARS[@]}"; do
   if ! grep -qE "^${var}=.+" .env; then
     echo "❌ Missing required variable '${var}' in .env"
-    echo "   See .env.prod.example for reference."
+    echo "   See $ENV_EXAMPLE for reference."
     exit 1
   fi
 done
@@ -89,4 +128,8 @@ echo "  Frontend : http://localhost:${FRONTEND_PORT}"
 echo "  Backend  : http://localhost:${FRONTEND_PORT}/api"
 echo ""
 echo "Logs: docker compose -f $COMPOSE_FILE logs -f"
-echo "DB  : Supabase dashboard → https://supabase.com/dashboard"
+if [[ "$VARIANT" == "supabase" ]]; then
+  echo "DB  : Supabase dashboard → https://supabase.com/dashboard"
+else
+  echo "DB  : docker compose -f $COMPOSE_FILE exec postgres psql -U \${POSTGRES_USER:-postgres} -d \${POSTGRES_DB:-viberoomer}"
+fi

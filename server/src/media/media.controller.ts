@@ -14,7 +14,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Response } from 'express';
 import { memoryStorage } from 'multer';
-import { MediaService } from './media.service';
+import { MediaLibraryService } from './media-library.service';
 
 /** Multer interceptor using in-memory storage — no files touch disk. */
 const memoryMulter = FileInterceptor('file', {
@@ -32,21 +32,38 @@ const memoryMulter = FileInterceptor('file', {
 
 @Controller('media')
 export class MediaController {
-  constructor(private readonly mediaService: MediaService) {}
+  constructor(private readonly mediaLibrary: MediaLibraryService) {}
 
-  // ── Unsplash proxy ────────────────────────────────────────────────────────
+  // ── Unsplash proxy (official API — requires UNSPLASH_ACCESS_KEY) ──────────
 
   @Get('unsplash/search')
   async searchUnsplash(@Query('query') query: string) {
     if (!query) {
       return { results: [] };
     }
+
+    const accessKey = process.env.UNSPLASH_ACCESS_KEY;
+    if (!accessKey) {
+      throw new BadRequestException(
+        'Unsplash search is not configured. Set UNSPLASH_ACCESS_KEY in your environment.',
+      );
+    }
+
     try {
       const response = await fetch(
-        `https://unsplash.com/napi/search/photos?query=${encodeURIComponent(query)}&per_page=24`,
+        `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=24`,
+        {
+          headers: {
+            Authorization: `Client-ID ${accessKey}`,
+            'Accept-Version': 'v1',
+          },
+        },
       );
       if (!response.ok) {
-        throw new Error('Failed to fetch from Unsplash api');
+        const detail = await response.text().catch(() => '');
+        throw new Error(
+          `Unsplash API returned ${response.status}${detail ? `: ${detail.slice(0, 200)}` : ''}`,
+        );
       }
       return await response.json();
     } catch (err: any) {
@@ -54,14 +71,14 @@ export class MediaController {
     }
   }
 
-  // ── List all uploaded files ───────────────────────────────────────────────
+  // ── List registered library images ────────────────────────────────────────
 
   @Get()
   async listMedia() {
-    return this.mediaService.listFiles();
+    return this.mediaLibrary.listImages();
   }
 
-  // ── Upload a new file ─────────────────────────────────────────────────────
+  // ── Upload + register in the media library ────────────────────────────────
 
   @Post('upload')
   @UseInterceptors(memoryMulter)
@@ -69,22 +86,14 @@ export class MediaController {
     if (!file) {
       throw new BadRequestException('No media file provided for upload');
     }
-    const result = await this.mediaService.uploadFile(file);
-    return {
-      message: 'Media uploaded successfully',
-      filename: result.filename,
-      originalName: file.originalname,
-      mimetype: file.mimetype,
-      size: result.size,
-      url: result.url,          // ← full Supabase CDN URL
-    };
+    return this.mediaLibrary.addImage(file);
   }
 
-  // ── Redirect to Supabase CDN URL (for backward-compat with old absolute paths) ──
+  // ── Redirect to the active media URL (Supabase CDN or local uploads path) ──
 
   @Get(':filename')
   async downloadFile(@Param('filename') filename: string, @Res() res: Response) {
-    const url = this.mediaService.getPublicUrl(filename);
+    const url = this.mediaLibrary.getPublicUrl(filename);
     return res.redirect(301, url);
   }
 
@@ -99,13 +108,13 @@ export class MediaController {
     if (!file) {
       throw new BadRequestException('No replacement file provided');
     }
-    return this.mediaService.updateFile(filename, file);
+    return this.mediaLibrary.replaceImage(filename, file);
   }
 
   // ── Delete a file ─────────────────────────────────────────────────────────
 
   @Delete(':filename')
   async deleteFile(@Param('filename') filename: string) {
-    return this.mediaService.deleteFile(filename);
+    return this.mediaLibrary.removeImage(filename);
   }
 }

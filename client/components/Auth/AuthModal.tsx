@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import { setAuthModalOpen, setAuthModalMode, clearError } from '../../store/authSlice';
 import { useLoginMutation, useRegisterMutation } from '../../store/api/authApi';
 import { BaseModal } from '../Common/BaseModal';
 
 export const AuthModal: React.FC = () => {
+  const { t } = useTranslation();
   const dispatch = useAppDispatch();
   const isAuthModalOpen = useAppSelector((s) => s.auth.isAuthModalOpen);
   const authModalMode = useAppSelector((s) => s.auth.authModalMode);
@@ -38,8 +40,8 @@ export const AuthModal: React.FC = () => {
     <BaseModal
       isOpen={isAuthModalOpen}
       onClose={() => dispatch(setAuthModalOpen({ open: false }))}
-      systemTag="[SYSTEM_AUTHENTICATION]"
-      title={authModalMode === 'login' ? 'USER LOGIN' : 'REGISTER NEW PROFILE'}
+      systemTag={t('auth.systemTag')}
+      title={authModalMode === 'login' ? t('auth.loginTitle') : t('auth.registerTitle')}
       maxWidth="max-w-md"
       containerClassName="p-6"
     >
@@ -57,7 +59,7 @@ export const AuthModal: React.FC = () => {
               : 'border-transparent text-zinc-500 hover:text-zinc-300'
           }`}
         >
-          [SIGN_IN]
+          {t('auth.signIn')}
         </button>
         <button
           type="button"
@@ -71,14 +73,14 @@ export const AuthModal: React.FC = () => {
               : 'border-transparent text-zinc-500 hover:text-zinc-300'
           }`}
         >
-          [REGISTER]
+          {t('auth.register')}
         </button>
       </div>
 
       {/* Error Notification */}
       {error && (
         <div className="mb-4 p-3 bg-red-950/60 border border-red-500/60 rounded text-xs text-red-300">
-          [ERROR]: {error}
+          {t('common.error')}: {t(error, { defaultValue: error })}
         </div>
       )}
 
@@ -86,34 +88,34 @@ export const AuthModal: React.FC = () => {
       <form onSubmit={handleSubmit} className="space-y-4 text-xs">
         {authModalMode === 'register' && (
           <div>
-            <label htmlFor="auth-username" className="block text-zinc-400 mb-1">USERNAME</label>
+            <label htmlFor="auth-username" className="block text-zinc-400 mb-1">{t('auth.username')}</label>
             <input
               id="auth-username"
               type="text"
               required
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="e.g. cyber_operator"
+              placeholder={t('auth.usernamePlaceholder')}
               className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded text-zinc-100 focus:outline-none focus:border-amber-500 transition-colors"
             />
           </div>
         )}
 
         <div>
-          <label htmlFor="auth-email" className="block text-zinc-400 mb-1">EMAIL ADDRESS</label>
+          <label htmlFor="auth-email" className="block text-zinc-400 mb-1">{t('auth.email')}</label>
           <input
             id="auth-email"
             type="email"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="operator@viberoom.net"
+            placeholder={t('auth.emailPlaceholder')}
             className="w-full px-3 py-2 bg-zinc-900 border border-zinc-800 rounded text-zinc-100 focus:outline-none focus:border-cyan-500 transition-colors"
           />
         </div>
 
         <div>
-          <label htmlFor="auth-password" className="block text-zinc-400 mb-1">PASSWORD</label>
+          <label htmlFor="auth-password" className="block text-zinc-400 mb-1">{t('auth.password')}</label>
           <input
             id="auth-password"
             type="password"
@@ -138,11 +140,11 @@ export const AuthModal: React.FC = () => {
             } disabled:opacity-50`}
           >
             {isLoading ? (
-              <span>AUTHENTICATING...</span>
+              <span>{t('auth.authenticating')}</span>
             ) : authModalMode === 'login' ? (
-              <span>[EXECUTE_SIGN_IN]</span>
+              <span>{t('auth.executeSignIn')}</span>
             ) : (
-              <span>[CREATE]</span>
+              <span>{t('auth.create')}</span>
             )}
           </button>
         </div>

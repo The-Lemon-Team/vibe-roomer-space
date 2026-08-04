@@ -162,6 +162,15 @@ exports.Prisma.HashtagScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.MenuTagScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  scope: 'scope',
+  sortOrder: 'sortOrder',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.RoomScalarFieldEnum = {
   id: 'id',
   title: 'title',
@@ -211,6 +220,18 @@ exports.Prisma.RoomNoteScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.MediaAssetScalarFieldEnum = {
+  id: 'id',
+  filename: 'filename',
+  originalName: 'originalName',
+  mimeType: 'mimeType',
+  size: 'size',
+  url: 'url',
+  provider: 'provider',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -241,15 +262,22 @@ exports.Role = exports.$Enums.Role = {
   ADMIN: 'ADMIN'
 };
 
+exports.MenuTagScope = exports.$Enums.MenuTagScope = {
+  VIBES: 'VIBES',
+  ROOMS: 'ROOMS'
+};
+
 exports.Prisma.ModelName = {
   User: 'User',
   Vibe: 'Vibe',
   VibeUpdate: 'VibeUpdate',
   Hashtag: 'Hashtag',
+  MenuTag: 'MenuTag',
   Room: 'Room',
   RoomStreamItem: 'RoomStreamItem',
   RoomNews: 'RoomNews',
-  RoomNote: 'RoomNote'
+  RoomNote: 'RoomNote',
+  MediaAsset: 'MediaAsset'
 };
 
 /**

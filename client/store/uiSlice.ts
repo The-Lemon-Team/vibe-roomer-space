@@ -6,7 +6,7 @@
  *  • activeTag / activeVibeTag / activeRoomTag
  *  • tagMode, pinnedTags, myTags, adminMenuTags (vibes + rooms variants)
  *  • viewMode, selectedVibePage, selectedVibeRoom, activeCreatedRoom
- *  • modal open states (isCreateModalOpen, isCreateRoomModalOpen, vibeToCreateRoom)
+ *  • modal open states (isCreateModalOpen, isCreateRoomModalOpen)
  *  • isMobileSidebarOpen
  *  • currentUserId
  *
@@ -31,10 +31,8 @@ const getStoredTags = (key: string, defaultTags: string[]): string[] => {
   }
 };
 
-const DEFAULT_ADMIN_VIBE_TAGS = ['#deepwork', '#chill'];
-const DEFAULT_ADMIN_ROOM_TAGS = ['#stream', '#ambient'];
-const DEFAULT_MY_VIBE_TAGS = ['#deepwork', '#chill'];
-const DEFAULT_MY_ROOM_TAGS = ['#stream', '#ambient'];
+const DEFAULT_MY_VIBE_TAGS: string[] = [];
+const DEFAULT_MY_ROOM_TAGS: string[] = [];
 
 // ── state shape ────────────────────────────────────────────────────────────
 
@@ -47,7 +45,7 @@ interface UiState {
   activeVibeTag: string;
   activeRoomTag: string;
 
-  // Vibe admin / my tags
+  // Vibe admin / my tags (admin tags are hydrated from GET /menu-tags)
   adminMenuTags: string[];
   myTags: string[];
   pinnedTags: string[];
@@ -65,8 +63,9 @@ interface UiState {
 
   // Modals
   isCreateModalOpen: boolean;
+  /** When set, CreateVibeModal opens in edit mode for this vibe */
+  editingVibe: VibeItem | null;
   isCreateRoomModalOpen: boolean;
-  vibeToCreateRoom: VibeItem | null;
 
   // Layout
   isMobileSidebarOpen: boolean;
@@ -78,25 +77,29 @@ interface UiState {
 const initialState: UiState = {
   viewMode: initialRoute.viewMode,
   activeTag: initialRoute.tag,
-  activeVibeTag: initialRoute.viewMode === 'vibes' ? initialRoute.tag : '#ALL',
+  activeVibeTag:
+    initialRoute.viewMode === 'vibes' || initialRoute.viewMode === 'vibe'
+      ? initialRoute.tag
+      : '#ALL',
   activeRoomTag: initialRoute.viewMode === 'rooms' ? initialRoute.tag : '#ALL',
 
-  adminMenuTags: getStoredTags('vibe_admin_menu_tags', DEFAULT_ADMIN_VIBE_TAGS),
+  adminMenuTags: [],
   myTags: getStoredTags('vibe_my_tags', DEFAULT_MY_VIBE_TAGS),
-  pinnedTags: getStoredTags('vibe_admin_menu_tags', DEFAULT_ADMIN_VIBE_TAGS),
+  pinnedTags: [],
 
-  roomsAdminMenuTags: getStoredTags('rooms_admin_menu_tags', DEFAULT_ADMIN_ROOM_TAGS),
+  roomsAdminMenuTags: [],
   roomsMyTags: getStoredTags('rooms_my_tags', DEFAULT_MY_ROOM_TAGS),
 
-  tagMode: localStorage.getItem('vibe_access_token') ? 'my_tags' : 'live',
+  // URL is source of truth: #/ = [Все вайбы], #/live = [Мои вайбы], #/my-tags, #/admin
+  tagMode: initialRoute.tagMode,
 
   selectedVibePage: null,
   selectedVibeRoom: null,
   activeCreatedRoom: null,
 
   isCreateModalOpen: false,
+  editingVibe: null,
   isCreateRoomModalOpen: false,
-  vibeToCreateRoom: null,
 
   isMobileSidebarOpen: false,
   currentUserId: '',
@@ -128,7 +131,7 @@ export const uiSlice = createSlice({
         state.selectedVibePage = null;
         state.activeVibeTag = formatted;
         state.activeTag = formatted;
-        updateHashRoute('vibes', formatted);
+        updateHashRoute('vibes', formatted, undefined, undefined, state.tagMode);
       }
     },
 
@@ -142,7 +145,13 @@ export const uiSlice = createSlice({
       } else {
         state.viewMode = mode;
         state.activeTag = state.activeVibeTag;
-        updateHashRoute(mode, state.activeVibeTag, state.selectedVibePage?.id);
+        updateHashRoute(
+          mode,
+          state.activeVibeTag,
+          state.selectedVibePage?.id,
+          undefined,
+          state.tagMode,
+        );
       }
     },
 
@@ -150,7 +159,14 @@ export const uiSlice = createSlice({
       const route = parseHashRoute();
       state.viewMode = route.viewMode;
       state.activeTag = route.tag;
-      if (route.viewMode === 'vibes') state.activeVibeTag = route.tag;
+      // Only sync tagMode from vibes feed URLs (/, /vibes, /all-vibes, /my-tags, /my-vibes, /admin)
+      if (route.viewMode === 'vibes') {
+        state.tagMode = route.tagMode;
+        state.activeVibeTag = route.tag;
+      }
+      if (route.viewMode === 'vibe') {
+        state.activeVibeTag = route.tag;
+      }
       if (route.viewMode === 'rooms') state.activeRoomTag = route.tag;
     },
 
@@ -187,21 +203,14 @@ export const uiSlice = createSlice({
     },
 
     // ── Admin / user tag management ──────────────────────────────────
-    addAdminMenuTag: (state, action: PayloadAction<string>) => {
-      const tag = action.payload.startsWith('#') ? action.payload : `#${action.payload}`;
-      if (!state.adminMenuTags.some((t) => t.toLowerCase() === tag.toLowerCase())) {
-        state.adminMenuTags.push(tag);
-        state.pinnedTags = [...state.adminMenuTags];
-        localStorage.setItem('vibe_admin_menu_tags', JSON.stringify(state.adminMenuTags));
-      }
+    /** Hydrate public vibe menu tags from GET /menu-tags (server source of truth). */
+    setAdminMenuTags: (state, action: PayloadAction<string[]>) => {
+      state.adminMenuTags = action.payload;
+      state.pinnedTags = [...action.payload];
     },
-    removeAdminMenuTag: (state, action: PayloadAction<string>) => {
-      const tag = action.payload.startsWith('#') ? action.payload : `#${action.payload}`;
-      state.adminMenuTags = state.adminMenuTags.filter(
-        (t) => t.toLowerCase() !== tag.toLowerCase(),
-      );
-      state.pinnedTags = [...state.adminMenuTags];
-      localStorage.setItem('vibe_admin_menu_tags', JSON.stringify(state.adminMenuTags));
+    /** Hydrate public room menu tags from GET /menu-tags. */
+    setRoomsAdminMenuTags: (state, action: PayloadAction<string[]>) => {
+      state.roomsAdminMenuTags = action.payload;
     },
 
     addMyTag: (state, action: PayloadAction<string>) => {
@@ -227,20 +236,6 @@ export const uiSlice = createSlice({
       localStorage.setItem('vibe_my_tags', JSON.stringify(state.myTags));
     },
 
-    addRoomsAdminMenuTag: (state, action: PayloadAction<string>) => {
-      const tag = action.payload.startsWith('#') ? action.payload : `#${action.payload}`;
-      if (!state.roomsAdminMenuTags.some((t) => t.toLowerCase() === tag.toLowerCase())) {
-        state.roomsAdminMenuTags.push(tag);
-        localStorage.setItem('rooms_admin_menu_tags', JSON.stringify(state.roomsAdminMenuTags));
-      }
-    },
-    removeRoomsAdminMenuTag: (state, action: PayloadAction<string>) => {
-      const tag = action.payload.startsWith('#') ? action.payload : `#${action.payload}`;
-      state.roomsAdminMenuTags = state.roomsAdminMenuTags.filter(
-        (t) => t.toLowerCase() !== tag.toLowerCase(),
-      );
-      localStorage.setItem('rooms_admin_menu_tags', JSON.stringify(state.roomsAdminMenuTags));
-    },
     addRoomsMyTag: (state, action: PayloadAction<string>) => {
       const tag = action.payload.startsWith('#') ? action.payload : `#${action.payload}`;
       if (!state.roomsMyTags.some((t) => t.toLowerCase() === tag.toLowerCase())) {
@@ -258,19 +253,35 @@ export const uiSlice = createSlice({
 
     setTagMode: (state, action: PayloadAction<TagMode>) => {
       state.tagMode = action.payload;
+      // Switching feed scope / My Tags / Admin always lands on the vibes feed list
+      if (state.viewMode === 'vibe') {
+        state.viewMode = 'vibes';
+        state.selectedVibePage = null;
+      }
+      if (state.viewMode === 'vibes') {
+        updateHashRoute('vibes', state.activeVibeTag, undefined, undefined, action.payload);
+      }
     },
 
     // ── Modals ───────────────────────────────────────────────────────
     setCreateModalOpen: (state, action: PayloadAction<boolean>) => {
       state.isCreateModalOpen = action.payload;
+      if (!action.payload) {
+        state.editingVibe = null;
+      }
+    },
+
+    /** Open create modal prefilled for editing an existing vibe */
+    openEditVibeModal: (state, action: PayloadAction<VibeItem>) => {
+      state.editingVibe = action.payload;
+      state.isCreateModalOpen = true;
     },
 
     setCreateRoomModalOpen: (
       state,
-      action: PayloadAction<{ open: boolean; vibe?: VibeItem | null }>,
+      action: PayloadAction<{ open: boolean }>,
     ) => {
       state.isCreateRoomModalOpen = action.payload.open;
-      state.vibeToCreateRoom = action.payload.vibe ?? null;
     },
 
     // ── Layout ───────────────────────────────────────────────────────
@@ -294,17 +305,16 @@ export const {
   setActiveCreatedRoom,
   openRoomPage,
   closeRoomPage,
-  addAdminMenuTag,
-  removeAdminMenuTag,
+  setAdminMenuTags,
+  setRoomsAdminMenuTags,
   addMyTag,
   removeMyTag,
   togglePinTag,
-  addRoomsAdminMenuTag,
-  removeRoomsAdminMenuTag,
   addRoomsMyTag,
   removeRoomsMyTag,
   setTagMode,
   setCreateModalOpen,
+  openEditVibeModal,
   setCreateRoomModalOpen,
   setMobileSidebarOpen,
   setCurrentUserId,

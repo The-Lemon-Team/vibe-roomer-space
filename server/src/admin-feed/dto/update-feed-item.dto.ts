@@ -1,5 +1,4 @@
-import { IsArray, IsBoolean, IsEnum, IsOptional, IsString } from 'class-validator';
-import { ActivityContext } from '../../generated/client';
+import { IsArray, IsBoolean, IsOptional, IsString } from 'class-validator';
 
 export class UpdateFeedItemDto {
   @IsString()
@@ -15,22 +14,20 @@ export class UpdateFeedItemDto {
   @IsOptional()
   keywords?: string[];
 
-  @IsEnum(ActivityContext)
-  @IsOptional()
-  activity?: ActivityContext;
-
   @IsArray()
   @IsString({ each: true })
   @IsOptional()
   images?: string[];
 
-  @IsString()
+  @IsArray()
+  @IsString({ each: true })
   @IsOptional()
-  videoUrl?: string;
+  videoUrls?: string[];
 
-  @IsString()
+  @IsArray()
+  @IsString({ each: true })
   @IsOptional()
-  musicUrl?: string;
+  musicUrls?: string[];
 
   @IsBoolean()
   @IsOptional()

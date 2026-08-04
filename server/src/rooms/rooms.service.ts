@@ -37,8 +37,8 @@ export class RoomsService {
             select: {
               roomConfig: true,
               images: true,
-              videoUrl: true,
-              musicUrl: true,
+              videoUrls: true,
+              musicUrls: true,
               createdAt: true,
             },
           });

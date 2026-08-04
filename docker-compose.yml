@@ -1,13 +1,14 @@
-version: '3.8'
-
 name: vibe-roomer-dev
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Development only — local Postgres for offline dev / CI without Supabase.
+# Local development Postgres (default).
 #
-# Production uses Supabase (external hosted Postgres).
-# Set DATABASE_URL + DIRECT_URL in .env to your Supabase connection strings
-# and this file is not needed at runtime.
+# Start with: npm run db:up
+# Connection string (see .env.example):
+#   postgresql://postgres:postgres@localhost:5448/viberoomer?schema=public
+#
+# For Supabase-backed runs, use .env.supabase.example instead — this compose
+# file is not needed at runtime in that case.
 # ─────────────────────────────────────────────────────────────────────────────
 
 services:

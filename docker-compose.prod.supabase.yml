@@ -1,0 +1,56 @@
+version: '3.8'
+
+name: vibe-roomer-prod-supabase
+
+services:
+
+  backend:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    restart: unless-stopped
+    environment:
+      MEDIA_PROVIDER: supabase
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL is required (Supabase pooler URL)}
+      DIRECT_URL: ${DIRECT_URL:?DIRECT_URL is required (Supabase direct URL for migrations)}
+      PORT: 3001
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      UPLOADS_DIR: ./uploads
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost}
+      SUPABASE_URL: ${SUPABASE_URL:?SUPABASE_URL is required}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:?SUPABASE_SERVICE_ROLE_KEY is required}
+      SUPABASE_STORAGE_BUCKET: ${SUPABASE_STORAGE_BUCKET:-media}
+    volumes:
+      - uploads_data:/app/uploads
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3001/api/stats || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.client
+      args:
+        VITE_API_URL: ${VITE_API_URL:-/api}
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-80}:80"
+    networks:
+      - internal
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  uploads_data:
+    driver: local
+
+networks:
+  internal:
+    driver: bridge

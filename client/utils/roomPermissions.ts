@@ -21,7 +21,7 @@ export const checkRoomPostingPermission = (
     return {
       canPost: false,
       isCreator: false,
-      reason: 'No active room target.',
+      reason: 'rooms.noRoom',
     };
   }
 
@@ -35,7 +35,7 @@ export const checkRoomPostingPermission = (
     return {
       canPost: false,
       isCreator: false,
-      reason: `Posting content to this room stream is currently restricted to the room creator (@${room.authorName || 'operator'}).`,
+      reason: 'rooms.postingRestricted',
     };
   }
 
